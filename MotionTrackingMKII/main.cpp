@@ -16,14 +16,14 @@
 TCHAR	*track_name[] = { "Method" };	//	トラックバーの名前
 int		track_default[] = { 2 };	//	トラックバーの初期値
 int		track_s[] = { 1 };	//	トラックバーの下限値
-int		track_e[] = { 4 };	//	トラックバーの上限値
+int		track_e[] = { 7 };	//	トラックバーの上限値
 
 #define	CHECK_N	10														//	チェックボックスの数
 TCHAR	*check_name[] = { "1. Select Object", "2. Analyze", "3A. View Result", "3B. Clear Result", "4. As English EXO?", "5. As Sub-filter/部分フィルター?", "6. Save EXO", "Quick Blur", "Easy Privacy", "⑨HELP" };				//	チェックボックスの名前
 int		check_default[] = { -1, -1, -1, -1, 0, 0, -1, 0, 0, -1 };				//	チェックボックスの初期値 (値は0か1)
 
-#define METHOD_N 4
-TCHAR *track_method[] = { "BOOSTING", "MIL", "MEDIANFLOW", "TLD" }; //MedianFlow and TLD is very unstable as on 2014 Nov
+#define METHOD_N 7
+TCHAR* track_method[] = { "BOOSTING", "MIL", "MEDIANFLOW", "TLD", "KCF", "CSRT", "MOSSE" };
 
 #define HSV_CHECK_N 4
 TCHAR   *hsv_check_name[] = { "HSV", "Hue only", "Saturation only", "Value only" };
@@ -40,17 +40,20 @@ int bgs_track_s[] = { 1, 0, 1, 1, 100 };
 int bgs_track_e[] = { 250, 1, 30, 99, 1000 };
 
 #ifdef __AVX__
-TCHAR* verstr={ "MotionTracking MK-II AVX by Maverick Tse\0" };
+TCHAR* verstr={ "MotionTracking MK-II Plus AVX by Mr-Ojii\0" };
 #else
-TCHAR* verstr = { "MotionTracking MK-II SSE2 by Maverick Tse\0" };
+TCHAR* verstr = { "MotionTracking MK-II Plus SSE2 by Mr-Ojii\0" };
 #endif
 const TCHAR *help_text =
 {
 	"=Method=\n"
 	"1. AdaBoost\n"
 	"2. Multi Instance Learning\n"
-	"3. MediaFlow (Broken)\n"
-	"4. TLD (Broken)\n"
+	"3. MediaFlow\n"
+	"4. TLD\n"
+	"5. KCF\n"
+	"6. CSRT\n"
+	"7. MOSSE\n"
 	"\n=Steps=\n"
 	"0. Mark a section to track\n"
 	"1. Click 1st button, Drag a box on the object to be tracked(in popup Window).\n"
@@ -69,8 +72,6 @@ const TCHAR *help_text =
 	"  No tracking is needed.\n"
 	"  Works well on frontal face, poor on profile face.\n\n"
 	"⑨HELP: by チルノ\n"
-	"\nBuild on: "
-	__DATE__"-"__TIME__
 	"\nLicense: 3-clause BSD License"
 };
 
@@ -112,7 +113,7 @@ FILTER_DLL filter = {
 	//	FILTER_FLAG_IMPORT				: インポートメニューを作ります
 	//	FILTER_FLAG_EXPORT				: エクスポートメニューを作ります
 	0, 0,						//	設定ウインドウのサイズ (FILTER_FLAG_WINDOW_SIZEが立っている時に有効)
-	"MotionTracking MK-II",			//	フィルタの名前
+	"MotionTracking MK-II Plus",//	フィルタの名前
 	TRACK_N,					//	トラックバーの数 (0なら名前初期値等もNULLでよい)
 	track_name,					//	トラックバーの名前郡へのポインタ
 	track_default,				//	トラックバーの初期値郡へのポインタ
@@ -564,7 +565,30 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 				}
 				int64 start_time = cv::getTickCount();
 				// Create Tracker
-				cv::Ptr<cv::Tracker> tracker = cv::Tracker::create(track_method[fp->track[0]-1]);
+				cv::Ptr<cv::Tracker> tracker;
+				switch (fp->track[0] - 1) {
+				case 0:
+					tracker = cv::TrackerBoosting::create();
+					break;
+				case 1:
+					tracker = cv::TrackerMIL::create();
+					break;
+				case 2:
+					tracker = cv::TrackerMedianFlow::create();
+					break;
+				case 3:
+					tracker = cv::TrackerTLD::create();
+					break;
+				case 4:
+					tracker = cv::TrackerKCF::create();
+					break;
+				case 5:
+					tracker = cv::TrackerCSRT::create();
+					break;
+				default:
+					tracker = cv::TrackerMOSSE::create();
+					break;
+				}
 				if (tracker == NULL)
 				{
 					MessageBox(NULL, "Error when creating tracker", "OpenCV3 Error", MB_OK);
@@ -752,7 +776,7 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 			startSel = false;
 			selectObj = false;
 			ocvImage.empty();
-			SetWindowText(fp->hwnd, "MotionTracking MK-II");
+			SetWindowText(fp->hwnd, "MotionTracking MK-II Plus");
 			MessageBox(NULL, "Selection states, results and image cache reseted", "INFO", MB_OK);
 			return TRUE;
 			break;
@@ -1234,26 +1258,26 @@ BOOL hsv_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 	fp->exfunc->yc2rgb(bgrbuf, ycbuf, w*h);
 	cv::Mat ocvImg(h, w, CV_8UC3, bgrbuf);
 	cv::Mat outImg;
-	cv::cvtColor(ocvImg, outImg, CV_BGR2HSV_FULL);
+	cv::cvtColor(ocvImg, outImg, cv::COLOR_BGR2HSV_FULL);
 	if (fp->check[1]) //Hue
 	{
 		std::vector<cv::Mat> channels;
 		cv::split(outImg, channels);
-		cv::cvtColor(channels[0], outImg, CV_GRAY2BGR);
+		cv::cvtColor(channels[0], outImg, cv::COLOR_GRAY2BGR);
 		channels.clear();
 	}
 	else if (fp->check[2]) //Sat
 	{
 		std::vector<cv::Mat> channels;
 		cv::split(outImg, channels);
-		cv::cvtColor(channels[1], outImg, CV_GRAY2BGR);
+		cv::cvtColor(channels[1], outImg, cv::COLOR_GRAY2BGR);
 		channels.clear();
 	}
 	else if (fp->check[3]) //Value
 	{
 		std::vector<cv::Mat> channels;
 		cv::split(outImg, channels);
-		cv::cvtColor(channels[2], outImg, CV_GRAY2BGR);
+		cv::cvtColor(channels[2], outImg, cv::COLOR_GRAY2BGR);
 		channels.clear();
 	}
 	fp->exfunc->rgb2yc(ycbuf, (PIXEL*)outImg.data, w*h);
@@ -1436,7 +1460,7 @@ BOOL bgs_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 		cv::erode(mask, mask, element);
 		cv::dilate(mask, mask, element);
 		cv::Mat tempbuf;
-		cv::cvtColor(mask, tempbuf, CV_GRAY2BGR);
+		cv::cvtColor(mask, tempbuf, cv::COLOR_GRAY2BGR);
 
 		PIXEL_YC* ycout = new PIXEL_YC[w*h];
 		fp->exfunc->rgb2yc(ycout, (PIXEL*)tempbuf.data, w*h);
@@ -1488,7 +1512,7 @@ BOOL bgs_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 		cv::erode(mask, mask, element);
 		cv::dilate(mask, mask, element);
 		cv::Mat tempbuf;
-		cv::cvtColor(mask, tempbuf, CV_GRAY2BGR);
+		cv::cvtColor(mask, tempbuf, cv::COLOR_GRAY2BGR);
 
 		PIXEL_YC* ycout = new PIXEL_YC[w*h];
 		fp->exfunc->rgb2yc(ycout, (PIXEL*)tempbuf.data, w*h);
