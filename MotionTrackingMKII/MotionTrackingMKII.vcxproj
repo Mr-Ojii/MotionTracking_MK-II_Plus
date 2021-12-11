@@ -58,7 +58,7 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
-      <AdditionalDependencies>comctl32.lib;IlmImfd.lib;ippicvmt.lib;ippiwd.lib;ittnotifyd.lib;libjasperd.lib;libjpeg-turbod.lib;libpngd.lib;libtiffd.lib;libwebpd.lib;opencv_core3416d.lib;opencv_highgui3416d.lib;opencv_imgcodecs3416d.lib;opencv_imgproc3416d.lib;opencv_objdetect3416d.lib;opencv_optflow3416d.lib;opencv_photo3416d.lib;opencv_reg3416d.lib;opencv_saliency3416d.lib;opencv_shape3416d.lib;opencv_superres3416d.lib;opencv_surface_matching3416d.lib;opencv_tracking3416d.lib;opencv_ts3416d.lib;opencv_video3416d.lib;opencv_videoio3416d.lib;opencv_ximgproc3416d.lib;opencv_xobjdetect3416d.lib;opencv_xphoto3416d.lib;zlibd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>comctl32.lib;IlmImfd.lib;ippicvmt.lib;ippiwd.lib;libjasperd.lib;libjpeg-turbod.lib;libpngd.lib;libtiffd.lib;libwebpd.lib;opencv_core3416d.lib;opencv_highgui3416d.lib;opencv_imgcodecs3416d.lib;opencv_imgproc3416d.lib;opencv_objdetect3416d.lib;opencv_tracking3416d.lib;opencv_video3416d.lib;zlibd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>main.def</ModuleDefinitionFile>
       <LargeAddressAware>true</LargeAddressAware>
@@ -84,7 +84,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <SubSystem>Windows</SubSystem>
-      <AdditionalDependencies>comctl32.lib;IlmImf.lib;ippicvmt.lib;ippiw.lib;ittnotify.lib;libjasper.lib;libjpeg-turbo.lib;libpng.lib;libtiff.lib;libwebp.lib;opencv_core3416.lib;opencv_highgui3416.lib;opencv_imgcodecs3416.lib;opencv_imgproc3416.lib;opencv_objdetect3416.lib;opencv_optflow3416.lib;opencv_photo3416.lib;opencv_reg3416.lib;opencv_saliency3416.lib;opencv_shape3416.lib;opencv_superres3416.lib;opencv_surface_matching3416.lib;opencv_tracking3416.lib;opencv_ts3416.lib;opencv_video3416.lib;opencv_videoio3416.lib;opencv_ximgproc3416.lib;opencv_xobjdetect3416.lib;opencv_xphoto3416.lib;zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>comctl32.lib;IlmImf.lib;ippicvmt.lib;ippiw.lib;libjasper.lib;libjpeg-turbo.lib;libpng.lib;libtiff.lib;libwebp.lib;opencv_core3416.lib;opencv_highgui3416.lib;opencv_imgcodecs3416.lib;opencv_imgproc3416.lib;opencv_objdetect3416.lib;opencv_tracking3416.lib;opencv_video3416.lib;zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>main.def</ModuleDefinitionFile>
       <LargeAddressAware>true</LargeAddressAware>
