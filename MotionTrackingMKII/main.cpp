@@ -878,7 +878,7 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 								if (fixedFrm[f].width > fixedFrm[f].height) //-ve rAsp, const width
 								{
 									size_st = fixedFrm[f].width;
-									rAsp_st = 100.0 * (1.0 - ((double)fixedFrm[f].height / (double)fixedFrm[f].width));
+									rAsp_st = -100.0 * (1.0 - ((double)fixedFrm[f].height / (double)fixedFrm[f].width));
 								}
 								else if (fixedFrm[f].width < fixedFrm[f].height) // +ve rAsp, const height
 								{
