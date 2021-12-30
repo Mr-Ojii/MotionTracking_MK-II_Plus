@@ -272,61 +272,57 @@ int Except_Eval(int code)
 // Mouse callback function for object selection
 static void onMouse(int event, int x, int y, int, void*)
 {
-	//if (!selectObj)
-	//{
-		switch (event)
+	switch (event)
+	{
+	case cv::EVENT_LBUTTONDOWN:
+		//set origin of the bounding box
+		startSel = true;
+		selectObj = false;
+		boundingBox.x = x;
+		boundingBox.y = y;
+		break;
+	case cv::EVENT_LBUTTONUP:
+		//set with and height of the bounding box
+		boundingBox.width = std::abs(x - boundingBox.x);
+		boundingBox.height = std::abs(y - boundingBox.y);
+		if (x < boundingBox.x)
 		{
-		case cv::EVENT_LBUTTONDOWN:
-			//set origin of the bounding box
-			startSel = true;
-			selectObj = false;
-			boundingBox.x = x;
-			boundingBox.y = y;
-			break;
-		case cv::EVENT_LBUTTONUP:
-			//set with and height of the bounding box
-			boundingBox.width = std::abs(x - boundingBox.x);
-			boundingBox.height = std::abs(y - boundingBox.y);
-			if (x < boundingBox.x)
+			if (x > 0)
 			{
-				if (x > 0)
-				{
-					boundingBox.x = x;
-				}
-				else
-				{
-					boundingBox.x = 0;
-				}
+				boundingBox.x = x;
 			}
-			if (y < boundingBox.y)
+			else
 			{
-				if (y > 0)
-				{
-					boundingBox.y = y;
-				}
-				else
-				{
-					boundingBox.y = 0;
-				}
+				boundingBox.x = 0;
 			}
-			//paused = false;
-			selectObj = true;
-			startSel = false;
-			break;
-		case cv::EVENT_MOUSEMOVE:
-
-			if (startSel && !selectObj)
-			{
-				//draw the bounding box
-				cv::Mat currentFrame;
-				ocvImage.copyTo(currentFrame);
-				cv::rectangle(currentFrame, cv::Point((int)boundingBox.x, (int)boundingBox.y), cv::Point(x, y), cv::Scalar(0, 255, 0), 1, 1);
-				
-				imshow("Object Selection", currentFrame);
-			}
-			break;
 		}
-	//}
+		if (y < boundingBox.y)
+		{
+			if (y > 0)
+			{
+				boundingBox.y = y;
+			}
+			else
+			{
+				boundingBox.y = 0;
+			}
+		}
+		selectObj = true;
+		startSel = false;
+		break;
+	case cv::EVENT_MOUSEMOVE:
+
+		if (startSel && !selectObj)
+		{
+			//draw the bounding box
+			cv::Mat currentFrame;
+			ocvImage.copyTo(currentFrame);
+			cv::rectangle(currentFrame, cv::Point((int)boundingBox.x, (int)boundingBox.y), cv::Point(x, y), cv::Scalar(0, 255, 0), 1, 1);
+
+			imshow("Object Selection", currentFrame);
+		}
+		break;
+	}
 }
 
 //Callback function for trackbar used in result preview
@@ -544,197 +540,176 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 		}
 		case MID_FILTER_BUTTON + 1: //Analyze
 		{
-			
-			//MessageBox(NULL, "Btn 2", "DEBUG", MB_OK);
-			if (selectObj)
-			{
-				track_result.clear();
-				track_found.clear();
-				ocvImage.empty();
-				cv::Rect2d boxbackup = boundingBox;
-				//Correct for out-of-bound box
-				int frmw, frmh;
-				fp->exfunc->get_pixel_filtered(editp, selA, NULL, &frmw, &frmh);
-				if (boundingBox.br().x > frmw)
-				{
-					boundingBox.width = frmw - boundingBox.x;
-				}
-				if (boundingBox.br().y > frmh)
-				{
-					boundingBox.height = frmh - boundingBox.y;
-				}
-				int64 start_time = cv::getTickCount();
-				// Create Tracker
-				cv::Ptr<cv::Tracker> tracker;
-				switch (fp->track[0] - 1) {
-				case 0:
-					tracker = cv::TrackerBoosting::create();
-					break;
-				case 1:
-					tracker = cv::TrackerMIL::create();
-					break;
-				case 2:
-					tracker = cv::TrackerMedianFlow::create();
-					break;
-				case 3:
-					tracker = cv::TrackerTLD::create();
-					break;
-				case 4:
-					tracker = cv::TrackerKCF::create();
-					break;
-				case 5:
-					tracker = cv::TrackerCSRT::create();
-					break;
-				default:
-					tracker = cv::TrackerMOSSE::create();
-					break;
-				}
-				if (tracker == NULL)
-				{
-					MessageBox(NULL, "Error when creating tracker", "OpenCV3 Error", MB_OK);
-					return FALSE;
-				}
-				//Set first frame
-				int srcw, srch;
-				if (!fp->exfunc->get_frame_size(editp, &srcw, &srch))
-				{
-					MessageBox(NULL, "Cannot get frame size", "AviUtl API Error", MB_OK);
-					return FALSE;
-				};
-				//cv::String trackWndTitle("Tracking");
-				//cv::namedWindow(trackWndTitle, cv::WINDOW_AUTOSIZE);
-				PIXEL* aubgr = new PIXEL[srcw*srch];
-				if (fp->exfunc->get_pixel_filtered(editp, selA, aubgr, NULL, NULL))
-				{
-					cv::Mat cvBuffer(srch, srcw, CV_8UC3, aubgr);
-					cv::flip(cvBuffer, cvBuffer, 0);
-					cvBuffer.copyTo(ocvImage);
-					cvBuffer.~Mat();
-					delete[] aubgr;
-					//cv::imshow(trackWndTitle, ocvImage);
-					
-				}
-				else
-				{
-					MessageBox(NULL, "Cannot get first image", "AviUtl API Error", MB_OK);
-					delete[] aubgr;
-					return FALSE;
-				}
 
-				bool track_init = false;
-				track_result.clear();
-				track_found.clear();
-				//Loop through selected frames for analysis
-				TCHAR shortmsg[64] = { 0 };
-				int64 prev_stamp, new_stamp;
-				for (int f = selA; f <= selB; f++)
-				{
-					
-					//sprintf_s(shortmsg, "%s processing frame %d / %d", track_method[fp->track[0]-1], f+1, selB+1);
-					//SetWindowText(fp->hwnd, shortmsg);
-					if (!track_init && selectObj)
-					{
-						//TODO
-						SecureZeroMemory(shortmsg, sizeof(TCHAR[64]));
-						sprintf_s(shortmsg, "%s tracker initializing...", track_method[fp->track[0] - 1]);
-						SetWindowText(fp->hwnd, shortmsg);
-						if (!tracker->init(ocvImage, boundingBox))
-						{
-							MessageBox(NULL, "Error initializing tracker", "OpenCV3 Error", MB_OK);
-							return FALSE;
-						}
-						track_init = true;
-						track_found.push_back(true);
-						
-						prev_stamp = cv::getTickCount();
-					}
-					else if (track_init)
-					{
-						new_stamp = cv::getTickCount();
-						double fps = 1.0 / ((new_stamp - prev_stamp) / cv::getTickFrequency());
-						SecureZeroMemory(shortmsg, sizeof(TCHAR[64]));
-						sprintf_s(shortmsg, "%s processing frame %d/%d @%.2f fps", track_method[fp->track[0] - 1], f + 1, selB + 1, fps);
-						SetWindowText(fp->hwnd, shortmsg);
-						prev_stamp = cv::getTickCount();
-						
-						try{
-							//cv::Rect2d bbox_backup = boundingBox;
-							if (tracker->update(ocvImage, boundingBox))
-							{
-								track_found.push_back(true);
-							}
-							else
-							{
-								track_found.push_back(false);
-								//boundingBox = bbox_backup;
-							}
-						}
-						
-						catch (...)
-						{
-							MessageBox(NULL, "Obscure tracker error", "Tracker update exception", MB_OK);
-							return FALSE;
-						}
-						/*__try{
-							//cv::Rect2d bbox_backup = boundingBox;
-							if (tracker->update(ocvImage, boundingBox))
-							{
-								track_found.push_back(true);
-							}
-							else
-							{
-								track_found.push_back(false);
-								//boundingBox = bbox_backup;
-							}
-						}
-						__except (Except_Eval(GetExceptionCode()))
-						{
-							return FALSE;
-						}*/
-						
-					}
-					if (boundingBox.area() <= 0)
-					{
-						boundingBox.width = 20;
-						boundingBox.height = 20;
-					}
-					track_result.push_back(boundingBox);
-					
-					
-					//Set next frame
-					PIXEL* nextau = new PIXEL[srcw*srch];
-					if (fp->exfunc->get_pixel_filtered(editp, f, nextau, NULL, NULL))
-					{
-						cv::Mat cvNext(srch, srcw, CV_8UC3, nextau);
-						cv::flip(cvNext, cvNext, 0);
-						cvNext.copyTo(ocvImage);
-						cvNext.~Mat();
-						delete[] nextau;
-						
-					}
-					else
-					{
-						MessageBox(NULL, "Cannot get next image", "AviUtl API Error", MB_OK);
-						delete[] nextau;
-					}
-				}
-				int64 end_time = cv::getTickCount();
-				double run_time = (end_time - start_time) / cv::getTickFrequency();
-				SecureZeroMemory(shortmsg, sizeof(TCHAR[64]));
-				sprintf_s(shortmsg, "%d frames tracked in %.2f sec", selB-selA, run_time);
-				SetWindowText(fp->hwnd, shortmsg);
-				SecureZeroMemory(shortmsg, sizeof(TCHAR[64]));
-				sprintf_s(shortmsg, "Tracking Completed!\nAverage %.2f fps", (selB - selA)/run_time);
-				MessageBox(NULL, shortmsg, "Tracking Completed!", MB_OK);
-				boundingBox = boxbackup;
-				return TRUE;
-			}
-			else
+			if (!selectObj)
 			{
 				MessageBox(NULL, "Nothing selected", "Operation Error", MB_OK);
 				return FALSE;
 			}
-			
+
+			track_result.clear();
+			track_found.clear();
+			ocvImage.empty();
+			cv::Rect2d boxbackup = boundingBox;
+			//Correct for out-of-bound box
+			int frmw, frmh;
+			fp->exfunc->get_pixel_filtered(editp, selA, NULL, &frmw, &frmh);
+			if (boundingBox.br().x > frmw)
+			{
+				boundingBox.width = frmw - boundingBox.x;
+			}
+			if (boundingBox.br().y > frmh)
+			{
+				boundingBox.height = frmh - boundingBox.y;
+			}
+			int64 start_time = cv::getTickCount();
+			// Create Tracker
+			cv::Ptr<cv::Tracker> tracker;
+			switch (fp->track[0] - 1) {
+			case 0:
+				tracker = cv::TrackerBoosting::create();
+				break;
+			case 1:
+				tracker = cv::TrackerMIL::create();
+				break;
+			case 2:
+				tracker = cv::TrackerMedianFlow::create();
+				break;
+			case 3:
+				tracker = cv::TrackerTLD::create();
+				break;
+			case 4:
+				tracker = cv::TrackerKCF::create();
+				break;
+			case 5:
+				tracker = cv::TrackerCSRT::create();
+				break;
+			default:
+				tracker = cv::TrackerMOSSE::create();
+				break;
+			}
+			if (tracker == NULL)
+			{
+				MessageBox(NULL, "Error when creating tracker", "OpenCV3 Error", MB_OK);
+				return FALSE;
+			}
+			//Set first frame
+			int srcw, srch;
+			if (!fp->exfunc->get_frame_size(editp, &srcw, &srch))
+			{
+				MessageBox(NULL, "Cannot get frame size", "AviUtl API Error", MB_OK);
+				return FALSE;
+			};
+			//cv::String trackWndTitle("Tracking");
+			//cv::namedWindow(trackWndTitle, cv::WINDOW_AUTOSIZE);
+			PIXEL* aubgr = new PIXEL[srcw * srch];
+			if (fp->exfunc->get_pixel_filtered(editp, selA, aubgr, NULL, NULL))
+			{
+				cv::Mat cvBuffer(srch, srcw, CV_8UC3, aubgr);
+				cv::flip(cvBuffer, cvBuffer, 0);
+				cvBuffer.copyTo(ocvImage);
+				cvBuffer.~Mat();
+				delete[] aubgr;
+				//cv::imshow(trackWndTitle, ocvImage);
+			}
+			else
+			{
+				MessageBox(NULL, "Cannot get first image", "AviUtl API Error", MB_OK);
+				delete[] aubgr;
+				return FALSE;
+			}
+
+			bool track_init = false;
+			track_result.clear();
+			track_found.clear();
+			//Loop through selected frames for analysis
+			TCHAR shortmsg[64] = { 0 };
+			int64 prev_stamp, new_stamp;
+			for (int f = selA; f <= selB; f++)
+			{
+
+				//sprintf_s(shortmsg, "%s processing frame %d / %d", track_method[fp->track[0]-1], f+1, selB+1);
+				//SetWindowText(fp->hwnd, shortmsg);
+				if (!track_init && selectObj)
+				{
+					//TODO
+					SecureZeroMemory(shortmsg, sizeof(TCHAR[64]));
+					sprintf_s(shortmsg, "%s tracker initializing...", track_method[fp->track[0] - 1]);
+					SetWindowText(fp->hwnd, shortmsg);
+					if (!tracker->init(ocvImage, boundingBox))
+					{
+						MessageBox(NULL, "Error initializing tracker", "OpenCV3 Error", MB_OK);
+						return FALSE;
+					}
+					track_init = true;
+					track_found.push_back(true);
+
+					prev_stamp = cv::getTickCount();
+				}
+				else if (track_init)
+				{
+					new_stamp = cv::getTickCount();
+					double fps = 1.0 / ((new_stamp - prev_stamp) / cv::getTickFrequency());
+					SecureZeroMemory(shortmsg, sizeof(TCHAR[64]));
+					sprintf_s(shortmsg, "%s processing frame %d/%d @%.2f fps", track_method[fp->track[0] - 1], f + 1, selB + 1, fps);
+					SetWindowText(fp->hwnd, shortmsg);
+					prev_stamp = cv::getTickCount();
+
+					try {
+						//cv::Rect2d bbox_backup = boundingBox;
+						if (tracker->update(ocvImage, boundingBox))
+						{
+							track_found.push_back(true);
+						}
+						else
+						{
+							track_found.push_back(false);
+							//boundingBox = bbox_backup;
+						}
+					}
+					catch (...)
+					{
+						MessageBox(NULL, "Obscure tracker error", "Tracker update exception", MB_OK);
+						return FALSE;
+					}
+
+				}
+				if (boundingBox.area() <= 0)
+				{
+					boundingBox.width = 20;
+					boundingBox.height = 20;
+				}
+				track_result.push_back(boundingBox);
+
+
+				//Set next frame
+				PIXEL* nextau = new PIXEL[srcw * srch];
+				if (fp->exfunc->get_pixel_filtered(editp, f, nextau, NULL, NULL))
+				{
+					cv::Mat cvNext(srch, srcw, CV_8UC3, nextau);
+					cv::flip(cvNext, cvNext, 0);
+					cvNext.copyTo(ocvImage);
+					cvNext.~Mat();
+					delete[] nextau;
+
+				}
+				else
+				{
+					MessageBox(NULL, "Cannot get next image", "AviUtl API Error", MB_OK);
+					delete[] nextau;
+				}
+			}
+			int64 end_time = cv::getTickCount();
+			double run_time = (end_time - start_time) / cv::getTickFrequency();
+			SecureZeroMemory(shortmsg, sizeof(TCHAR[64]));
+			sprintf_s(shortmsg, "%d frames tracked in %.2f sec", selB - selA, run_time);
+			SetWindowText(fp->hwnd, shortmsg);
+			SecureZeroMemory(shortmsg, sizeof(TCHAR[64]));
+			sprintf_s(shortmsg, "Tracking Completed!\nAverage %.2f fps", (selB - selA) / run_time);
+			MessageBox(NULL, shortmsg, "Tracking Completed!", MB_OK);
+			boundingBox = boxbackup;
+			return TRUE;
+
 			break;
 		}
 		case MID_FILTER_BUTTON + 2: //View result
@@ -785,267 +760,265 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 		{
 			//TODO
 			//MessageBox(NULL, "Btn 5", "DEBUG", MB_OK);
-			if (track_result.size() > 0)
-			{
-				CHAR filename[MAX_PATH] = { 0 };
-				if (fp->exfunc->dlg_get_save_name(filename, "ExEdit Object File(*.exo)\0*.exo;\0", "tracking.exo"))
-				{
-					//MessageBox(fp->hwnd, filename, "DEBUG", MB_OK);
-					// Starts doing the real work
-					std::ostringstream strbuf;
-					TCHAR* boilerplate = new TCHAR[2048];
-					TCHAR* fmtstr = new TCHAR[2048];
-					SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
-					SecureZeroMemory(fmtstr, sizeof(TCHAR[2048]));
-					/* Common Project Data*/
-					int width, height, rate, scale, audio;
-					long prj_len;
-					FILE_INFO fi;
-					fp->exfunc->get_frame_size(editp, &width, &height);
-					fp->exfunc->get_file_info(editp, &fi);
-					rate = fi.video_rate;
-					scale = fi.video_scale;
-					audio = fi.audio_rate;
-					prj_len = fi.frame_n;
-					/* End common prj data*/
-					/* Format and write to buffer*/
-					LoadString(fp->dll_hinst, IDS_PRJHEADER, boilerplate, 2048);
-					sprintf_s(fmtstr, sizeof(TCHAR[2048]), boilerplate, width, height, rate, scale, prj_len, audio);
-					strbuf << fmtstr;
-					SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
-					SecureZeroMemory(fmtstr, sizeof(TCHAR[2048]));
-					//* END OF COMMON PROJECT HEADER*//
-					//Starts object processing //
-					/* vector storage for bounding-box interpolation and various checks*/
-					std::vector<UINT32> frmInterpolate; //frames to be interpolate;
-					std::vector<FRMFIX> fixedFrm; //interpolated and use AviUtl coordinate
-					std::vector<FRMGROUP> gpinfo; //strats and ends of objects
-					//
-					find_inter_frame(track_found, frmInterpolate);
-					fix_frame(track_result, track_found, frmInterpolate, fixedFrm, width, height);
-					groupObject(fixedFrm, gpinfo);
-					// Should now have all info we need...
-					int object_id = 0; //keep track of how many segments/objects have been added
-					for (size_t o = 0; o < gpinfo.size(); o++) //loop through each object
-					{
-						int oStart, oEnd;
-						oStart = gpinfo[o].vi_start;
-						oEnd = gpinfo[o].vi_end;
-						bool firstframe = true;
-						for (int f = oStart; f <= oEnd; f++) //each frames in this object
-						{
-							//Section Num
-							char head_num[32];
-							sprintf_s(head_num, sizeof(char[32]), "[%d]\n\0", object_id);
-							strbuf << head_num;
-							//Common obj param
-							LoadString(fp->dll_hinst, IDS_OBJPARAM, boilerplate, 2048);
-							sprintf_s(fmtstr, sizeof(TCHAR[2048]), boilerplate, fixedFrm[f].frame, fixedFrm[f].frame, 1);//st, ed, layer
-							strbuf << fmtstr;
-							SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
-							SecureZeroMemory(fmtstr, sizeof(TCHAR[2048]));
-							//2 more param for Figure obj
-							if (!fp->check[5])
-							{
-								LoadString(fp->dll_hinst, IDS_FIGUREPARAMA, boilerplate, 2048);
-								strbuf << boilerplate; //verbatim copy
-								SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
-							}
-							if (!firstframe)
-							{
-								LoadString(fp->dll_hinst, IDS_OBJCHAIN, boilerplate, 2048);
-								strbuf << boilerplate; //verbatim copy
-								SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
-							}
-							//Section [*.0] Graphics/Sub-filter
-							sprintf_s(head_num, sizeof(char[32]), "[%d.0]\n\0", object_id);
-							strbuf << head_num;
-							//
-							if (fp->check[5]) //Sub-filter
-							{
-								if (fp->check[4])//English EXO
-								{
-									LoadString(fp->dll_hinst, IDS_SFPARAM_EN, boilerplate, 2048);
-								}
-								else //JP
-								{
-									LoadString(fp->dll_hinst, IDS_SFPARAM_JP, boilerplate, 2048);//TODO: Set JP text
-								}
-								int Xi, Xf, Yi, Yf, size_st, size_ed;
-								double  rAsp_st, rAsp_ed;
-								Xi = fixedFrm[f].cx;
-								Yi = fixedFrm[f].cy;
-								if (fixedFrm[f].width > fixedFrm[f].height) //-ve rAsp, const width
-								{
-									size_st = fixedFrm[f].width;
-									rAsp_st = -100.0 * (1.0 - ((double)fixedFrm[f].height / (double)fixedFrm[f].width));
-								}
-								else if (fixedFrm[f].width < fixedFrm[f].height) // +ve rAsp, const height
-								{
-									size_st = fixedFrm[f].height;
-									rAsp_st = 100.0 * (1.0 - ((double)fixedFrm[f].width / (double)fixedFrm[f].height));
-								}
-								else // rAsp=0, square
-								{
-									size_st = fixedFrm[f].width;
-									rAsp_st = 0.0;
-								}
-								if ((size_t)f >= (fixedFrm.size()-1))//special handling for last frame
-								{
-									Xf = Xi;
-									Yf = Yi;
-									size_ed = size_st;
-									rAsp_ed = rAsp_st;
-								}
-								else
-								{
-									Xf = fixedFrm[f + 1].cx;
-									Yf = fixedFrm[f + 1].cy;
-									if (fixedFrm[f+1].width > fixedFrm[f+1].height) //-ve rAsp, const width
-									{
-										size_ed = fixedFrm[f+1].width;
-										rAsp_ed = -100.0 * (1.0 - ((double)fixedFrm[f+1].height / (double)fixedFrm[f+1].width));
-									}
-									else if (fixedFrm[f+1].width < fixedFrm[f+1].height) // +ve rAsp, const height
-									{
-										size_ed = fixedFrm[f+1].height;
-										rAsp_ed = 100.0 * (1.0 - ((double)fixedFrm[f+1].width / (double)fixedFrm[f+1].height));
-									}
-									else // rAsp=0, square
-									{
-										size_ed = fixedFrm[f+1].width;
-										rAsp_ed = 0.0;
-									}
-								}
-
-								sprintf_s(fmtstr, sizeof(TCHAR[2048]), boilerplate, (double)Xi, (double)Xf, (double)Yi, (double)Yf, size_st, size_ed, rAsp_st, rAsp_ed);//X-st, X-ed, Y-st, Y-ed, size_start, size_end, rAsp-st, rAsp-ed
-								strbuf << fmtstr;
-								SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
-								SecureZeroMemory(fmtstr, sizeof(TCHAR[2048]));
-							}
-							else //Graphics
-							{
-								if (fp->check[4])//English EXO
-								{
-									LoadString(fp->dll_hinst, IDS_FIGUREPARAMB_EN, boilerplate, 2048);
-								}
-								else //JP
-								{
-									LoadString(fp->dll_hinst, IDS_FIGUREPARAMB_JP, boilerplate, 2048);//TODO: Set JP text
-								}
-								strbuf << boilerplate;
-								SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
-								
-							}
-							//Section [*.1] Resize FX or Mono FX
-							sprintf_s(head_num, sizeof(char[32]), "[%d.1]\n\0", object_id);
-							strbuf << head_num;
-							//
-							if (fp->check[5])// Mono FX for Sub-filter
-							{
-								if (fp->check[4])//English EXO
-								{
-									LoadString(fp->dll_hinst, IDS_FXMONO_EN, boilerplate, 2048);
-								}
-								else //JP
-								{
-									LoadString(fp->dll_hinst, IDS_FXMONO_JP, boilerplate, 2048);//TODO: Set JP text
-								}
-								strbuf << boilerplate;
-								SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
-							}
-							else //Resize FX for Graphics
-							{
-								int Wi, Wf, Hi, Hf;
-
-								Wi = fixedFrm[f].width;
-								Hi = fixedFrm[f].height;
-
-								if ((size_t)f >= (fixedFrm.size() - 1)) //Last frame
-								{
-									Wf = Wi;
-									Hf = Hi;
-								}
-								else // Normal
-								{
-									Wf = fixedFrm[f + 1].width;
-									Hf = fixedFrm[f + 1].height;
-								}
-
-								if (fp->check[4])//English EXO
-								{
-									LoadString(fp->dll_hinst, IDS_FXRESIZE_EN, boilerplate, 2048);
-								}
-								else //JP
-								{
-									LoadString(fp->dll_hinst, IDS_FXRESIZE_JP, boilerplate, 2048);//TODO: Set JP text
-								}
-								sprintf_s(fmtstr, sizeof(TCHAR[2048]), boilerplate, (double)Wi, (double)Wf, (double)Hi, (double)Hf);
-								strbuf << fmtstr;
-								SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
-								SecureZeroMemory(fmtstr, sizeof(TCHAR[2048]));
-							}
-							//Section [*.2] Std Drawing for Graphics
-							//Coordinate animation part for Graphics
-							if (!fp->check[5]) //only for graphics
-							{
-								sprintf_s(head_num, sizeof(char[32]), "[%d.2]\n\0", object_id);
-								strbuf << head_num;
-								//
-								int Xi, Xf, Yi, Yf;
-								Xi = fixedFrm[f].cx;
-								Yi = fixedFrm[f].cy;
-								if ((size_t)f >= (fixedFrm.size() - 1))//last frame
-								{
-									Xf = Xi;
-									Yf = Yi;
-								}
-								else //Normal
-								{
-									Xf = fixedFrm[f + 1].cx;
-									Yf = fixedFrm[f + 1].cy;
-								}
-								if (fp->check[4])//English EXO
-								{
-									LoadString(fp->dll_hinst, IDS_STDDRAW_EN, boilerplate, 2048);
-								}
-								else //JP
-								{
-									LoadString(fp->dll_hinst, IDS_STDDRAW_JP, boilerplate, 2048);//TODO: Set JP text
-								}
-								sprintf_s(fmtstr, sizeof(TCHAR[2048]), boilerplate, (double)Xi, (double)Xf, (double)Yi, (double)Yf);
-								strbuf << fmtstr;
-								SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
-								SecureZeroMemory(fmtstr, sizeof(TCHAR[2048]));
-							}
-							//
-							object_id++;
-							firstframe = false;
-						}
-					}
-					//Write to file
-					std::ofstream fhandle(filename, std::ofstream::out | std::ofstream::trunc);
-					if (fhandle.is_open())
-					{
-						fhandle << strbuf.str();
-						fhandle.flush();
-						fhandle.close();
-						MessageBox(fp->hwnd, "DONE", "Finished", MB_OK);
-					}
-					else
-					{
-						MessageBox(fp->hwnd, "Cannot write to file!", "File I/O ERROR", MB_OK);
-						return FALSE;
-					}
-
-				}
-			}
-			else
+			if (track_result.size() <= 0)
 			{
 				MessageBox(fp->hwnd, "No track data to save!", "Operation Error", MB_OK);
 				return FALSE;
 			}
-			
+
+			CHAR filename[MAX_PATH] = { 0 };
+			if (fp->exfunc->dlg_get_save_name(filename, "ExEdit Object File(*.exo)\0*.exo;\0", "tracking.exo"))
+			{
+				//MessageBox(fp->hwnd, filename, "DEBUG", MB_OK);
+				// Starts doing the real work
+				std::ostringstream strbuf;
+				TCHAR* boilerplate = new TCHAR[2048];
+				TCHAR* fmtstr = new TCHAR[2048];
+				SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
+				SecureZeroMemory(fmtstr, sizeof(TCHAR[2048]));
+				/* Common Project Data*/
+				int width, height, rate, scale, audio;
+				long prj_len;
+				FILE_INFO fi;
+				fp->exfunc->get_frame_size(editp, &width, &height);
+				fp->exfunc->get_file_info(editp, &fi);
+				rate = fi.video_rate;
+				scale = fi.video_scale;
+				audio = fi.audio_rate;
+				prj_len = fi.frame_n;
+				/* End common prj data*/
+				/* Format and write to buffer*/
+				LoadString(fp->dll_hinst, IDS_PRJHEADER, boilerplate, 2048);
+				sprintf_s(fmtstr, sizeof(TCHAR[2048]), boilerplate, width, height, rate, scale, prj_len, audio);
+				strbuf << fmtstr;
+				SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
+				SecureZeroMemory(fmtstr, sizeof(TCHAR[2048]));
+				//* END OF COMMON PROJECT HEADER*//
+				//Starts object processing //
+				/* vector storage for bounding-box interpolation and various checks*/
+				std::vector<UINT32> frmInterpolate; //frames to be interpolate;
+				std::vector<FRMFIX> fixedFrm; //interpolated and use AviUtl coordinate
+				std::vector<FRMGROUP> gpinfo; //strats and ends of objects
+				//
+				find_inter_frame(track_found, frmInterpolate);
+				fix_frame(track_result, track_found, frmInterpolate, fixedFrm, width, height);
+				groupObject(fixedFrm, gpinfo);
+				// Should now have all info we need...
+				int object_id = 0; //keep track of how many segments/objects have been added
+				for (size_t o = 0; o < gpinfo.size(); o++) //loop through each object
+				{
+					int oStart, oEnd;
+					oStart = gpinfo[o].vi_start;
+					oEnd = gpinfo[o].vi_end;
+					bool firstframe = true;
+					for (int f = oStart; f <= oEnd; f++) //each frames in this object
+					{
+						//Section Num
+						char head_num[32];
+						sprintf_s(head_num, sizeof(char[32]), "[%d]\n\0", object_id);
+						strbuf << head_num;
+						//Common obj param
+						LoadString(fp->dll_hinst, IDS_OBJPARAM, boilerplate, 2048);
+						sprintf_s(fmtstr, sizeof(TCHAR[2048]), boilerplate, fixedFrm[f].frame, fixedFrm[f].frame, 1);//st, ed, layer
+						strbuf << fmtstr;
+						SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
+						SecureZeroMemory(fmtstr, sizeof(TCHAR[2048]));
+						//2 more param for Figure obj
+						if (!fp->check[5])
+						{
+							LoadString(fp->dll_hinst, IDS_FIGUREPARAMA, boilerplate, 2048);
+							strbuf << boilerplate; //verbatim copy
+							SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
+						}
+						if (!firstframe)
+						{
+							LoadString(fp->dll_hinst, IDS_OBJCHAIN, boilerplate, 2048);
+							strbuf << boilerplate; //verbatim copy
+							SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
+						}
+						//Section [*.0] Graphics/Sub-filter
+						sprintf_s(head_num, sizeof(char[32]), "[%d.0]\n\0", object_id);
+						strbuf << head_num;
+						//
+						if (fp->check[5]) //Sub-filter
+						{
+							if (fp->check[4])//English EXO
+							{
+								LoadString(fp->dll_hinst, IDS_SFPARAM_EN, boilerplate, 2048);
+							}
+							else //JP
+							{
+								LoadString(fp->dll_hinst, IDS_SFPARAM_JP, boilerplate, 2048);//TODO: Set JP text
+							}
+							int Xi, Xf, Yi, Yf, size_st, size_ed;
+							double  rAsp_st, rAsp_ed;
+							Xi = fixedFrm[f].cx;
+							Yi = fixedFrm[f].cy;
+							if (fixedFrm[f].width > fixedFrm[f].height) //-ve rAsp, const width
+							{
+								size_st = fixedFrm[f].width;
+								rAsp_st = -100.0 * (1.0 - ((double)fixedFrm[f].height / (double)fixedFrm[f].width));
+							}
+							else if (fixedFrm[f].width < fixedFrm[f].height) // +ve rAsp, const height
+							{
+								size_st = fixedFrm[f].height;
+								rAsp_st = 100.0 * (1.0 - ((double)fixedFrm[f].width / (double)fixedFrm[f].height));
+							}
+							else // rAsp=0, square
+							{
+								size_st = fixedFrm[f].width;
+								rAsp_st = 0.0;
+							}
+							if ((size_t)f >= (fixedFrm.size() - 1))//special handling for last frame
+							{
+								Xf = Xi;
+								Yf = Yi;
+								size_ed = size_st;
+								rAsp_ed = rAsp_st;
+							}
+							else
+							{
+								Xf = fixedFrm[f + 1].cx;
+								Yf = fixedFrm[f + 1].cy;
+								if (fixedFrm[f + 1].width > fixedFrm[f + 1].height) //-ve rAsp, const width
+								{
+									size_ed = fixedFrm[f + 1].width;
+									rAsp_ed = -100.0 * (1.0 - ((double)fixedFrm[f + 1].height / (double)fixedFrm[f + 1].width));
+								}
+								else if (fixedFrm[f + 1].width < fixedFrm[f + 1].height) // +ve rAsp, const height
+								{
+									size_ed = fixedFrm[f + 1].height;
+									rAsp_ed = 100.0 * (1.0 - ((double)fixedFrm[f + 1].width / (double)fixedFrm[f + 1].height));
+								}
+								else // rAsp=0, square
+								{
+									size_ed = fixedFrm[f + 1].width;
+									rAsp_ed = 0.0;
+								}
+							}
+
+							sprintf_s(fmtstr, sizeof(TCHAR[2048]), boilerplate, (double)Xi, (double)Xf, (double)Yi, (double)Yf, size_st, size_ed, rAsp_st, rAsp_ed);//X-st, X-ed, Y-st, Y-ed, size_start, size_end, rAsp-st, rAsp-ed
+							strbuf << fmtstr;
+							SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
+							SecureZeroMemory(fmtstr, sizeof(TCHAR[2048]));
+						}
+						else //Graphics
+						{
+							if (fp->check[4])//English EXO
+							{
+								LoadString(fp->dll_hinst, IDS_FIGUREPARAMB_EN, boilerplate, 2048);
+							}
+							else //JP
+							{
+								LoadString(fp->dll_hinst, IDS_FIGUREPARAMB_JP, boilerplate, 2048);//TODO: Set JP text
+							}
+							strbuf << boilerplate;
+							SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
+
+						}
+						//Section [*.1] Resize FX or Mono FX
+						sprintf_s(head_num, sizeof(char[32]), "[%d.1]\n\0", object_id);
+						strbuf << head_num;
+						//
+						if (fp->check[5])// Mono FX for Sub-filter
+						{
+							if (fp->check[4])//English EXO
+							{
+								LoadString(fp->dll_hinst, IDS_FXMONO_EN, boilerplate, 2048);
+							}
+							else //JP
+							{
+								LoadString(fp->dll_hinst, IDS_FXMONO_JP, boilerplate, 2048);//TODO: Set JP text
+							}
+							strbuf << boilerplate;
+							SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
+						}
+						else //Resize FX for Graphics
+						{
+							int Wi, Wf, Hi, Hf;
+
+							Wi = fixedFrm[f].width;
+							Hi = fixedFrm[f].height;
+
+							if ((size_t)f >= (fixedFrm.size() - 1)) //Last frame
+							{
+								Wf = Wi;
+								Hf = Hi;
+							}
+							else // Normal
+							{
+								Wf = fixedFrm[f + 1].width;
+								Hf = fixedFrm[f + 1].height;
+							}
+
+							if (fp->check[4])//English EXO
+							{
+								LoadString(fp->dll_hinst, IDS_FXRESIZE_EN, boilerplate, 2048);
+							}
+							else //JP
+							{
+								LoadString(fp->dll_hinst, IDS_FXRESIZE_JP, boilerplate, 2048);//TODO: Set JP text
+							}
+							sprintf_s(fmtstr, sizeof(TCHAR[2048]), boilerplate, (double)Wi, (double)Wf, (double)Hi, (double)Hf);
+							strbuf << fmtstr;
+							SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
+							SecureZeroMemory(fmtstr, sizeof(TCHAR[2048]));
+						}
+						//Section [*.2] Std Drawing for Graphics
+						//Coordinate animation part for Graphics
+						if (!fp->check[5]) //only for graphics
+						{
+							sprintf_s(head_num, sizeof(char[32]), "[%d.2]\n\0", object_id);
+							strbuf << head_num;
+							//
+							int Xi, Xf, Yi, Yf;
+							Xi = fixedFrm[f].cx;
+							Yi = fixedFrm[f].cy;
+							if ((size_t)f >= (fixedFrm.size() - 1))//last frame
+							{
+								Xf = Xi;
+								Yf = Yi;
+							}
+							else //Normal
+							{
+								Xf = fixedFrm[f + 1].cx;
+								Yf = fixedFrm[f + 1].cy;
+							}
+							if (fp->check[4])//English EXO
+							{
+								LoadString(fp->dll_hinst, IDS_STDDRAW_EN, boilerplate, 2048);
+							}
+							else //JP
+							{
+								LoadString(fp->dll_hinst, IDS_STDDRAW_JP, boilerplate, 2048);//TODO: Set JP text
+							}
+							sprintf_s(fmtstr, sizeof(TCHAR[2048]), boilerplate, (double)Xi, (double)Xf, (double)Yi, (double)Yf);
+							strbuf << fmtstr;
+							SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
+							SecureZeroMemory(fmtstr, sizeof(TCHAR[2048]));
+						}
+						//
+						object_id++;
+						firstframe = false;
+					}
+				}
+				//Write to file
+				std::ofstream fhandle(filename, std::ofstream::out | std::ofstream::trunc);
+				if (fhandle.is_open())
+				{
+					fhandle << strbuf.str();
+					fhandle.flush();
+					fhandle.close();
+					MessageBox(fp->hwnd, "DONE", "Finished", MB_OK);
+				}
+				else
+				{
+					MessageBox(fp->hwnd, "Cannot write to file!", "File I/O ERROR", MB_OK);
+					return FALSE;
+				}
+
+			}
+
 			return TRUE;
 			break;
 		}
