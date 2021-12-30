@@ -6,6 +6,7 @@ add_library(${PROJECT_NAME} SHARED)
 set(OPENCV_INCLUDE_DIR CACHE PATH "OpenCV include directory")
 set(OPENCV_LIBRARY_DIR CACHE PATH "OpenCV library directory")
 
+
 target_sources(${PROJECT_NAME} PRIVATE main.cpp main.def resource.rc)
 set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ".auf")
 target_include_directories(${PROJECT_NAME} PRIVATE ${OPENCV_INCLUDE_DIR})
@@ -14,6 +15,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE comctl32 ippicvmt debug ippiwd deb
 
 if("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
     set_property(TARGET ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/LARGEADDRESSAWARE")
 elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
     target_link_options(${PROJECT_NAME} PRIVATE -static-libstdc++ -static)
 endif()
