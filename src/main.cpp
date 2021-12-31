@@ -602,22 +602,6 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 			};
 			//cv::String trackWndTitle("Tracking");
 			//cv::namedWindow(trackWndTitle, cv::WINDOW_AUTOSIZE);
-			PIXEL* aubgr = new PIXEL[srcw * srch];
-			if (fp->exfunc->get_pixel_filtered(editp, selA, aubgr, NULL, NULL))
-			{
-				cv::Mat cvBuffer(srch, srcw, CV_8UC3, aubgr);
-				cv::flip(cvBuffer, cvBuffer, 0);
-				cvBuffer.copyTo(ocvImage);
-				cvBuffer.~Mat();
-				delete[] aubgr;
-				//cv::imshow(trackWndTitle, ocvImage);
-			}
-			else
-			{
-				MessageBox(NULL, "Cannot get first image", "AviUtl API Error", MB_OK);
-				delete[] aubgr;
-				return FALSE;
-			}
 
 			bool track_init = false;
 			track_result.clear();
@@ -627,6 +611,22 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 			int64 prev_stamp, new_stamp;
 			for (int f = selA; f <= selB; f++)
 			{
+				//Set next frame
+				PIXEL* nextau = new PIXEL[srcw * srch];
+				if (fp->exfunc->get_pixel_filtered(editp, f, nextau, NULL, NULL))
+				{
+					cv::Mat cvNext(srch, srcw, CV_8UC3, nextau);
+					cv::flip(cvNext, cvNext, 0);
+					cvNext.copyTo(ocvImage);
+					cvNext.~Mat();
+					delete[] nextau;
+
+				}
+				else
+				{
+					MessageBox(NULL, "Cannot get next image", "AviUtl API Error", MB_OK);
+					delete[] nextau;
+				}
 
 				//sprintf_s(shortmsg, "%s processing frame %d / %d", track_method[fp->track[0]-1], f+1, selB+1);
 				//SetWindowText(fp->hwnd, shortmsg);
@@ -679,25 +679,15 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 					boundingBox.width = 20;
 					boundingBox.height = 20;
 				}
+				if (boundingBox.x < 0) {
+					boundingBox.width += boundingBox.x;
+					boundingBox.x = 0;
+				}
+				if (boundingBox.y < 0) {
+					boundingBox.height += boundingBox.y;
+					boundingBox.y = 0;
+				}
 				track_result.push_back(boundingBox);
-
-
-				//Set next frame
-				PIXEL* nextau = new PIXEL[srcw * srch];
-				if (fp->exfunc->get_pixel_filtered(editp, f, nextau, NULL, NULL))
-				{
-					cv::Mat cvNext(srch, srcw, CV_8UC3, nextau);
-					cv::flip(cvNext, cvNext, 0);
-					cvNext.copyTo(ocvImage);
-					cvNext.~Mat();
-					delete[] nextau;
-
-				}
-				else
-				{
-					MessageBox(NULL, "Cannot get next image", "AviUtl API Error", MB_OK);
-					delete[] nextau;
-				}
 			}
 			int64 end_time = cv::getTickCount();
 			double run_time = (end_time - start_time) / cv::getTickFrequency();
@@ -1047,7 +1037,7 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 	redraw = false;
 	isFilterActive = (fp->exfunc->is_filter_active(fp) == TRUE);
 	isEditing = (fp->exfunc->is_editing(fpip->editp) == TRUE);
-	hasResult = track_result.size() > 0;
+	hasResult = track_result.size() > fpip->frame - selA;
 	isFrameInRng = (fpip->frame >= selA) && (fpip->frame <= selB);
 
 	if (isFilterActive && isEditing && fp->check[7] && hasResult && isFrameInRng)
