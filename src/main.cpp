@@ -540,7 +540,6 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 		}
 		case MID_FILTER_BUTTON + 1: //Analyze
 		{
-
 			if (!selectObj)
 			{
 				MessageBox(NULL, "Nothing selected", "Operation Error", MB_OK);
@@ -609,23 +608,20 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 			//Loop through selected frames for analysis
 			TCHAR shortmsg[64] = { 0 };
 			int64 prev_stamp, new_stamp;
+			PIXEL* nextau = new PIXEL[srcw * srch];
 			for (int f = selA; f <= selB; f++)
 			{
 				//Set next frame
-				PIXEL* nextau = new PIXEL[srcw * srch];
 				if (fp->exfunc->get_pixel_filtered(editp, f, nextau, NULL, NULL))
 				{
 					cv::Mat cvNext(srch, srcw, CV_8UC3, nextau);
 					cv::flip(cvNext, cvNext, 0);
 					cvNext.copyTo(ocvImage);
 					cvNext.~Mat();
-					delete[] nextau;
-
 				}
 				else
 				{
 					MessageBox(NULL, "Cannot get next image", "AviUtl API Error", MB_OK);
-					delete[] nextau;
 				}
 
 				//sprintf_s(shortmsg, "%s processing frame %d / %d", track_method[fp->track[0]-1], f+1, selB+1);
@@ -639,6 +635,7 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 					if (!tracker->init(ocvImage, boundingBox))
 					{
 						MessageBox(NULL, "Error initializing tracker", "OpenCV3 Error", MB_OK);
+						delete[] nextau;
 						return FALSE;
 					}
 					track_init = true;
@@ -670,9 +667,9 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 					catch (...)
 					{
 						MessageBox(NULL, "Obscure tracker error", "Tracker update exception", MB_OK);
+						delete[] nextau;
 						return FALSE;
 					}
-
 				}
 				if (boundingBox.area() <= 0)
 				{
@@ -687,8 +684,17 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 					boundingBox.height += boundingBox.y;
 					boundingBox.y = 0;
 				}
+				if (boundingBox.br().x > frmw)
+				{
+					boundingBox.width = frmw - boundingBox.x;
+				}
+				if (boundingBox.br().y > frmh)
+				{
+					boundingBox.height = frmh - boundingBox.y;
+				}
 				track_result.push_back(boundingBox);
 			}
+			delete[] nextau;
 			int64 end_time = cv::getTickCount();
 			double run_time = (end_time - start_time) / cv::getTickFrequency();
 			SecureZeroMemory(shortmsg, sizeof(TCHAR[64]));
@@ -762,24 +768,17 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 				//MessageBox(fp->hwnd, filename, "DEBUG", MB_OK);
 				// Starts doing the real work
 				std::ostringstream strbuf;
-				TCHAR* boilerplate = new TCHAR[2048];
-				TCHAR* fmtstr = new TCHAR[2048];
-				SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
-				SecureZeroMemory(fmtstr, sizeof(TCHAR[2048]));
+				TCHAR boilerplate[2048] = { 0 };
+				TCHAR fmtstr[2048] = { 0 };
 				/* Common Project Data*/
-				int width, height, rate, scale, audio;
-				long prj_len;
+				int width, height;
 				FILE_INFO fi;
 				fp->exfunc->get_frame_size(editp, &width, &height);
 				fp->exfunc->get_file_info(editp, &fi);
-				rate = fi.video_rate;
-				scale = fi.video_scale;
-				audio = fi.audio_rate;
-				prj_len = fi.frame_n;
 				/* End common prj data*/
 				/* Format and write to buffer*/
 				LoadString(fp->dll_hinst, IDS_PRJHEADER, boilerplate, 2048);
-				sprintf_s(fmtstr, sizeof(TCHAR[2048]), boilerplate, width, height, rate, scale, prj_len, audio);
+				sprintf_s(fmtstr, sizeof(TCHAR[2048]), boilerplate, width, height, fi.video_rate, fi.video_scale, fi.frame_n, fi.audio_rate);
 				strbuf << fmtstr;
 				SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
 				SecureZeroMemory(fmtstr, sizeof(TCHAR[2048]));
@@ -1185,14 +1184,7 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 			redraw = true;
 		}
 	}
-	if (redraw)
-	{
-		return TRUE;
-	}
-	else
-	{
-		return FALSE;
-	}
+	return redraw;
 }
 
 //HSV Conversion filter
