@@ -332,7 +332,7 @@ static void onChange(int pos, void* userdata)
 	void* editp = para->editp;
 	FILTER* fp = para->fp;
 	int srcw, srch;
-	fp->exfunc->get_frame_size(editp, &srcw, &srch);
+	fp->exfunc->get_pixel_filtered(editp, selA + pos, NULL, &srcw, &srch);
 	PIXEL* aubuf = new PIXEL[srcw*srch];
 	fp->exfunc->get_pixel_filtered(editp, selA + pos, aubuf, NULL, NULL);
 	cv::Mat disp(srch, srcw, CV_8UC3, aubuf);
@@ -552,7 +552,11 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 			cv::Rect2d boxbackup = boundingBox;
 			//Correct for out-of-bound box
 			int frmw, frmh;
-			fp->exfunc->get_pixel_filtered(editp, selA, NULL, &frmw, &frmh);
+			if (!fp->exfunc->get_pixel_filtered(editp, selA, NULL, &frmw, &frmh))
+			{
+				MessageBox(NULL, "Cannot get frame size", "AviUtl API Error", MB_OK);
+				return FALSE;
+			}
 			if (boundingBox.br().x > frmw)
 			{
 				boundingBox.width = frmw - boundingBox.x;
@@ -592,13 +596,6 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 				MessageBox(NULL, "Error when creating tracker", "OpenCV3 Error", MB_OK);
 				return FALSE;
 			}
-			//Set first frame
-			int srcw, srch;
-			if (!fp->exfunc->get_frame_size(editp, &srcw, &srch))
-			{
-				MessageBox(NULL, "Cannot get frame size", "AviUtl API Error", MB_OK);
-				return FALSE;
-			};
 			//cv::String trackWndTitle("Tracking");
 			//cv::namedWindow(trackWndTitle, cv::WINDOW_AUTOSIZE);
 
@@ -608,13 +605,13 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 			//Loop through selected frames for analysis
 			TCHAR shortmsg[64] = { 0 };
 			int64 prev_stamp, new_stamp;
-			PIXEL* nextau = new PIXEL[srcw * srch];
+			PIXEL* nextau = new PIXEL[frmw * frmh];
 			for (int f = selA; f <= selB; f++)
 			{
 				//Set next frame
 				if (fp->exfunc->get_pixel_filtered(editp, f, nextau, NULL, NULL))
 				{
-					cv::Mat cvNext(srch, srcw, CV_8UC3, nextau);
+					cv::Mat cvNext(frmh, frmw, CV_8UC3, nextau);
 					cv::flip(cvNext, cvNext, 0);
 					cvNext.copyTo(ocvImage);
 					cvNext.~Mat();
@@ -773,7 +770,7 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 				/* Common Project Data*/
 				int width, height;
 				FILE_INFO fi;
-				fp->exfunc->get_frame_size(editp, &width, &height);
+				fp->exfunc->get_pixel_filtered(editp, selA, NULL, &width, &height);
 				fp->exfunc->get_file_info(editp, &fi);
 				/* End common prj data*/
 				/* Format and write to buffer*/
