@@ -17,10 +17,10 @@ jobs:
       run: |
         git clone https://github.com/opencv/opencv.git -b 3.4.16 --depth 1
         git clone https://github.com/opencv/opencv_contrib.git -b 3.4.16 --depth 1
-        cmake -S opencv -B opencv/build -G "Visual Studio 17 2022" -D CMAKE_GENERATOR_PLATFORM=Win32 -D OPENCV_EXTRA_MODULES_PATH=./opencv_contrib/modules
+        cmake -S opencv -B opencv/build -G "Visual Studio 17 2022" -D CMAKE_GENERATOR_PLATFORM=Win32 -D OPENCV_EXTRA_MODULES_PATH=./opencv_contrib/modules -D BUILD_SHARED_LIBS=OFF
         cmake --build opencv/build --config Release
 
     - name: Build MotionTracking_MKII_Plus
       run: |
-        cmake -S src -B src/build -G "Visual Studio 17 2022" -D CMAKE_GENERATOR_PLATFORM=Win32
+        cmake -S src -B src/build -G "Visual Studio 17 2022" -D CMAKE_GENERATOR_PLATFORM=Win32 -D OPENCV_INCLUDE_DIR=opencv/build/install/include -D OPENCV_LIBRARY_DIR=opencv/build/install/x86/vc17/staticlib
         cmake --build opencv/build --config Release
