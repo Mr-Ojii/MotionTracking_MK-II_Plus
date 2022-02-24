@@ -23,7 +23,7 @@ jobs:
     - name: Build MotionTracking_MKII_Plus
       run: |
         cmake -S src -B src/build -G "Visual Studio 17 2022" -D CMAKE_GENERATOR_PLATFORM=Win32 -D OPENCV_INCLUDE_DIR=opencv/build/install/include -D OPENCV_LIBRARY_DIR=opencv/build/install/x86/vc17/staticlib
-        cmake --build opencv/build --config Release
+        cmake --build src/build --config Release
 
     - name: Upload artifact
       uses: actions/upload-artifact@v2
