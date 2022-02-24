@@ -1,4 +1,4 @@
-name: CI
+name: Build
 
 on:
   push:
@@ -42,3 +42,33 @@ jobs:
       with:
         name: MotionTracking_MKII_Plus
         path: ${{ github.workspace }}/MotionTrackingMKIIPlus.zip
+
+  create_release:
+    name: Create release
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    
+    - uses: actions/download-artifact@v2
+      with:
+        name: MotionTracking_MKII_Plus
+        path: artifacts
+    
+    # https://gist.github.com/superbrothers/af84a2f8af394a62352e06537a640746        
+    - name: Create a Release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        REVCOUNT=`git rev-list --count HEAD`
+        RELEASE_NAME=r${REVCOUNT}
+        TAG_NAME=r${REVCOUNT}
+        assets=()
+        for asset in ${{ github.workspace }}/artifacts/*.zip; do
+          assets+=("-a" "$asset")
+        done
+        hub release create "${assets[@]}" -m "$RELEASE_NAME" "$TAG_NAME"
