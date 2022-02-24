@@ -8,16 +8,16 @@
 
 //	YC Struct
 typedef	struct {
-	short	y;					//	Pixel data-Y (     0 Å` 4096 )
-	short	cb;					//	Pixel data-Cb ( -2048 Å` 2048 )
-	short	cr;					//	Pixel data-Cr ( -2048 Å` 2048 )
+	short	y;					//	Pixel data-Y (     0 ÔΩû 4096 )
+	short	cb;					//	Pixel data-Cb ( -2048 ÔΩû 2048 )
+	short	cr;					//	Pixel data-Cr ( -2048 ÔΩû 2048 )
 	//	Pixel data can get outside of the above range
 	//	
 } PIXEL_YC;
 
 //	PIXEL Struct
 typedef	struct {
-	unsigned char	b, g, r;		//	Pixel(RGB)Data (0Å`255)
+	unsigned char	b, g, r;		//	Pixel(RGB)Data (0ÔΩû255)
 } PIXEL;
 
 //	Filter_PROC Struct
@@ -44,8 +44,8 @@ typedef struct {
 } FILTER_PROC_INFO;
 #define	FILTER_PROC_INFO_FLAG_INVERT_FIELD_ORDER	0x00010000
 #define	FILTER_PROC_INFO_FLAG_INVERT_INTERLACE		0x00020000
-//	Å¶For de-interlace filter, ycp_edit is not initialized with image dataÅB
-//	Å¶De-interlace filter cannot change ycp_edit,ycp_temp,w and h
+//	‚ÄªFor de-interlace filter, ycp_edit is not initialized with image data„ÄÇ
+//	‚ÄªDe-interlace filter cannot change ycp_edit,ycp_temp,w and h
 
 //	Frame Status Struct
 typedef struct {
@@ -137,7 +137,7 @@ typedef void*	AVI_FILE_HANDLE;
 
 //	Struct for external functions
 typedef struct {
-	//	Å¶Use of get_ycp_source_cache() is preferred
+	//	‚ÄªUse of get_ycp_source_cache() is preferred
 	//
 	// Obtains Image Data's pointer of Frame plus offset
 	//	The data are those before any filtering
@@ -148,7 +148,7 @@ typedef struct {
 	//			  Content of Image Data pointer is valid until external function or Main returns
 	void(*get_ycp_ofs)(void *editp, int n, int ofs);
 
-	//	Å¶Use of get_ycp_source_cache() is preferred
+	//	‚ÄªUse of get_ycp_source_cache() is preferred
 	// Obtains Image Data's pointer of specified Frame
 	//	The data are those before any filtering
 	//	editp 	: Editing Handle
@@ -419,11 +419,11 @@ typedef struct {
 
 	// Obtains the pointer to FILTER Struct with a specific Filter ID
 	//	filter_id
-	//		 	: Filter ID (0Å`Total filter count-1)
+	//		 	: Filter ID (0ÔΩûTotal filter count-1)
 	//  Return Value	: pointer to Filter Struct (Return NULL when Failed)
 	void 		*(*get_filterp)(int filter_id);
 
-	//	Å¶Please use get_ycp_filtering_cache_ex() instead whenever possible
+	//	‚ÄªPlease use get_ycp_filtering_cache_ex() instead whenever possible
 	// Obtains Image Data's pointer of specified Frame
 	//	The image is the one JUST before processing by current filter
 	//	fp	 	: Pointer to FILTER Struct
@@ -454,7 +454,7 @@ typedef struct {
 	//  Return Value	: TRUE if successful
 	BOOL(*set_ycp_filtering_cache_size)(void *fp, int w, int h, int d, int flag);
 
-	//	Å¶Please use get_ycp_filtering_cache_ex() instead whenever possible
+	//	‚ÄªPlease use get_ycp_filtering_cache_ex() instead whenever possible
 	// Obtains Image Data's cache pointer for specified Frame
 	//	Follow cache settings defined by set_ycp_filtering_cache_size()
 	//	The data is the one just before processing by current filter
@@ -555,7 +555,7 @@ typedef struct {
 	//	ycp_src	Pointer to source image
 	//	sx,sy	: Top-left coordinate of source
 	//	sw,sh	: size of source
-	//	tr      : Transparency of source (0Å`4096)
+	//	tr      : Transparency of source (0ÔΩû4096)
 	void(*copy_yc)(PIXEL_YC *ycp, int x, int y, PIXEL_YC *ycp_src, int sx, int sy, int sw, int sh, int tr);
 
 	//	Draw text on frame image
@@ -563,15 +563,15 @@ typedef struct {
 	//	ycp     : pointer to Image Data (NULL to skip drawing and just return the size)
 	//	x,y		: Top-left of the drawing coordinate
 	//	text	: The text itself
-	//	r,g,b	: Color (0Å`255)
-	//	tr      : Transparency (0Å`4096)
+	//	r,g,b	: Color (0ÔΩû255)
+	//	tr      : Transparency (0ÔΩû4096)
 	//	hfont	: Font (NULL for default font)
 	//	w,h		: Size of the resulting drawn text (can be NULL)
 	void(*draw_text)(PIXEL_YC *ycp, int x, int y, LPSTR text, int r, int g, int b, int tr, HFONT hfont, int *w, int *h);
 
 	//	Obtains a handle for use with avi_file_read_video() and avi_file_read_audio()
 	//  when opening AVI file
-	//	Å¶File and format can be different from the one being edited
+	//	‚ÄªFile and format can be different from the one being edited
 	//	file    : AVI filename (also accepts file that passthrough import plugins)
 	//  fip		: pointer to FileInfo Struct (Contains info for imported file)
 	//	flag 	: Open flags
@@ -716,7 +716,7 @@ typedef struct {
 #define	EDIT_OUTPUT_FLAG_NO_DIALOG			2
 #define	EDIT_OUTPUT_FLAG_WAV				4
 
-//	ÉtÉBÉãÉ^ Struct
+//	„Éï„Ç£„É´„Çø Struct
 typedef struct {
 	int		flag;				//	Filter Flags...
 	//	FILTER_FLAG_ALWAYS_ACTIVE		: Filter is always active
@@ -805,7 +805,7 @@ typedef struct {
 	int		*track;				//	pointer to sliders' settings (Set by AviUtl)
 	int		*check;				//	pointer to checkboxes' setting  (Set by AviUtl)
 	void	*ex_data_ptr;		//	pointer to extended data (when FILTER_FLAG_EX_DATA is set)
-	int		ex_data_size;		//	size of extended data ( when FILTER_FLAG_EX_DATAÇ™ is set)
+	int		ex_data_size;		//	size of extended data ( when FILTER_FLAG_EX_DATA„Åå is set)
 	TCHAR	*information;		//	pointer to filter info (when FILTER_FLAG_EX_INFORMATION is set)
 	BOOL(*func_save_start)(void *fp, int s, int e, void *editp);
 	//	pointer to function to be called just before saving begins (skip calling if NULL)
@@ -825,7 +825,7 @@ typedef struct {
 	//	fps			: settings for changing framerate (30,24,20,15,10)
 	//	edit_flag	: Edit flags
 	//	inter		: interlace state of frame
-	//	Return Value		: TRUE for Frame to be savedÅAFALSE for Frame to be dropped
+	//	Return Value		: TRUE for Frame to be saved„ÄÅFALSE for Frame to be dropped
 	BOOL(*func_project_load)(void *fp, void *editp, void *data, int size);
 	// pointer to function to be called when opening project file(skip calling if NULL)
 	//	Will not be called when project is empty
