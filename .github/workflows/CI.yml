@@ -26,8 +26,19 @@ jobs:
         cmake -S src -B src/build -G "Visual Studio 17 2022" -D CMAKE_GENERATOR_PLATFORM=Win32 -D OPENCV_INCLUDE_DIR=opencv/build/install/include -D OPENCV_LIBRARY_DIR=opencv/build/install/x86/vc17/staticlib
         cmake --build src/build --config Release
 
+    - name: Create Archive
+      run: |
+        cd ${{ github.workspace }}
+        move LICENSE Licenses/MotionTracking_MKII.txt
+        move opencv/LICENSE Licenses/opencv.txt
+        move opencv_contrib/LICENSE Licenses/opencv_contrib.txt
+        move src/build/Release/MotionTrackingMKIIPlus.auf MotionTrackingMKIIPlus.auf
+        move opencv/data/haarcascades/haarcascade_frontalface_default.xml haarcascade_frontalface_default.xml
+        move opencv/data/haarcascades/haarcascade_profileface.xml haarcascade_profileface.xml
+        7z a MotionTrackingMKIIPlus.zip haarcascade_profileface.xml haarcascade_frontalface_default.xml MotionTrackingMKIIPlus.auf Original_Readme.txt README.md Licenses
+
     - name: Upload artifact
       uses: actions/upload-artifact@v2
       with:
         name: MotionTracking_MKII_Plus
-        path: ${{ github.workspace }}/src/build/Release/MotionTrackingMKIIPlus.auf
+        path: ${{ github.workspace }}/MotionTrackingMKIIPlus.zip
