@@ -16,7 +16,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE comctl32 ippicvmt debug ippiwd deb
 if("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
     set_property(TARGET ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
     set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/LARGEADDRESSAWARE")
-    target_compile_options(${PROJECT_NAME} PRIVATE /arch:AVX)
+    target_compile_options(${PROJECT_NAME} PRIVATE /arch:AVX /utf-8)
 elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
     target_link_options(${PROJECT_NAME} PRIVATE -static-libstdc++ -static)
 endif()
