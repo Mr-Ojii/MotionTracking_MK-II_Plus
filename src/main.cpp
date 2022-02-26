@@ -20,7 +20,7 @@ int		track_e[] = { 7 };	//	トラックバーの上限値
 
 #define	CHECK_N	10														//	チェックボックスの数
 TCHAR	*check_name[] = { "1. Select Object", "2. Analyze", "3A. View Result", "3B. Clear Result", "4. As English EXO?", "5. As Sub-filter/部分フィルター?", "6. Save EXO", "Quick Blur", "Easy Privacy", "⑨HELP" };				//	チェックボックスの名前
-int		check_default[] = { -1, -1, -1, -1, 0, 0, -1, 0, 0, -1 };				//	チェックボックスの初期値 (値は0か1)
+int		check_default[] = { -1, -1, 0, -1, 0, 0, -1, 0, 0, -1 };				//	チェックボックスの初期値 (値は0か1)
 
 #define METHOD_N 7
 TCHAR* track_method[] = { "BOOSTING", "MIL", "MEDIANFLOW", "TLD", "KCF", "CSRT", "MOSSE" };
@@ -59,7 +59,7 @@ const TCHAR *help_text =
 	"1. Click 1st button, Drag a box on the object to be tracked(in popup Window).\n"
 	"   Close the popup Window.\n"
 	"2. Click Analyze, wait for completion.\n"
-	"3. Click View Result and check in the popup Window.\n"
+	"3. Activate the View Result and check.\n"
 	"IF result is good, click SaveEXO or check QuickBlur.\n"
 	"Otherwise, click Clear Result and go back to step 0 or 1.\n\n"
 	"=Save EXO=\n"
@@ -195,10 +195,6 @@ static bool startSel = false;
 static int selA, selB;
 static std::vector<cv::Rect2d> track_result;
 static std::vector<bool> track_found;
-typedef struct{
-	void* editp;
-	FILTER* fp;
-}ParaCombo;
 
 typedef struct{
 	UINT32 frame;
@@ -324,36 +320,6 @@ static void onMouse(int event, int x, int y, int, void*)
 		break;
 	}
 }
-
-//Callback function for trackbar used in result preview
-static void onChange(int pos, void* userdata)
-{
-	ParaCombo* para = (ParaCombo*)userdata;
-	void* editp = para->editp;
-	FILTER* fp = para->fp;
-	int srcw, srch;
-	fp->exfunc->get_pixel_filtered(editp, selA + pos, NULL, &srcw, &srch);
-	PIXEL* aubuf = new PIXEL[srcw*srch];
-	fp->exfunc->get_pixel_filtered(editp, selA + pos, aubuf, NULL, NULL);
-	cv::Mat disp(srch, srcw, CV_8UC3, aubuf);
-	cv::flip(disp, disp, 0);
-	if (track_found[pos])
-	{
-		cv::rectangle(disp, track_result[pos], cv::Scalar(255, 0, 0), 2, 1);
-		cv::putText(disp, "OK", cv::Point(0, 50), cv::FONT_HERSHEY_PLAIN, 2.0, cv::Scalar(0, 255, 0), 2);
-	}
-	else
-	{
-		cv::putText(disp, "ERROR", cv::Point(0, 50), cv::FONT_HERSHEY_PLAIN, 2.0, cv::Scalar(0, 0, 255), 2);
-	}
-	
-	cv::Mat disp_clone;
-	disp.copyTo(disp_clone);
-	disp.~Mat();
-	delete[] aubuf;
-	imshow("Tracking Result", disp_clone);
-}
-
 
 //Find single-frame error to be interpolate
 //RETURN: a std::vector<UINT32> containing relevant index -> out_list
@@ -730,30 +696,6 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 
 			break;
 		}
-		case MID_FILTER_BUTTON + 2: //View result
-		{
-			
-			//MessageBox(NULL, "Btn 3", "DEBUG", MB_OK);
-			if (track_result.size() > 0)
-			{
-				cv::namedWindow("Tracking Result", cv::WINDOW_AUTOSIZE);
-				int pos_val = 0;
-				int max_pos = selB - selA;
-				ParaCombo parameters;
-				parameters.editp = editp;
-				parameters.fp = fp;
-				cv::createTrackbar("Frame", "Tracking Result", &pos_val, max_pos, onChange, &parameters);
-				onChange(pos_val, &parameters);
-				cv::waitKey(0);
-			}
-			else
-			{
-				MessageBox(NULL, "No tracking result found", "Operational Error", MB_OK);
-				return FALSE;
-			}
-			return TRUE;
-			break;
-		}
 		case MID_FILTER_BUTTON +3: //Clear data
 		{
 			
@@ -1054,12 +996,67 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 //For directly blurring
 BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 {
-	bool isFilterActive, isEditing, isFrameInRng, hasResult, redraw;
+	bool isFilterActive, isEditing, isFrameInRng, hasResult, redraw, isSaving;
 	redraw = false;
 	isFilterActive = (fp->exfunc->is_filter_active(fp) == TRUE);
 	isEditing = (fp->exfunc->is_editing(fpip->editp) == TRUE);
 	hasResult = track_result.size() > fpip->frame - selA;
 	isFrameInRng = (fpip->frame >= selA) && (fpip->frame <= selB);
+	isSaving = (fp->exfunc->is_saving(fpip->editp) == TRUE);
+
+	if (isFilterActive && isEditing && fp->check[2] && hasResult && isFrameInRng && !isSaving)
+	{
+		int frmsize = fpip->w * fpip->h;
+		PIXEL* aubuf = new PIXEL[frmsize];
+		PIXEL_YC* yc_src = new PIXEL_YC[frmsize];
+		byte* p1 = (byte*)fpip->ycp_edit;
+		byte* p2 = (byte*)yc_src;
+		size_t yc_linesize = sizeof(PIXEL_YC) * fpip->w;
+		size_t yc_maxlinesize = sizeof(PIXEL_YC) * fpip->max_w;
+		for (int line = 0; line < fpip->h; line++)
+		{
+			memcpy_s(p2, yc_linesize, p1, yc_linesize);
+			p1 += yc_maxlinesize;
+			p2 += yc_linesize;
+		}
+		fp->exfunc->yc2rgb(aubuf, yc_src, frmsize);
+		cv::Mat disp(fpip->h, fpip->w, CV_8UC3, aubuf);
+
+		if (track_found[fpip->frame - selA])
+		{
+			cv::rectangle(disp, track_result[fpip->frame - selA], cv::Scalar(255, 0, 0), 2, 1);
+			cv::putText(disp, "OK", cv::Point(0, 50), cv::FONT_HERSHEY_PLAIN, 2.0, cv::Scalar(0, 255, 0), 2);
+		}
+		else
+		{
+			cv::putText(disp, "ERROR", cv::Point(0, 50), cv::FONT_HERSHEY_PLAIN, 2.0, cv::Scalar(0, 0, 255), 2);
+		}
+
+		PIXEL* aubuf2 = (PIXEL*)disp.data;
+		PIXEL_YC* ycbuf = new PIXEL_YC[frmsize];
+		fp->exfunc->rgb2yc(ycbuf, aubuf2, frmsize);
+		size_t linesize = sizeof(PIXEL_YC) * fpip->w;
+		size_t canvas_linesize = sizeof(PIXEL_YC) * fpip->max_w;
+		byte* ptemp = (byte*)fpip->ycp_temp;
+		byte* psrc = (byte*)ycbuf;
+		for (int line = 0; line < fpip->h; line++)
+		{
+			memcpy_s(ptemp, canvas_linesize, psrc, linesize);
+			ptemp += canvas_linesize;
+			psrc += linesize;
+		}
+		//swap ptr
+		PIXEL_YC* ycswap = fpip->ycp_temp;
+		fpip->ycp_temp = fpip->ycp_edit;
+		fpip->ycp_edit = ycswap;
+		//Cleanup
+
+		disp.~Mat();
+
+		delete[] aubuf;
+		delete[] yc_src;
+		delete[] ycbuf;
+	}
 
 	if (isFilterActive && isEditing && fp->check[7] && hasResult && isFrameInRng)
 	{
