@@ -3,7 +3,6 @@
 #include <sstream>
 #include <fstream>
 #include <vector>
-//#include <stdexcept>
 #include "filter.h"
 #include "opencv2\core\utility.hpp"
 #include "opencv2\highgui.hpp"
@@ -222,48 +221,6 @@ EXTERN_C FILTER_DLL __declspec(dllexport) ** __stdcall GetFilterTableList(void)
 {
 	return (FILTER_DLL**)&filterlist;
 }
-//**************************************************************
-//      Helper functions
-//**************************************************************
-
-// Exception filter
-int Except_Eval(int code)
-{
-	switch (code)
-	{
-	case EXCEPTION_FLT_DENORMAL_OPERAND:
-		MessageBox(NULL, "FLT_DENORMAL_OPERAND", "Error", MB_OK);
-		return EXCEPTION_CONTINUE_EXECUTION;
-		break;
-	case EXCEPTION_FLT_DIVIDE_BY_ZERO:
-		MessageBox(NULL, "DIV_BY_ZERO", "Error", MB_OK);
-		return EXCEPTION_CONTINUE_EXECUTION;
-		break;
-	case EXCEPTION_FLT_INEXACT_RESULT:
-		MessageBox(NULL, "FLT_INEXACT_RESULT", "Error", MB_OK);
-		return EXCEPTION_CONTINUE_EXECUTION;
-		break;
-	case EXCEPTION_FLT_INVALID_OPERATION:
-		MessageBox(NULL, "FLT_INVALID_OP", "Error", MB_OK);
-		return EXCEPTION_CONTINUE_EXECUTION;
-		break;
-	case EXCEPTION_FLT_OVERFLOW:
-		MessageBox(NULL, "FLT_OVERFLOW", "Error", MB_OK);
-		return EXCEPTION_CONTINUE_EXECUTION;
-		break;
-	case EXCEPTION_FLT_UNDERFLOW:
-		MessageBox(NULL, "FLT_UNDERFLOW", "Error", MB_OK);
-		return EXCEPTION_CONTINUE_EXECUTION;
-		break;
-	case EXCEPTION_FLT_STACK_CHECK:
-		MessageBox(NULL, "FLT_STACK_CHECK", "Error", MB_OK);
-		return EXCEPTION_CONTINUE_EXECUTION;
-		break;
-	default:
-		MessageBox(NULL, "Non-FLT Exception", "Error", MB_OK);
-		return ExceptionContinueExecution;
-	}
-}
 
 // Mouse callback function for object selection
 static void onMouse(int event, int x, int y, int, void*)
@@ -472,24 +429,25 @@ static void groupObject(std::vector<FRMFIX> &fixedframes, std::vector<FRMGROUP> 
 //BOOL func_update(FILTER *fp, int status);
 BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *editp, FILTER *fp)
 {
-	if (fp->exfunc->is_filter_active(fp) && fp->exfunc->is_editing(editp))
+	if (!fp->exfunc->is_filter_active(fp) || !fp->exfunc->is_editing(editp))
+		return FALSE;
+
+	switch (message)
+	{
+	case WM_COMMAND:
 	{
 		switch (wparam)
 		{
 		case MID_FILTER_BUTTON: //Object selection
 		{
-			
-			//MessageBox(NULL, "Btn 1", "DEBUG", MB_OK);
-			
 			int srcw, srch;
 			if (!fp->exfunc->get_pixel_filtered(editp, selA, NULL, &srcw, &srch))
 			{
 				MessageBox(NULL, "Cannot get frame size", "AviUtl API Error", MB_OK);
 				return FALSE;
 			};
-			//int selA, selB;
 			fp->exfunc->get_select_frame(editp, &selA, &selB);
-			PIXEL* aubgr = new PIXEL[srcw*srch];
+			PIXEL* aubgr = new PIXEL[srcw * srch];
 			if (fp->exfunc->get_pixel_filtered(editp, selA, aubgr, NULL, NULL))
 			{
 				cv::Mat cvBuffer(srch, srcw, CV_8UC3, aubgr);
@@ -526,7 +484,7 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 
 			if (srcw != frmw || srch != frmh)
 			{
-				int res = MessageBoxA(NULL, 
+				int res = MessageBoxA(NULL,
 					"EN\n"
 					"Resizing has been detected.\n"
 					"You may not be able to get normal results.\n"
@@ -546,15 +504,15 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 			track_result.clear();
 			track_found.clear();
 			ocvImage.empty();
-			cv::Rect2d boxbackup = boundingBox;
+			cv::Rect2d box = boundingBox;
 			//Correct for out-of-bound box
-			if (boundingBox.br().x > frmw)
+			if (box.br().x > frmw)
 			{
-				boundingBox.width = frmw - boundingBox.x;
+				box.width = frmw - box.x;
 			}
-			if (boundingBox.br().y > frmh)
+			if (box.br().y > frmh)
 			{
-				boundingBox.height = frmh - boundingBox.y;
+				box.height = frmh - box.y;
 			}
 			int64 start_time = cv::getTickCount();
 			// Create Tracker
@@ -587,8 +545,6 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 				MessageBox(NULL, "Error when creating tracker", "OpenCV3 Error", MB_OK);
 				return FALSE;
 			}
-			//cv::String trackWndTitle("Tracking");
-			//cv::namedWindow(trackWndTitle, cv::WINDOW_AUTOSIZE);
 
 			bool track_init = false;
 			track_result.clear();
@@ -612,9 +568,7 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 					MessageBox(NULL, "Cannot get next image", "AviUtl API Error", MB_OK);
 				}
 
-				//sprintf_s(shortmsg, "%s processing frame %d / %d", track_method[fp->track[0]-1], f+1, selB+1);
-				//SetWindowText(fp->hwnd, shortmsg);
-				if (!track_init && selectObj)
+				if (!track_init)
 				{
 					//TODO
 					SecureZeroMemory(shortmsg, sizeof(TCHAR[64]));
@@ -631,7 +585,7 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 
 					prev_stamp = cv::getTickCount();
 				}
-				else if (track_init)
+				else
 				{
 					new_stamp = cv::getTickCount();
 					double fps = 1.0 / ((new_stamp - prev_stamp) / cv::getTickFrequency());
@@ -641,15 +595,13 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 					prev_stamp = cv::getTickCount();
 
 					try {
-						//cv::Rect2d bbox_backup = boundingBox;
-						if (tracker->update(ocvImage, boundingBox))
+						if (tracker->update(ocvImage, box))
 						{
 							track_found.push_back(true);
 						}
 						else
 						{
 							track_found.push_back(false);
-							//boundingBox = bbox_backup;
 						}
 					}
 					catch (...)
@@ -659,28 +611,28 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 						return FALSE;
 					}
 				}
-				if (boundingBox.area() <= 0)
+				if (box.area() <= 0)
 				{
-					boundingBox.width = 20;
-					boundingBox.height = 20;
+					box.width = 20;
+					box.height = 20;
 				}
-				if (boundingBox.x < 0) {
-					boundingBox.width += boundingBox.x;
-					boundingBox.x = 0;
+				if (box.x < 0) {
+					box.width += box.x;
+					box.x = 0;
 				}
-				if (boundingBox.y < 0) {
-					boundingBox.height += boundingBox.y;
-					boundingBox.y = 0;
+				if (box.y < 0) {
+					box.height += box.y;
+					box.y = 0;
 				}
-				if (boundingBox.br().x > frmw)
+				if (box.br().x > frmw)
 				{
-					boundingBox.width = frmw - boundingBox.x;
+					box.width = frmw - box.x;
 				}
-				if (boundingBox.br().y > frmh)
+				if (box.br().y > frmh)
 				{
-					boundingBox.height = frmh - boundingBox.y;
+					box.height = frmh - box.y;
 				}
-				track_result.push_back(boundingBox);
+				track_result.push_back(box);
 			}
 			delete[] nextau;
 			int64 end_time = cv::getTickCount();
@@ -691,15 +643,12 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 			SecureZeroMemory(shortmsg, sizeof(TCHAR[64]));
 			sprintf_s(shortmsg, "Tracking Completed!\nAverage %.2f fps", (selB - selA) / run_time);
 			MessageBox(NULL, shortmsg, "Tracking Completed!", MB_OK);
-			boundingBox = boxbackup;
 			return TRUE;
 
 			break;
 		}
-		case MID_FILTER_BUTTON +3: //Clear data
+		case MID_FILTER_BUTTON + 3: //Clear data
 		{
-			
-			//MessageBox(NULL, "Btn 4", "DEBUG", MB_OK);
 			selA = 0;
 			selB = 0;
 			boundingBox.x = 0;
@@ -719,7 +668,6 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 		case MID_FILTER_BUTTON + 6: //Save EXO
 		{
 			//TODO
-			//MessageBox(NULL, "Btn 5", "DEBUG", MB_OK);
 			if (track_result.size() <= 0)
 			{
 				MessageBox(fp->hwnd, "No track data to save!", "Operation Error", MB_OK);
@@ -727,255 +675,253 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 			}
 
 			CHAR filename[MAX_PATH] = { 0 };
-			if (fp->exfunc->dlg_get_save_name(filename, "ExEdit Object File(*.exo)\0*.exo;\0", "tracking.exo"))
+			if (!fp->exfunc->dlg_get_save_name(filename, "ExEdit Object File(*.exo)\0*.exo;\0", "tracking.exo"))
+				return TRUE;
+
+			// Starts doing the real work
+			std::ostringstream strbuf;
+			TCHAR boilerplate[2048] = { 0 };
+			TCHAR fmtstr[2048] = { 0 };
+			/* Common Project Data*/
+			int width, height;
+			FILE_INFO fi;
+			fp->exfunc->get_pixel_filtered(editp, selA, NULL, &width, &height);
+			fp->exfunc->get_file_info(editp, &fi);
+			/* End common prj data*/
+			/* Format and write to buffer*/
+			LoadString(fp->dll_hinst, IDS_PRJHEADER, boilerplate, 2048);
+			sprintf_s(fmtstr, sizeof(TCHAR[2048]), boilerplate, width, height, fi.video_rate, fi.video_scale, fi.frame_n, fi.audio_rate);
+			strbuf << fmtstr;
+			SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
+			SecureZeroMemory(fmtstr, sizeof(TCHAR[2048]));
+			//* END OF COMMON PROJECT HEADER*//
+			//Starts object processing //
+			/* vector storage for bounding-box interpolation and various checks*/
+			std::vector<UINT32> frmInterpolate; //frames to be interpolate;
+			std::vector<FRMFIX> fixedFrm; //interpolated and use AviUtl coordinate
+			std::vector<FRMGROUP> gpinfo; //strats and ends of objects
+			//
+			find_inter_frame(track_found, frmInterpolate);
+			fix_frame(track_result, track_found, frmInterpolate, fixedFrm, width, height);
+			groupObject(fixedFrm, gpinfo);
+			// Should now have all info we need...
+			int object_id = 0; //keep track of how many segments/objects have been added
+			for (size_t o = 0; o < gpinfo.size(); o++) //loop through each object
 			{
-				//MessageBox(fp->hwnd, filename, "DEBUG", MB_OK);
-				// Starts doing the real work
-				std::ostringstream strbuf;
-				TCHAR boilerplate[2048] = { 0 };
-				TCHAR fmtstr[2048] = { 0 };
-				/* Common Project Data*/
-				int width, height;
-				FILE_INFO fi;
-				fp->exfunc->get_pixel_filtered(editp, selA, NULL, &width, &height);
-				fp->exfunc->get_file_info(editp, &fi);
-				/* End common prj data*/
-				/* Format and write to buffer*/
-				LoadString(fp->dll_hinst, IDS_PRJHEADER, boilerplate, 2048);
-				sprintf_s(fmtstr, sizeof(TCHAR[2048]), boilerplate, width, height, fi.video_rate, fi.video_scale, fi.frame_n, fi.audio_rate);
-				strbuf << fmtstr;
-				SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
-				SecureZeroMemory(fmtstr, sizeof(TCHAR[2048]));
-				//* END OF COMMON PROJECT HEADER*//
-				//Starts object processing //
-				/* vector storage for bounding-box interpolation and various checks*/
-				std::vector<UINT32> frmInterpolate; //frames to be interpolate;
-				std::vector<FRMFIX> fixedFrm; //interpolated and use AviUtl coordinate
-				std::vector<FRMGROUP> gpinfo; //strats and ends of objects
-				//
-				find_inter_frame(track_found, frmInterpolate);
-				fix_frame(track_result, track_found, frmInterpolate, fixedFrm, width, height);
-				groupObject(fixedFrm, gpinfo);
-				// Should now have all info we need...
-				int object_id = 0; //keep track of how many segments/objects have been added
-				for (size_t o = 0; o < gpinfo.size(); o++) //loop through each object
+				int oStart, oEnd;
+				oStart = gpinfo[o].vi_start;
+				oEnd = gpinfo[o].vi_end;
+				bool firstframe = true;
+				for (int f = oStart; f <= oEnd; f++) //each frames in this object
 				{
-					int oStart, oEnd;
-					oStart = gpinfo[o].vi_start;
-					oEnd = gpinfo[o].vi_end;
-					bool firstframe = true;
-					for (int f = oStart; f <= oEnd; f++) //each frames in this object
+					//Section Num
+					char head_num[32];
+					sprintf_s(head_num, sizeof(char[32]), "[%d]\n\0", object_id);
+					strbuf << head_num;
+					//Common obj param
+					LoadString(fp->dll_hinst, IDS_OBJPARAM, boilerplate, 2048);
+					sprintf_s(fmtstr, sizeof(TCHAR[2048]), boilerplate, fixedFrm[f].frame, fixedFrm[f].frame, 1);//st, ed, layer
+					strbuf << fmtstr;
+					SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
+					SecureZeroMemory(fmtstr, sizeof(TCHAR[2048]));
+					//2 more param for Figure obj
+					if (!fp->check[5])
 					{
-						//Section Num
-						char head_num[32];
-						sprintf_s(head_num, sizeof(char[32]), "[%d]\n\0", object_id);
-						strbuf << head_num;
-						//Common obj param
-						LoadString(fp->dll_hinst, IDS_OBJPARAM, boilerplate, 2048);
-						sprintf_s(fmtstr, sizeof(TCHAR[2048]), boilerplate, fixedFrm[f].frame, fixedFrm[f].frame, 1);//st, ed, layer
-						strbuf << fmtstr;
+						LoadString(fp->dll_hinst, IDS_FIGUREPARAMA, boilerplate, 2048);
+						strbuf << boilerplate; //verbatim copy
 						SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
-						SecureZeroMemory(fmtstr, sizeof(TCHAR[2048]));
-						//2 more param for Figure obj
-						if (!fp->check[5])
+					}
+					if (!firstframe)
+					{
+						LoadString(fp->dll_hinst, IDS_OBJCHAIN, boilerplate, 2048);
+						strbuf << boilerplate; //verbatim copy
+						SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
+					}
+					//Section [*.0] Graphics/Sub-filter
+					sprintf_s(head_num, sizeof(char[32]), "[%d.0]\n\0", object_id);
+					strbuf << head_num;
+					//
+					if (fp->check[5]) //Sub-filter
+					{
+						if (fp->check[4])//English EXO
 						{
-							LoadString(fp->dll_hinst, IDS_FIGUREPARAMA, boilerplate, 2048);
-							strbuf << boilerplate; //verbatim copy
-							SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
+							LoadString(fp->dll_hinst, IDS_SFPARAM_EN, boilerplate, 2048);
 						}
-						if (!firstframe)
+						else //JP
 						{
-							LoadString(fp->dll_hinst, IDS_OBJCHAIN, boilerplate, 2048);
-							strbuf << boilerplate; //verbatim copy
-							SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
+							LoadString(fp->dll_hinst, IDS_SFPARAM_JP, boilerplate, 2048);//TODO: Set JP text
 						}
-						//Section [*.0] Graphics/Sub-filter
-						sprintf_s(head_num, sizeof(char[32]), "[%d.0]\n\0", object_id);
-						strbuf << head_num;
-						//
-						if (fp->check[5]) //Sub-filter
+						int Xi, Xf, Yi, Yf, size_st, size_ed;
+						double  rAsp_st, rAsp_ed;
+						Xi = fixedFrm[f].cx;
+						Yi = fixedFrm[f].cy;
+						if (fixedFrm[f].width > fixedFrm[f].height) //-ve rAsp, const width
 						{
-							if (fp->check[4])//English EXO
+							size_st = fixedFrm[f].width;
+							rAsp_st = -100.0 * (1.0 - ((double)fixedFrm[f].height / (double)fixedFrm[f].width));
+						}
+						else if (fixedFrm[f].width < fixedFrm[f].height) // +ve rAsp, const height
+						{
+							size_st = fixedFrm[f].height;
+							rAsp_st = 100.0 * (1.0 - ((double)fixedFrm[f].width / (double)fixedFrm[f].height));
+						}
+						else // rAsp=0, square
+						{
+							size_st = fixedFrm[f].width;
+							rAsp_st = 0.0;
+						}
+						if ((size_t)f >= (fixedFrm.size() - 1))//special handling for last frame
+						{
+							Xf = Xi;
+							Yf = Yi;
+							size_ed = size_st;
+							rAsp_ed = rAsp_st;
+						}
+						else
+						{
+							Xf = fixedFrm[f + 1].cx;
+							Yf = fixedFrm[f + 1].cy;
+							if (fixedFrm[f + 1].width > fixedFrm[f + 1].height) //-ve rAsp, const width
 							{
-								LoadString(fp->dll_hinst, IDS_SFPARAM_EN, boilerplate, 2048);
+								size_ed = fixedFrm[f + 1].width;
+								rAsp_ed = -100.0 * (1.0 - ((double)fixedFrm[f + 1].height / (double)fixedFrm[f + 1].width));
 							}
-							else //JP
+							else if (fixedFrm[f + 1].width < fixedFrm[f + 1].height) // +ve rAsp, const height
 							{
-								LoadString(fp->dll_hinst, IDS_SFPARAM_JP, boilerplate, 2048);//TODO: Set JP text
-							}
-							int Xi, Xf, Yi, Yf, size_st, size_ed;
-							double  rAsp_st, rAsp_ed;
-							Xi = fixedFrm[f].cx;
-							Yi = fixedFrm[f].cy;
-							if (fixedFrm[f].width > fixedFrm[f].height) //-ve rAsp, const width
-							{
-								size_st = fixedFrm[f].width;
-								rAsp_st = -100.0 * (1.0 - ((double)fixedFrm[f].height / (double)fixedFrm[f].width));
-							}
-							else if (fixedFrm[f].width < fixedFrm[f].height) // +ve rAsp, const height
-							{
-								size_st = fixedFrm[f].height;
-								rAsp_st = 100.0 * (1.0 - ((double)fixedFrm[f].width / (double)fixedFrm[f].height));
+								size_ed = fixedFrm[f + 1].height;
+								rAsp_ed = 100.0 * (1.0 - ((double)fixedFrm[f + 1].width / (double)fixedFrm[f + 1].height));
 							}
 							else // rAsp=0, square
 							{
-								size_st = fixedFrm[f].width;
-								rAsp_st = 0.0;
+								size_ed = fixedFrm[f + 1].width;
+								rAsp_ed = 0.0;
 							}
-							if ((size_t)f >= (fixedFrm.size() - 1))//special handling for last frame
-							{
-								Xf = Xi;
-								Yf = Yi;
-								size_ed = size_st;
-								rAsp_ed = rAsp_st;
-							}
-							else
-							{
-								Xf = fixedFrm[f + 1].cx;
-								Yf = fixedFrm[f + 1].cy;
-								if (fixedFrm[f + 1].width > fixedFrm[f + 1].height) //-ve rAsp, const width
-								{
-									size_ed = fixedFrm[f + 1].width;
-									rAsp_ed = -100.0 * (1.0 - ((double)fixedFrm[f + 1].height / (double)fixedFrm[f + 1].width));
-								}
-								else if (fixedFrm[f + 1].width < fixedFrm[f + 1].height) // +ve rAsp, const height
-								{
-									size_ed = fixedFrm[f + 1].height;
-									rAsp_ed = 100.0 * (1.0 - ((double)fixedFrm[f + 1].width / (double)fixedFrm[f + 1].height));
-								}
-								else // rAsp=0, square
-								{
-									size_ed = fixedFrm[f + 1].width;
-									rAsp_ed = 0.0;
-								}
-							}
-
-							sprintf_s(fmtstr, sizeof(TCHAR[2048]), boilerplate, (double)Xi, (double)Xf, (double)Yi, (double)Yf, size_st, size_ed, rAsp_st, rAsp_ed);//X-st, X-ed, Y-st, Y-ed, size_start, size_end, rAsp-st, rAsp-ed
-							strbuf << fmtstr;
-							SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
-							SecureZeroMemory(fmtstr, sizeof(TCHAR[2048]));
 						}
-						else //Graphics
+
+						sprintf_s(fmtstr, sizeof(TCHAR[2048]), boilerplate, (double)Xi, (double)Xf, (double)Yi, (double)Yf, size_st, size_ed, rAsp_st, rAsp_ed);//X-st, X-ed, Y-st, Y-ed, size_start, size_end, rAsp-st, rAsp-ed
+						strbuf << fmtstr;
+						SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
+						SecureZeroMemory(fmtstr, sizeof(TCHAR[2048]));
+					}
+					else //Graphics
+					{
+						if (fp->check[4])//English EXO
 						{
-							if (fp->check[4])//English EXO
-							{
-								LoadString(fp->dll_hinst, IDS_FIGUREPARAMB_EN, boilerplate, 2048);
-							}
-							else //JP
-							{
-								LoadString(fp->dll_hinst, IDS_FIGUREPARAMB_JP, boilerplate, 2048);//TODO: Set JP text
-							}
-							strbuf << boilerplate;
-							SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
-
+							LoadString(fp->dll_hinst, IDS_FIGUREPARAMB_EN, boilerplate, 2048);
 						}
-						//Section [*.1] Resize FX or Mono FX
-						sprintf_s(head_num, sizeof(char[32]), "[%d.1]\n\0", object_id);
+						else //JP
+						{
+							LoadString(fp->dll_hinst, IDS_FIGUREPARAMB_JP, boilerplate, 2048);//TODO: Set JP text
+						}
+						strbuf << boilerplate;
+						SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
+
+					}
+					//Section [*.1] Resize FX or Mono FX
+					sprintf_s(head_num, sizeof(char[32]), "[%d.1]\n\0", object_id);
+					strbuf << head_num;
+					//
+					if (fp->check[5])// Mono FX for Sub-filter
+					{
+						if (fp->check[4])//English EXO
+						{
+							LoadString(fp->dll_hinst, IDS_FXMONO_EN, boilerplate, 2048);
+						}
+						else //JP
+						{
+							LoadString(fp->dll_hinst, IDS_FXMONO_JP, boilerplate, 2048);//TODO: Set JP text
+						}
+						strbuf << boilerplate;
+						SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
+					}
+					else //Resize FX for Graphics
+					{
+						int Wi, Wf, Hi, Hf;
+
+						Wi = fixedFrm[f].width;
+						Hi = fixedFrm[f].height;
+
+						if ((size_t)f >= (fixedFrm.size() - 1)) //Last frame
+						{
+							Wf = Wi;
+							Hf = Hi;
+						}
+						else // Normal
+						{
+							Wf = fixedFrm[f + 1].width;
+							Hf = fixedFrm[f + 1].height;
+						}
+
+						if (fp->check[4])//English EXO
+						{
+							LoadString(fp->dll_hinst, IDS_FXRESIZE_EN, boilerplate, 2048);
+						}
+						else //JP
+						{
+							LoadString(fp->dll_hinst, IDS_FXRESIZE_JP, boilerplate, 2048);//TODO: Set JP text
+						}
+						sprintf_s(fmtstr, sizeof(TCHAR[2048]), boilerplate, (double)Wi, (double)Wf, (double)Hi, (double)Hf);
+						strbuf << fmtstr;
+						SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
+						SecureZeroMemory(fmtstr, sizeof(TCHAR[2048]));
+					}
+					//Section [*.2] Std Drawing for Graphics
+					//Coordinate animation part for Graphics
+					if (!fp->check[5]) //only for graphics
+					{
+						sprintf_s(head_num, sizeof(char[32]), "[%d.2]\n\0", object_id);
 						strbuf << head_num;
 						//
-						if (fp->check[5])// Mono FX for Sub-filter
+						int Xi, Xf, Yi, Yf;
+						Xi = fixedFrm[f].cx;
+						Yi = fixedFrm[f].cy;
+						if ((size_t)f >= (fixedFrm.size() - 1))//last frame
 						{
-							if (fp->check[4])//English EXO
-							{
-								LoadString(fp->dll_hinst, IDS_FXMONO_EN, boilerplate, 2048);
-							}
-							else //JP
-							{
-								LoadString(fp->dll_hinst, IDS_FXMONO_JP, boilerplate, 2048);//TODO: Set JP text
-							}
-							strbuf << boilerplate;
-							SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
+							Xf = Xi;
+							Yf = Yi;
 						}
-						else //Resize FX for Graphics
+						else //Normal
 						{
-							int Wi, Wf, Hi, Hf;
-
-							Wi = fixedFrm[f].width;
-							Hi = fixedFrm[f].height;
-
-							if ((size_t)f >= (fixedFrm.size() - 1)) //Last frame
-							{
-								Wf = Wi;
-								Hf = Hi;
-							}
-							else // Normal
-							{
-								Wf = fixedFrm[f + 1].width;
-								Hf = fixedFrm[f + 1].height;
-							}
-
-							if (fp->check[4])//English EXO
-							{
-								LoadString(fp->dll_hinst, IDS_FXRESIZE_EN, boilerplate, 2048);
-							}
-							else //JP
-							{
-								LoadString(fp->dll_hinst, IDS_FXRESIZE_JP, boilerplate, 2048);//TODO: Set JP text
-							}
-							sprintf_s(fmtstr, sizeof(TCHAR[2048]), boilerplate, (double)Wi, (double)Wf, (double)Hi, (double)Hf);
-							strbuf << fmtstr;
-							SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
-							SecureZeroMemory(fmtstr, sizeof(TCHAR[2048]));
+							Xf = fixedFrm[f + 1].cx;
+							Yf = fixedFrm[f + 1].cy;
 						}
-						//Section [*.2] Std Drawing for Graphics
-						//Coordinate animation part for Graphics
-						if (!fp->check[5]) //only for graphics
+						if (fp->check[4])//English EXO
 						{
-							sprintf_s(head_num, sizeof(char[32]), "[%d.2]\n\0", object_id);
-							strbuf << head_num;
-							//
-							int Xi, Xf, Yi, Yf;
-							Xi = fixedFrm[f].cx;
-							Yi = fixedFrm[f].cy;
-							if ((size_t)f >= (fixedFrm.size() - 1))//last frame
-							{
-								Xf = Xi;
-								Yf = Yi;
-							}
-							else //Normal
-							{
-								Xf = fixedFrm[f + 1].cx;
-								Yf = fixedFrm[f + 1].cy;
-							}
-							if (fp->check[4])//English EXO
-							{
-								LoadString(fp->dll_hinst, IDS_STDDRAW_EN, boilerplate, 2048);
-							}
-							else //JP
-							{
-								LoadString(fp->dll_hinst, IDS_STDDRAW_JP, boilerplate, 2048);//TODO: Set JP text
-							}
-							sprintf_s(fmtstr, sizeof(TCHAR[2048]), boilerplate, (double)Xi, (double)Xf, (double)Yi, (double)Yf);
-							strbuf << fmtstr;
-							SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
-							SecureZeroMemory(fmtstr, sizeof(TCHAR[2048]));
+							LoadString(fp->dll_hinst, IDS_STDDRAW_EN, boilerplate, 2048);
 						}
-						//
-						object_id++;
-						firstframe = false;
+						else //JP
+						{
+							LoadString(fp->dll_hinst, IDS_STDDRAW_JP, boilerplate, 2048);//TODO: Set JP text
+						}
+						sprintf_s(fmtstr, sizeof(TCHAR[2048]), boilerplate, (double)Xi, (double)Xf, (double)Yi, (double)Yf);
+						strbuf << fmtstr;
+						SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
+						SecureZeroMemory(fmtstr, sizeof(TCHAR[2048]));
 					}
+					//
+					object_id++;
+					firstframe = false;
 				}
-				//Write to file
-				std::ofstream fhandle(filename, std::ofstream::out | std::ofstream::trunc);
-				if (fhandle.is_open())
-				{
-					fhandle << strbuf.str();
-					fhandle.flush();
-					fhandle.close();
-					MessageBox(fp->hwnd, "DONE", "Finished", MB_OK);
-				}
-				else
-				{
-					MessageBox(fp->hwnd, "Cannot write to file!", "File I/O ERROR", MB_OK);
-					return FALSE;
-				}
-
+			}
+			//Write to file
+			std::ofstream fhandle(filename, std::ofstream::out | std::ofstream::trunc);
+			if (fhandle.is_open())
+			{
+				fhandle << strbuf.str();
+				fhandle.flush();
+				fhandle.close();
+				MessageBox(fp->hwnd, "DONE", "Finished", MB_OK);
+			}
+			else
+			{
+				MessageBox(fp->hwnd, "Cannot write to file!", "File I/O ERROR", MB_OK);
+				return FALSE;
 			}
 
 			return TRUE;
 			break;
 		}
-		
+
 		case MID_FILTER_BUTTON + 9: //Help button
 		{
 			MessageBoxEx(NULL, help_text, "Who... gonna to help you!", MB_OK | MB_ICONINFORMATION, MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN));
@@ -989,11 +935,11 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 		}
 		}
 	}
+	}
 	
 	return FALSE;
 }
 
-//For directly blurring
 BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 {
 	bool isFilterActive, isEditing, isFrameInRng, hasResult, redraw, isSaving;
