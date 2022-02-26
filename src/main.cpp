@@ -545,18 +545,43 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 				MessageBox(NULL, "Nothing selected", "Operation Error", MB_OK);
 				return FALSE;
 			}
-
-			track_result.clear();
-			track_found.clear();
-			ocvImage.empty();
-			cv::Rect2d boxbackup = boundingBox;
-			//Correct for out-of-bound box
+			int srcw, srch;
+			if (!fp->exfunc->get_frame_size(editp, &srcw, &srch))
+			{
+				MessageBox(NULL, "Cannot get original frame size", "AviUtl API Error", MB_OK);
+				return FALSE;
+			}
 			int frmw, frmh;
 			if (!fp->exfunc->get_pixel_filtered(editp, selA, NULL, &frmw, &frmh))
 			{
 				MessageBox(NULL, "Cannot get frame size", "AviUtl API Error", MB_OK);
 				return FALSE;
 			}
+
+			if (srcw != frmw || srch != frmh)
+			{
+				int res = MessageBoxA(NULL, 
+					"EN\n"
+					"Resizing has been detected.\n"
+					"You may not be able to get normal results.\n"
+					"It is recommended that you disable resizing.\n"
+					"Do you want to continue the analyze?\n"
+					"JA\n"
+					"動画のリサイズが検出されました。\n"
+					"正常な結果が得られない可能性があります。\n"
+					"リサイズを無効化することをお勧めします。\n"
+					"Analyzeを続行しますか？"
+					, "MotionTracking MKII Plus", MB_ICONWARNING | MB_YESNO);
+				if (res == IDNO) {
+					return FALSE;
+				}
+			}
+
+			track_result.clear();
+			track_found.clear();
+			ocvImage.empty();
+			cv::Rect2d boxbackup = boundingBox;
+			//Correct for out-of-bound box
 			if (boundingBox.br().x > frmw)
 			{
 				boundingBox.width = frmw - boundingBox.x;
