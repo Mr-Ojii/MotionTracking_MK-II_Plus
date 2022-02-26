@@ -33,7 +33,7 @@ BGSubtraction aims to isolate the moving object from the background. It can outp
 
 ## Building From Source
 1. Run `git clone https://github.com/Mr-Ojii/MotionTracking_MKII_Plus.git`
-2. Build your own OpenCV 3.4.16 STATIC (Both Debug and Release builds)
+2. Build your own OpenCV 3.4.17 STATIC (Both Debug and Release builds)
 3. Generate VS project file from src/CMakeLists.txt
 4. Build with Visual Studio
 

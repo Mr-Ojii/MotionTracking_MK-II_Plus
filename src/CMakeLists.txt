@@ -11,7 +11,7 @@ target_sources(${PROJECT_NAME} PRIVATE main.cpp main.def resource.rc)
 set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ".auf")
 target_include_directories(${PROJECT_NAME} PRIVATE ${OPENCV_INCLUDE_DIR})
 target_link_directories(${PROJECT_NAME} PRIVATE ${OPENCV_LIBRARY_DIR})
-target_link_libraries(${PROJECT_NAME} PRIVATE comctl32 ippicvmt debug ippiwd debug ittnotifyd debug opencv_core3416d debug opencv_highgui3416d debug opencv_imgcodecs3416d debug opencv_imgproc3416d debug opencv_objdetect3416d debug opencv_tracking3416d debug opencv_video3416d debug zlibd optimized ippiw optimized ittnotify optimized opencv_core3416 optimized opencv_highgui3416 optimized opencv_imgcodecs3416 optimized opencv_imgproc3416 optimized opencv_objdetect3416 optimized opencv_tracking3416 optimized opencv_video3416 optimized zlib)
+target_link_libraries(${PROJECT_NAME} PRIVATE comctl32 ippicvmt debug ippiwd debug ittnotifyd debug opencv_core3417d debug opencv_highgui3417d debug opencv_imgcodecs3417d debug opencv_imgproc3417d debug opencv_objdetect3417d debug opencv_tracking3417d debug opencv_video3417d debug zlibd optimized ippiw optimized ittnotify optimized opencv_core3417 optimized opencv_highgui3417 optimized opencv_imgcodecs3417 optimized opencv_imgproc3417 optimized opencv_objdetect3417 optimized opencv_tracking3417 optimized opencv_video3417 optimized zlib)
 
 if("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
     set_property(TARGET ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
