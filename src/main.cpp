@@ -6,7 +6,8 @@
 #include "filter.h"
 #include "opencv2\core\utility.hpp"
 #include "opencv2\highgui.hpp"
-#include "opencv2\tracking\tracker.hpp"
+#include "opencv2\tracking.hpp"
+#include "opencv2\tracking\tracking_legacy.hpp"
 #include "opencv2\objdetect.hpp"
 #include "opencv2\video.hpp"
 #include "resource.h"
@@ -516,31 +517,31 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 			}
 			int64 start_time = cv::getTickCount();
 			// Create Tracker
-			cv::Ptr<cv::Tracker> tracker;
+			cv::Ptr<cv::legacy::Tracker> tracker;
 			switch (fp->track[0] - 1) {
 			case 0:
-				tracker = cv::TrackerBoosting::create();
+				tracker = cv::legacy::TrackerBoosting::create();
 				break;
 			case 1:
-				tracker = cv::TrackerMIL::create();
+				tracker = cv::legacy::TrackerMIL::create();
 				break;
 			case 2:
-				tracker = cv::TrackerMedianFlow::create();
+				tracker = cv::legacy::TrackerMedianFlow::create();
 				break;
 			case 3:
-				tracker = cv::TrackerTLD::create();
+				tracker = cv::legacy::TrackerTLD::create();
 				break;
 			case 4:
-				tracker = cv::TrackerKCF::create();
+				tracker = cv::legacy::TrackerKCF::create();
 				break;
 			case 5:
-				tracker = cv::TrackerCSRT::create();
+				tracker = cv::legacy::TrackerCSRT::create();
 				break;
 			default:
-				tracker = cv::TrackerMOSSE::create();
+				tracker = cv::legacy::TrackerMOSSE::create();
 				break;
 			}
-			if (tracker == NULL)
+			if (!tracker)
 			{
 				MessageBox(NULL, "Error when creating tracker", "OpenCV3 Error", MB_OK);
 				return FALSE;

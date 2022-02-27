@@ -11,7 +11,7 @@ target_sources(${PROJECT_NAME} PRIVATE main.cpp main.def resource.rc)
 set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ".auf")
 target_include_directories(${PROJECT_NAME} PRIVATE ${OPENCV_INCLUDE_DIR})
 target_link_directories(${PROJECT_NAME} PRIVATE ${OPENCV_LIBRARY_DIR})
-target_link_libraries(${PROJECT_NAME} PRIVATE comctl32 ippicvmt debug ippiwd debug ittnotifyd debug opencv_core3417d debug opencv_highgui3417d debug opencv_imgcodecs3417d debug opencv_imgproc3417d debug opencv_objdetect3417d debug opencv_tracking3417d debug opencv_video3417d debug zlibd optimized ippiw optimized ittnotify optimized opencv_core3417 optimized opencv_highgui3417 optimized opencv_imgcodecs3417 optimized opencv_imgproc3417 optimized opencv_objdetect3417 optimized opencv_tracking3417 optimized opencv_video3417 optimized zlib)
+target_link_libraries(${PROJECT_NAME} PRIVATE comctl32 ippicvmt debug ippiwd debug ittnotifyd debug opencv_core455d debug opencv_highgui455d debug opencv_imgcodecs455d debug opencv_imgproc455d debug opencv_objdetect455d debug opencv_tracking455d debug opencv_video455d debug opencv_calib3d455d debug opencv_flann455d debug opencv_features2d455d debug zlibd optimized ippiw optimized ittnotify optimized opencv_core455 optimized opencv_highgui455 optimized opencv_imgcodecs455 optimized opencv_imgproc455 optimized opencv_objdetect455 optimized opencv_tracking455 optimized opencv_video455 optimized opencv_calib3d455 optimized opencv_flann455 optimized opencv_features2d455 optimized zlib)
 
 if("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
     set_property(TARGET ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")

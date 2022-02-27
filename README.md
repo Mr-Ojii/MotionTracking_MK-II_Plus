@@ -1,5 +1,5 @@
 # MotionTracking_MKII_Plus
-AviUtl object tracking (rubbish) plugin based on LKT/optical flow. Use OpenCV 3.4.1 or newer.
+AviUtl object tracking (rubbish) plugin based on LKT/optical flow. Use OpenCV 4.5.1 or newer.
 
 ## System Requirement
 *- Intel Core-i series processor  
@@ -33,7 +33,7 @@ BGSubtraction aims to isolate the moving object from the background. It can outp
 
 ## Building From Source
 1. Run `git clone https://github.com/Mr-Ojii/MotionTracking_MKII_Plus.git`
-2. Build your own OpenCV 3.4.17 STATIC (Both Debug and Release builds)
+2. Build your own OpenCV 4.5.5 STATIC (Both Debug and Release builds)
 3. Generate VS project file from src/CMakeLists.txt
 4. Build with Visual Studio
 
