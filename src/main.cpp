@@ -442,16 +442,22 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 		case MID_FILTER_BUTTON: //Object selection
 		{
 			int srcw, srch;
+			if (!fp->exfunc->get_select_frame(editp, &selA, &selB)) 
+			{
+				MessageBox(NULL, "Cannot get selected frame number", "AviUtl API Error", MB_OK);
+				return FALSE;
+			}
 			if (!fp->exfunc->get_pixel_filtered(editp, selA, NULL, &srcw, &srch))
 			{
 				MessageBox(NULL, "Cannot get frame size", "AviUtl API Error", MB_OK);
 				return FALSE;
 			};
-			fp->exfunc->get_select_frame(editp, &selA, &selB);
-			PIXEL* aubgr = new PIXEL[srcw * srch];
+			const int step = ((srcw + 1) * 3) & ~3;
+
+			uint8_t* aubgr = new uint8_t[step * srch];
 			if (fp->exfunc->get_pixel_filtered(editp, selA, aubgr, NULL, NULL))
 			{
-				cv::Mat cvBuffer(srch, srcw, CV_8UC3, aubgr);
+				cv::Mat cvBuffer(srch, srcw, CV_8UC3, aubgr, step);
 				cv::flip(cvBuffer, cvBuffer, 0);
 				cvBuffer.copyTo(ocvImage);
 				cvBuffer.~Mat();
@@ -553,13 +559,14 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 			//Loop through selected frames for analysis
 			TCHAR shortmsg[64] = { 0 };
 			int64 prev_stamp, new_stamp;
-			PIXEL* nextau = new PIXEL[frmw * frmh];
+			const int step = ((frmw + 1) * 3) & ~3;
+			uint8_t* nextau = new uint8_t[step * frmh];
 			for (int f = selA; f <= selB; f++)
 			{
 				//Set next frame
 				if (fp->exfunc->get_pixel_filtered(editp, f, nextau, NULL, NULL))
 				{
-					cv::Mat cvNext(frmh, frmw, CV_8UC3, nextau);
+					cv::Mat cvNext(frmh, frmw, CV_8UC3, nextau, step);
 					cv::flip(cvNext, cvNext, 0);
 					cvNext.copyTo(ocvImage);
 					cvNext.~Mat();
@@ -1023,7 +1030,6 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 				p2 += yc_linesize;
 			}
 			fp->exfunc->yc2rgb(aubuf, yc_src, frmsize);
-			//fp->exfunc->get_pixel_filtered(fpip->editp, fpip->frame, aubuf, NULL, NULL);
 
 			cv::Mat ocvbuf(fpip->h, fpip->w, CV_8UC3, aubuf);
 			//cv::flip(ocvbuf, ocvbuf, 0);
