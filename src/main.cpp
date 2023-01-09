@@ -12,18 +12,18 @@
 #include "opencv2\video.hpp"
 #include "resource.h"
 
+#define METHOD_N 7
+TCHAR* track_method[] = { "BOOSTING", "MIL", "MEDIANFLOW", "TLD", "KCF", "CSRT", "MOSSE" };
+
 #define	TRACK_N	1														//	トラックバーの数
 TCHAR	*track_name[] = { "Method" };	//	トラックバーの名前
 int		track_default[] = { 2 };	//	トラックバーの初期値
 int		track_s[] = { 1 };	//	トラックバーの下限値
-int		track_e[] = { 7 };	//	トラックバーの上限値
+int		track_e[] = { METHOD_N };	//	トラックバーの上限値
 
 #define	CHECK_N	10														//	チェックボックスの数
 TCHAR	*check_name[] = { "1. Select Object", "2. Analyze", "3A. View Result", "3B. Clear Result", "4. As English EXO?", "5. As Sub-filter/部分フィルター?", "6. Save EXO", "Quick Blur", "Easy Privacy", "⑨HELP" };				//	チェックボックスの名前
 int		check_default[] = { -1, -1, 0, -1, 0, 0, -1, 0, 0, -1 };				//	チェックボックスの初期値 (値は0か1)
-
-#define METHOD_N 7
-TCHAR* track_method[] = { "BOOSTING", "MIL", "MEDIANFLOW", "TLD", "KCF", "CSRT", "MOSSE" };
 
 #define HSV_CHECK_N 4
 TCHAR   *hsv_check_name[] = { "HSV", "Hue only", "Saturation only", "Value only" };
