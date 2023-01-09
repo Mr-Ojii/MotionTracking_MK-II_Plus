@@ -454,14 +454,13 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 			};
 			const int step = ((srcw + 1) * 3) & ~3;
 
-			uint8_t* aubgr = new uint8_t[step * srch];
-			if (fp->exfunc->get_pixel_filtered(editp, selA, aubgr, NULL, NULL))
+			std::unique_ptr<uint8_t[]> aubgr = std::make_unique<uint8_t[]>(step * srch);
+			if (fp->exfunc->get_pixel_filtered(editp, selA, aubgr.get(), NULL, NULL))
 			{
-				cv::Mat cvBuffer(srch, srcw, CV_8UC3, aubgr, step);
+				cv::Mat cvBuffer(srch, srcw, CV_8UC3, aubgr.get(), step);
 				cv::flip(cvBuffer, cvBuffer, 0);
 				cvBuffer.copyTo(ocvImage);
 				cvBuffer.~Mat();
-				delete[] aubgr;
 				cv::namedWindow("Object Selection", cv::WINDOW_AUTOSIZE);
 				cv::setMouseCallback("Object Selection", onMouse, 0);
 				cv::imshow("Object Selection", ocvImage);
@@ -560,13 +559,13 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 			TCHAR shortmsg[64] = { 0 };
 			int64 prev_stamp, new_stamp;
 			const int step = ((frmw + 1) * 3) & ~3;
-			uint8_t* nextau = new uint8_t[step * frmh];
+			std::unique_ptr<uint8_t[]> nextau = std::make_unique<uint8_t[]>(step * frmh);
 			for (int f = selA; f <= selB; f++)
 			{
 				//Set next frame
-				if (fp->exfunc->get_pixel_filtered(editp, f, nextau, NULL, NULL))
+				if (fp->exfunc->get_pixel_filtered(editp, f, nextau.get(), NULL, NULL))
 				{
-					cv::Mat cvNext(frmh, frmw, CV_8UC3, nextau, step);
+					cv::Mat cvNext(frmh, frmw, CV_8UC3, nextau.get(), step);
 					cv::flip(cvNext, cvNext, 0);
 					cvNext.copyTo(ocvImage);
 					cvNext.~Mat();
@@ -585,7 +584,6 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 					if (!tracker->init(ocvImage, boundingBox))
 					{
 						MessageBox(NULL, "Error initializing tracker", "OpenCV3 Error", MB_OK);
-						delete[] nextau;
 						return FALSE;
 					}
 					track_init = true;
@@ -615,7 +613,6 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 					catch (...)
 					{
 						MessageBox(NULL, "Obscure tracker error", "Tracker update exception", MB_OK);
-						delete[] nextau;
 						return FALSE;
 					}
 				}
@@ -642,7 +639,6 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 				}
 				track_result.push_back(box);
 			}
-			delete[] nextau;
 			int64 end_time = cv::getTickCount();
 			double run_time = (end_time - start_time) / cv::getTickFrequency();
 			SecureZeroMemory(shortmsg, sizeof(TCHAR[64]));
@@ -961,10 +957,10 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 	if (isFilterActive && isEditing && fp->check[2] && hasResult && isFrameInRng && !isSaving)
 	{
 		int frmsize = fpip->w * fpip->h;
-		PIXEL* aubuf = new PIXEL[frmsize];
-		PIXEL_YC* yc_src = new PIXEL_YC[frmsize];
+		std::unique_ptr<PIXEL[]> aubuf = std::make_unique<PIXEL[]>(frmsize);
+		std::unique_ptr<PIXEL_YC[]> yc_src = std::make_unique<PIXEL_YC[]>(frmsize);
 		byte* p1 = (byte*)fpip->ycp_edit;
-		byte* p2 = (byte*)yc_src;
+		byte* p2 = (byte*)yc_src.get();
 		size_t yc_linesize = sizeof(PIXEL_YC) * fpip->w;
 		size_t yc_maxlinesize = sizeof(PIXEL_YC) * fpip->max_w;
 		for (int line = 0; line < fpip->h; line++)
@@ -973,8 +969,8 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 			p1 += yc_maxlinesize;
 			p2 += yc_linesize;
 		}
-		fp->exfunc->yc2rgb(aubuf, yc_src, frmsize);
-		cv::Mat disp(fpip->h, fpip->w, CV_8UC3, aubuf);
+		fp->exfunc->yc2rgb(aubuf.get(), yc_src.get(), frmsize);
+		cv::Mat disp(fpip->h, fpip->w, CV_8UC3, aubuf.get());
 
 		if (track_found[fpip->frame - selA])
 		{
@@ -987,12 +983,12 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 		}
 
 		PIXEL* aubuf2 = (PIXEL*)disp.data;
-		PIXEL_YC* ycbuf = new PIXEL_YC[frmsize];
-		fp->exfunc->rgb2yc(ycbuf, aubuf2, frmsize);
+		std::unique_ptr<PIXEL_YC[]> ycbuf = std::make_unique<PIXEL_YC[]>(frmsize);
+		fp->exfunc->rgb2yc(ycbuf.get(), aubuf2, frmsize);
 		size_t linesize = sizeof(PIXEL_YC) * fpip->w;
 		size_t canvas_linesize = sizeof(PIXEL_YC) * fpip->max_w;
 		byte* ptemp = (byte*)fpip->ycp_temp;
-		byte* psrc = (byte*)ycbuf;
+		byte* psrc = (byte*)ycbuf.get();
 		for (int line = 0; line < fpip->h; line++)
 		{
 			memcpy_s(ptemp, canvas_linesize, psrc, linesize);
@@ -1006,10 +1002,6 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 		//Cleanup
 
 		disp.~Mat();
-
-		delete[] aubuf;
-		delete[] yc_src;
-		delete[] ycbuf;
 	}
 
 	if (isFilterActive && isEditing && fp->check[7] && hasResult && isFrameInRng)
@@ -1017,10 +1009,10 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 		if (track_found[fpip->frame - selA])
 		{
 			size_t frmsize = fpip->w* fpip->h;
-			PIXEL* aubuf = new PIXEL[frmsize];
-			PIXEL_YC* yc_src = new PIXEL_YC[frmsize];
+			std::unique_ptr<PIXEL[]> aubuf = std::make_unique<PIXEL[]>(frmsize);
+			std::unique_ptr<PIXEL_YC[]> yc_src = std::make_unique<PIXEL_YC[]>(frmsize);
 			byte* p1 = (byte*)fpip->ycp_edit;
-			byte* p2 = (byte*)yc_src;
+			byte* p2 = (byte*)yc_src.get();
 			size_t yc_linesize = sizeof(PIXEL_YC)*fpip->w;
 			size_t yc_maxlinesize = sizeof(PIXEL_YC)*fpip->max_w;
 			for (int line = 0; line < fpip->h; line++)
@@ -1029,19 +1021,19 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 				p1 += yc_maxlinesize;
 				p2 += yc_linesize;
 			}
-			fp->exfunc->yc2rgb(aubuf, yc_src, frmsize);
+			fp->exfunc->yc2rgb(aubuf.get(), yc_src.get(), frmsize);
 
-			cv::Mat ocvbuf(fpip->h, fpip->w, CV_8UC3, aubuf);
+			cv::Mat ocvbuf(fpip->h, fpip->w, CV_8UC3, aubuf.get());
 			//cv::flip(ocvbuf, ocvbuf, 0);
 			cv::Mat blurArea(ocvbuf, track_result[fpip->frame - selA]);
 			cv::blur(blurArea, blurArea, cv::Size(21, 21));
 			PIXEL* aubuf2 = (PIXEL*)ocvbuf.data;
-			PIXEL_YC* ycbuf = new PIXEL_YC[frmsize];
-			fp->exfunc->rgb2yc(ycbuf, aubuf2, frmsize);
+			std::unique_ptr<PIXEL_YC[]> ycbuf = std::make_unique<PIXEL_YC[]>(frmsize);
+			fp->exfunc->rgb2yc(ycbuf.get(), aubuf2, frmsize);
 			size_t linesize = sizeof(PIXEL_YC)*fpip->w;
 			size_t canvas_linesize = sizeof(PIXEL_YC)*fpip->max_w;
 			byte* ptemp = (byte*)fpip->ycp_temp;
-			byte* psrc = (byte*)ycbuf;
+			byte* psrc = (byte*)ycbuf.get();
 			for (int line = 0; line < fpip->h; line++)
 			{
 				memcpy_s(ptemp, canvas_linesize, psrc, linesize);
@@ -1054,11 +1046,8 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 			fpip->ycp_edit = ycswap;
 			//Cleanup
 
-			delete[] ycbuf;
 			blurArea.~Mat();
 			ocvbuf.~Mat();
-			delete[] aubuf;
-			delete[] yc_src;
 			redraw = true;
 		}
 	}
@@ -1129,12 +1118,12 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 			if (frontface_list.size() || profileface_list.size())
 			{
 				PIXEL* aubuf2 = (PIXEL*)ocvbuf.data;
-				PIXEL_YC* ycbuf = new PIXEL_YC[frmsize];
-				fp->exfunc->rgb2yc(ycbuf, aubuf2, frmsize);
+				std::unique_ptr<PIXEL_YC[]> ycbuf = std::make_unique<PIXEL_YC[]>(frmsize);
+				fp->exfunc->rgb2yc(ycbuf.get(), aubuf2, frmsize);
 				size_t linesize = sizeof(PIXEL_YC)*fpip->w;
 				size_t canvas_linesize = sizeof(PIXEL_YC)*fpip->max_w;
 				byte* ptemp = (byte*)fpip->ycp_temp;
-				byte* psrc = (byte*)ycbuf;
+				byte* psrc = (byte*)ycbuf.get();
 				for (int line = 0; line < fpip->h; line++)
 				{
 					memcpy_s(ptemp, canvas_linesize, psrc, linesize);
@@ -1145,7 +1134,6 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 				PIXEL_YC* ycswap = fpip->ycp_temp;
 				fpip->ycp_temp = fpip->ycp_edit;
 				fpip->ycp_edit = ycswap;
-				delete[] ycbuf;
 			}
 			
 			//Clean up
@@ -1169,11 +1157,11 @@ BOOL hsv_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 	int w, h;
 	w = fpip->w;
 	h = fpip->h;
-	PIXEL_YC* ycbuf = new PIXEL_YC[w*h];
-	PIXEL* bgrbuf = new PIXEL[w*h];
+	std::unique_ptr<PIXEL_YC[]> ycbuf = std::make_unique<PIXEL_YC[]>(w * h);
+	std::unique_ptr<PIXEL[]> bgrbuf = std::make_unique<PIXEL[]>(w * h);
 	byte *src_ptr, *dst_ptr;
 	src_ptr = (byte*)fpip->ycp_edit;
-	dst_ptr = (byte*)ycbuf;
+	dst_ptr = (byte*)ycbuf.get();
 	size_t src_linesize = fpip->max_w * sizeof(PIXEL_YC);
 	size_t dst_linesize = w * sizeof(PIXEL_YC);
 	for (int line = 0; line < h; line++)
@@ -1182,8 +1170,8 @@ BOOL hsv_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 		dst_ptr += dst_linesize;
 		src_ptr += src_linesize;
 	}
-	fp->exfunc->yc2rgb(bgrbuf, ycbuf, w*h);
-	cv::Mat ocvImg(h, w, CV_8UC3, bgrbuf);
+	fp->exfunc->yc2rgb(bgrbuf.get(), ycbuf.get(), w * h);
+	cv::Mat ocvImg(h, w, CV_8UC3, bgrbuf.get());
 	cv::Mat outImg;
 	cv::cvtColor(ocvImg, outImg, cv::COLOR_BGR2HSV_FULL);
 	if (fp->check[1]) //Hue
@@ -1207,8 +1195,8 @@ BOOL hsv_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 		cv::cvtColor(channels[2], outImg, cv::COLOR_GRAY2BGR);
 		channels.clear();
 	}
-	fp->exfunc->rgb2yc(ycbuf, (PIXEL*)outImg.data, w*h);
-	src_ptr = (byte*)ycbuf;
+	fp->exfunc->rgb2yc(ycbuf.get(), (PIXEL*)outImg.data, w * h);
+	src_ptr = (byte*)ycbuf.get();
 	dst_ptr = (byte*)fpip->ycp_temp;
 	src_linesize = w* sizeof(PIXEL_YC);
 	dst_linesize = fpip->max_w* sizeof(PIXEL_YC);
@@ -1223,8 +1211,6 @@ BOOL hsv_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 	fpip->ycp_temp = temp;
 	outImg.~Mat();
 	ocvImg.~Mat();
-	delete[] bgrbuf;
-	delete[] ycbuf;
 	return TRUE;
 }
 
@@ -1265,17 +1251,16 @@ BOOL bgs_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 		for (int f = frame_s; f <= fpip->frame-1; f++)// Scan all frames in range
 		{
 			PIXEL_YC* ycbuf = fp->exfunc->get_ycp_filtering_cache_ex(fp, fpip->editp, f, &w, &h);
-			PIXEL* bgrbuf = new PIXEL[w*h];
-			fp->exfunc->yc2rgb(bgrbuf, ycbuf, w*h);
-			cv::Mat ocvbuf(h, w, CV_8UC3, bgrbuf);
+			std::unique_ptr<PIXEL[]> bgrbuf = std::make_unique<PIXEL[]>(w * h);
+			fp->exfunc->yc2rgb(bgrbuf.get(), ycbuf, w * h);
+			cv::Mat ocvbuf(h, w, CV_8UC3, bgrbuf.get());
 			mog2->apply(ocvbuf, mask);
 			ocvbuf.~Mat();
-			delete[] bgrbuf;
 		}
 		PIXEL_YC* ycbuf = fp->exfunc->get_ycp_filtering_cache_ex(fp, fpip->editp, fpip->frame, &w, &h);
-		PIXEL* bgrbuf = new PIXEL[w*h];
-		fp->exfunc->yc2rgb(bgrbuf, ycbuf, w*h);
-		cv::Mat ocvbuf(h, w, CV_8UC3, bgrbuf);
+		std::unique_ptr<PIXEL[]> bgrbuf = std::make_unique<PIXEL[]>(w * h);
+		fp->exfunc->yc2rgb(bgrbuf.get(), ycbuf, w * h);
+		cv::Mat ocvbuf(h, w, CV_8UC3, bgrbuf.get());
 		mog2->apply(ocvbuf, mask);
 		cv::Mat element = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
 		cv::erode(mask, mask, element);
@@ -1283,11 +1268,11 @@ BOOL bgs_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 		cv::Mat tempbuf;
 		ocvbuf.copyTo(tempbuf, mask);
 				
-		PIXEL_YC* ycout = new PIXEL_YC[w*h];
-		fp->exfunc->rgb2yc(ycout, (PIXEL*)tempbuf.data, w*h);
+		std::unique_ptr<PIXEL_YC[]> ycout = std::make_unique<PIXEL_YC[]>(w * h);
+		fp->exfunc->rgb2yc(ycout.get(), (PIXEL*)tempbuf.data, w * h);
 		tempbuf.~Mat();
 		mask.~Mat();
-		byte* src_ptr = (byte*)ycout;
+		byte* src_ptr = (byte*)ycout.get();
 		byte* dst_ptr = (byte*)fpip->ycp_temp;
 		size_t src_linesize = w* sizeof(PIXEL_YC);
 		size_t dst_linesize = fpip->max_w * sizeof(PIXEL_YC);
@@ -1302,8 +1287,6 @@ BOOL bgs_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 		fpip->ycp_temp = swap;
 		//Cleanup
 		ocvbuf.~Mat();
-		delete[] ycout;
-		delete[] bgrbuf;
 		return TRUE;
 	}
 
@@ -1317,17 +1300,16 @@ BOOL bgs_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 		for (int f = frame_s; f <= frame_e; f++)// Scan all frames in range
 		{
 			PIXEL_YC* ycbuf = fp->exfunc->get_ycp_filtering_cache_ex(fp, fpip->editp, f, &w, &h);
-			PIXEL* bgrbuf = new PIXEL[w*h];
-			fp->exfunc->yc2rgb(bgrbuf, ycbuf, w*h);
-			cv::Mat ocvbuf(h, w, CV_8UC3, bgrbuf);
+			std::unique_ptr<PIXEL[]> bgrbuf = std::make_unique<PIXEL[]>(w * h);
+			fp->exfunc->yc2rgb(bgrbuf.get(), ycbuf, w * h);
+			cv::Mat ocvbuf(h, w, CV_8UC3, bgrbuf.get());
 			knn->apply(ocvbuf, mask);
 			ocvbuf.~Mat();
-			delete[] bgrbuf;
 		}
 		PIXEL_YC* ycbuf = fp->exfunc->get_ycp_filtering_cache_ex(fp, fpip->editp, fpip->frame, &w, &h);
-		PIXEL* bgrbuf = new PIXEL[w*h];
-		fp->exfunc->yc2rgb(bgrbuf, ycbuf, w*h);
-		cv::Mat ocvbuf(h, w, CV_8UC3, bgrbuf);
+		std::unique_ptr<PIXEL[]> bgrbuf = std::make_unique<PIXEL[]>(w * h);
+		fp->exfunc->yc2rgb(bgrbuf.get(), ycbuf, w * h);
+		cv::Mat ocvbuf(h, w, CV_8UC3, bgrbuf.get());
 		knn->apply(ocvbuf, mask);
 		cv::Mat element = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
 		cv::erode(mask, mask, element);
@@ -1335,13 +1317,13 @@ BOOL bgs_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 		cv::Mat tempbuf;
 		ocvbuf.copyTo(tempbuf, mask);
 
-		PIXEL_YC* ycout = new PIXEL_YC[w*h];
-		fp->exfunc->rgb2yc(ycout, (PIXEL*)tempbuf.data, w*h);
+		std::unique_ptr<PIXEL_YC[]> ycout = std::make_unique<PIXEL_YC[]>(w * h);
+		fp->exfunc->rgb2yc(ycout.get(), (PIXEL*)tempbuf.data, w * h);
 		tempbuf.~Mat();
 		mask.~Mat();
-		byte* src_ptr = (byte*)ycout;
+		byte* src_ptr = (byte*)ycout.get();
 		byte* dst_ptr = (byte*)fpip->ycp_temp;
-		size_t src_linesize = w* sizeof(PIXEL_YC);
+		size_t src_linesize = w * sizeof(PIXEL_YC);
 		size_t dst_linesize = fpip->max_w * sizeof(PIXEL_YC);
 		for (int line = 0; line < h; line++)
 		{
@@ -1354,8 +1336,6 @@ BOOL bgs_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 		fpip->ycp_temp = swap;
 		//Cleanup
 		ocvbuf.~Mat();
-		delete[] ycout;
-		delete[] bgrbuf;
 		return TRUE;
 	}
 
@@ -1371,17 +1351,16 @@ BOOL bgs_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 		for (int f = frame_s; f <= fpip->frame - 1; f++)// Scan all frames in range
 		{
 			PIXEL_YC* ycbuf = fp->exfunc->get_ycp_filtering_cache_ex(fp, fpip->editp, f, &w, &h);
-			PIXEL* bgrbuf = new PIXEL[w*h];
-			fp->exfunc->yc2rgb(bgrbuf, ycbuf, w*h);
-			cv::Mat ocvbuf(h, w, CV_8UC3, bgrbuf);
+			std::unique_ptr<PIXEL[]> bgrbuf = std::make_unique<PIXEL[]>(w * h);
+			fp->exfunc->yc2rgb(bgrbuf.get(), ycbuf, w* h);
+			cv::Mat ocvbuf(h, w, CV_8UC3, bgrbuf.get());
 			mog2->apply(ocvbuf, mask);
 			ocvbuf.~Mat();
-			delete[] bgrbuf;
 		}
 		PIXEL_YC* ycbuf = fp->exfunc->get_ycp_filtering_cache_ex(fp, fpip->editp, fpip->frame, &w, &h);
-		PIXEL* bgrbuf = new PIXEL[w*h];
-		fp->exfunc->yc2rgb(bgrbuf, ycbuf, w*h);
-		cv::Mat ocvbuf(h, w, CV_8UC3, bgrbuf);
+		std::unique_ptr<PIXEL[]> bgrbuf = std::make_unique<PIXEL[]>(w * h);
+		fp->exfunc->yc2rgb(bgrbuf.get(), ycbuf, w* h);
+		cv::Mat ocvbuf(h, w, CV_8UC3, bgrbuf.get());
 		mog2->apply(ocvbuf, mask);
 		cv::Mat element = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
 		cv::erode(mask, mask, element);
@@ -1389,11 +1368,11 @@ BOOL bgs_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 		cv::Mat tempbuf;
 		cv::cvtColor(mask, tempbuf, cv::COLOR_GRAY2BGR);
 
-		PIXEL_YC* ycout = new PIXEL_YC[w*h];
-		fp->exfunc->rgb2yc(ycout, (PIXEL*)tempbuf.data, w*h);
+		std::unique_ptr<PIXEL_YC[]> ycout = std::make_unique<PIXEL_YC[]>(w * h);
+		fp->exfunc->rgb2yc(ycout.get(), (PIXEL*)tempbuf.data, w* h);
 		tempbuf.~Mat();
 		mask.~Mat();
-		byte* src_ptr = (byte*)ycout;
+		byte* src_ptr = (byte*)ycout.get();
 		byte* dst_ptr = (byte*)fpip->ycp_temp;
 		size_t src_linesize = w* sizeof(PIXEL_YC);
 		size_t dst_linesize = fpip->max_w * sizeof(PIXEL_YC);
@@ -1408,8 +1387,6 @@ BOOL bgs_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 		fpip->ycp_temp = swap;
 		//Cleanup
 		ocvbuf.~Mat();
-		delete[] ycout;
-		delete[] bgrbuf;
 		return TRUE;
 	}
 	
@@ -1423,17 +1400,16 @@ BOOL bgs_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 		for (int f = frame_s; f <= frame_e; f++)// Scan all frames in range
 		{
 			PIXEL_YC* ycbuf = fp->exfunc->get_ycp_filtering_cache_ex(fp, fpip->editp, f, &w, &h);
-			PIXEL* bgrbuf = new PIXEL[w*h];
-			fp->exfunc->yc2rgb(bgrbuf, ycbuf, w*h);
-			cv::Mat ocvbuf(h, w, CV_8UC3, bgrbuf);
+			std::unique_ptr<PIXEL[]> bgrbuf = std::make_unique<PIXEL[]>(w * h);
+			fp->exfunc->yc2rgb(bgrbuf.get(), ycbuf, w * h);
+			cv::Mat ocvbuf(h, w, CV_8UC3, bgrbuf.get());
 			knn->apply(ocvbuf, mask);
 			ocvbuf.~Mat();
-			delete[] bgrbuf;
 		}
 		PIXEL_YC* ycbuf = fp->exfunc->get_ycp_filtering_cache_ex(fp, fpip->editp, fpip->frame, &w, &h);
-		PIXEL* bgrbuf = new PIXEL[w*h];
-		fp->exfunc->yc2rgb(bgrbuf, ycbuf, w*h);
-		cv::Mat ocvbuf(h, w, CV_8UC3, bgrbuf);
+		std::unique_ptr<PIXEL[]> bgrbuf = std::make_unique<PIXEL[]>(w * h);
+		fp->exfunc->yc2rgb(bgrbuf.get(), ycbuf, w* h);
+		cv::Mat ocvbuf(h, w, CV_8UC3, bgrbuf.get());
 		knn->apply(ocvbuf, mask);
 		cv::Mat element = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
 		cv::erode(mask, mask, element);
@@ -1441,11 +1417,11 @@ BOOL bgs_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 		cv::Mat tempbuf;
 		cv::cvtColor(mask, tempbuf, cv::COLOR_GRAY2BGR);
 
-		PIXEL_YC* ycout = new PIXEL_YC[w*h];
-		fp->exfunc->rgb2yc(ycout, (PIXEL*)tempbuf.data, w*h);
+		std::unique_ptr<PIXEL_YC[]> ycout = std::make_unique<PIXEL_YC[]>(w * h);
+		fp->exfunc->rgb2yc(ycout.get(), (PIXEL*)tempbuf.data, w* h);
 		tempbuf.~Mat();
 		mask.~Mat();
-		byte* src_ptr = (byte*)ycout;
+		byte* src_ptr = (byte*)ycout.get();
 		byte* dst_ptr = (byte*)fpip->ycp_temp;
 		size_t src_linesize = w* sizeof(PIXEL_YC);
 		size_t dst_linesize = fpip->max_w * sizeof(PIXEL_YC);
@@ -1460,8 +1436,6 @@ BOOL bgs_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 		fpip->ycp_temp = swap;
 		//Cleanup
 		ocvbuf.~Mat();
-		delete[] ycout;
-		delete[] bgrbuf;
 		return TRUE;
 	}
 	return FALSE;
