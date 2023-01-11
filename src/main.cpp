@@ -464,7 +464,6 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 			cv::Mat cvBuffer(srch, srcw, CV_8UC3, aubgr.get(), step);
 			cv::flip(cvBuffer, cvBuffer, 0);
 			cvBuffer.copyTo(ocvImage);
-			cvBuffer.~Mat();
 
 			cv::namedWindow("Object Selection", cv::WINDOW_AUTOSIZE);
 			cv::setMouseCallback("Object Selection", onMouse, 0);
@@ -576,7 +575,6 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 				cv::Mat cvNext(frmh, frmw, CV_8UC3, nextau.get(), step);
 				cv::flip(cvNext, cvNext, 0);
 				cvNext.copyTo(ocvImage);
-				cvNext.~Mat();
 
 				if (!track_init)
 				{
@@ -1002,9 +1000,6 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 		PIXEL_YC* ycswap = fpip->ycp_temp;
 		fpip->ycp_temp = fpip->ycp_edit;
 		fpip->ycp_edit = ycswap;
-		//Cleanup
-
-		disp.~Mat();
 	}
 
 	if (isFilterActive && isEditing && fp->check[7] && hasResult && isFrameInRng)
@@ -1049,8 +1044,6 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 			fpip->ycp_edit = ycswap;
 			//Cleanup
 
-			blurArea.~Mat();
-			ocvbuf.~Mat();
 			redraw = true;
 		}
 	}
@@ -1140,7 +1133,6 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 			
 			//Clean up
 						
-			ocvbuf.~Mat();
 			redraw = true;
 		}
 	}
@@ -1209,8 +1201,6 @@ BOOL hsv_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 	PIXEL_YC* temp = fpip->ycp_edit;
 	fpip->ycp_edit = fpip->ycp_temp;
 	fpip->ycp_temp = temp;
-	outImg.~Mat();
-	ocvImg.~Mat();
 	return TRUE;
 }
 
@@ -1255,7 +1245,6 @@ BOOL bgs_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 			fp->exfunc->yc2rgb(bgrbuf.get(), ycbuf, w * h);
 			cv::Mat ocvbuf(h, w, CV_8UC3, bgrbuf.get());
 			mog2->apply(ocvbuf, mask);
-			ocvbuf.~Mat();
 		}
 		PIXEL_YC* ycbuf = fp->exfunc->get_ycp_filtering_cache_ex(fp, fpip->editp, fpip->frame, &w, &h);
 		std::unique_ptr<PIXEL[]> bgrbuf = std::make_unique<PIXEL[]>(w * h);
@@ -1270,8 +1259,6 @@ BOOL bgs_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 				
 		std::unique_ptr<PIXEL_YC[]> ycout = std::make_unique<PIXEL_YC[]>(w * h);
 		fp->exfunc->rgb2yc(ycout.get(), (PIXEL*)tempbuf.data, w * h);
-		tempbuf.~Mat();
-		mask.~Mat();
 		byte* src_ptr = (byte*)ycout.get();
 		byte* dst_ptr = (byte*)fpip->ycp_temp;
 		size_t src_linesize = w* sizeof(PIXEL_YC);
@@ -1285,8 +1272,6 @@ BOOL bgs_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 		PIXEL_YC* swap = fpip->ycp_edit;
 		fpip->ycp_edit = fpip->ycp_temp;
 		fpip->ycp_temp = swap;
-		//Cleanup
-		ocvbuf.~Mat();
 		return TRUE;
 	}
 
@@ -1304,7 +1289,6 @@ BOOL bgs_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 			fp->exfunc->yc2rgb(bgrbuf.get(), ycbuf, w * h);
 			cv::Mat ocvbuf(h, w, CV_8UC3, bgrbuf.get());
 			knn->apply(ocvbuf, mask);
-			ocvbuf.~Mat();
 		}
 		PIXEL_YC* ycbuf = fp->exfunc->get_ycp_filtering_cache_ex(fp, fpip->editp, fpip->frame, &w, &h);
 		std::unique_ptr<PIXEL[]> bgrbuf = std::make_unique<PIXEL[]>(w * h);
@@ -1319,8 +1303,6 @@ BOOL bgs_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 
 		std::unique_ptr<PIXEL_YC[]> ycout = std::make_unique<PIXEL_YC[]>(w * h);
 		fp->exfunc->rgb2yc(ycout.get(), (PIXEL*)tempbuf.data, w * h);
-		tempbuf.~Mat();
-		mask.~Mat();
 		byte* src_ptr = (byte*)ycout.get();
 		byte* dst_ptr = (byte*)fpip->ycp_temp;
 		size_t src_linesize = w * sizeof(PIXEL_YC);
@@ -1334,8 +1316,6 @@ BOOL bgs_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 		PIXEL_YC* swap = fpip->ycp_edit;
 		fpip->ycp_edit = fpip->ycp_temp;
 		fpip->ycp_temp = swap;
-		//Cleanup
-		ocvbuf.~Mat();
 		return TRUE;
 	}
 
@@ -1355,7 +1335,6 @@ BOOL bgs_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 			fp->exfunc->yc2rgb(bgrbuf.get(), ycbuf, w* h);
 			cv::Mat ocvbuf(h, w, CV_8UC3, bgrbuf.get());
 			mog2->apply(ocvbuf, mask);
-			ocvbuf.~Mat();
 		}
 		PIXEL_YC* ycbuf = fp->exfunc->get_ycp_filtering_cache_ex(fp, fpip->editp, fpip->frame, &w, &h);
 		std::unique_ptr<PIXEL[]> bgrbuf = std::make_unique<PIXEL[]>(w * h);
@@ -1370,8 +1349,6 @@ BOOL bgs_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 
 		std::unique_ptr<PIXEL_YC[]> ycout = std::make_unique<PIXEL_YC[]>(w * h);
 		fp->exfunc->rgb2yc(ycout.get(), (PIXEL*)tempbuf.data, w* h);
-		tempbuf.~Mat();
-		mask.~Mat();
 		byte* src_ptr = (byte*)ycout.get();
 		byte* dst_ptr = (byte*)fpip->ycp_temp;
 		size_t src_linesize = w* sizeof(PIXEL_YC);
@@ -1385,8 +1362,6 @@ BOOL bgs_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 		PIXEL_YC* swap = fpip->ycp_edit;
 		fpip->ycp_edit = fpip->ycp_temp;
 		fpip->ycp_temp = swap;
-		//Cleanup
-		ocvbuf.~Mat();
 		return TRUE;
 	}
 	
@@ -1404,7 +1379,6 @@ BOOL bgs_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 			fp->exfunc->yc2rgb(bgrbuf.get(), ycbuf, w * h);
 			cv::Mat ocvbuf(h, w, CV_8UC3, bgrbuf.get());
 			knn->apply(ocvbuf, mask);
-			ocvbuf.~Mat();
 		}
 		PIXEL_YC* ycbuf = fp->exfunc->get_ycp_filtering_cache_ex(fp, fpip->editp, fpip->frame, &w, &h);
 		std::unique_ptr<PIXEL[]> bgrbuf = std::make_unique<PIXEL[]>(w * h);
@@ -1419,8 +1393,6 @@ BOOL bgs_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 
 		std::unique_ptr<PIXEL_YC[]> ycout = std::make_unique<PIXEL_YC[]>(w * h);
 		fp->exfunc->rgb2yc(ycout.get(), (PIXEL*)tempbuf.data, w* h);
-		tempbuf.~Mat();
-		mask.~Mat();
 		byte* src_ptr = (byte*)ycout.get();
 		byte* dst_ptr = (byte*)fpip->ycp_temp;
 		size_t src_linesize = w* sizeof(PIXEL_YC);
@@ -1434,8 +1406,6 @@ BOOL bgs_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 		PIXEL_YC* swap = fpip->ycp_edit;
 		fpip->ycp_edit = fpip->ycp_temp;
 		fpip->ycp_temp = swap;
-		//Cleanup
-		ocvbuf.~Mat();
 		return TRUE;
 	}
 	return FALSE;
