@@ -451,20 +451,24 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 			{
 				MessageBox(NULL, "Cannot get frame size", "AviUtl API Error", MB_OK);
 				return FALSE;
-			};
+			}
 			const int step = ((srcw + 1) * 3) & ~3;
 
 			std::unique_ptr<uint8_t[]> aubgr = std::make_unique<uint8_t[]>(step * srch);
-			if (fp->exfunc->get_pixel_filtered(editp, selA, aubgr.get(), NULL, NULL))
+			if (!fp->exfunc->get_pixel_filtered(editp, selA, aubgr.get(), NULL, NULL))
 			{
-				cv::Mat cvBuffer(srch, srcw, CV_8UC3, aubgr.get(), step);
-				cv::flip(cvBuffer, cvBuffer, 0);
-				cvBuffer.copyTo(ocvImage);
-				cvBuffer.~Mat();
-				cv::namedWindow("Object Selection", cv::WINDOW_AUTOSIZE);
-				cv::setMouseCallback("Object Selection", onMouse, 0);
-				cv::imshow("Object Selection", ocvImage);
+				MessageBox(NULL, "Cannot get image", "AviUtl API Error", MB_OK);
+				return FALSE;
 			}
+
+			cv::Mat cvBuffer(srch, srcw, CV_8UC3, aubgr.get(), step);
+			cv::flip(cvBuffer, cvBuffer, 0);
+			cvBuffer.copyTo(ocvImage);
+			cvBuffer.~Mat();
+
+			cv::namedWindow("Object Selection", cv::WINDOW_AUTOSIZE);
+			cv::setMouseCallback("Object Selection", onMouse, 0);
+			cv::imshow("Object Selection", ocvImage);
 			return TRUE;
 			break;
 		}
@@ -563,17 +567,16 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 			for (int f = selA; f <= selB; f++)
 			{
 				//Set next frame
-				if (fp->exfunc->get_pixel_filtered(editp, f, nextau.get(), NULL, NULL))
-				{
-					cv::Mat cvNext(frmh, frmw, CV_8UC3, nextau.get(), step);
-					cv::flip(cvNext, cvNext, 0);
-					cvNext.copyTo(ocvImage);
-					cvNext.~Mat();
-				}
-				else
+				if (!fp->exfunc->get_pixel_filtered(editp, f, nextau.get(), NULL, NULL))
 				{
 					MessageBox(NULL, "Cannot get next image", "AviUtl API Error", MB_OK);
+					return FALSE;
 				}
+
+				cv::Mat cvNext(frmh, frmw, CV_8UC3, nextau.get(), step);
+				cv::flip(cvNext, cvNext, 0);
+				cvNext.copyTo(ocvImage);
+				cvNext.~Mat();
 
 				if (!track_init)
 				{
