@@ -9,7 +9,7 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     
     - name: Build OpenCV
       run: |
@@ -36,7 +36,7 @@ jobs:
         7z a MotionTrackingMKIIPlus.zip haarcascade_profileface.xml haarcascade_frontalface_default.xml MotionTrackingMKIIPlus.auf Original_Readme.txt README.md Licenses
 
     - name: Upload artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: MotionTracking_MKII_Plus
         path: ${{ github.workspace }}/MotionTrackingMKIIPlus.zip
@@ -48,11 +48,11 @@ jobs:
     if: github.ref == 'refs/heads/master'
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         fetch-depth: 0
     
-    - uses: actions/download-artifact@v2
+    - uses: actions/download-artifact@v3
       with:
         name: MotionTracking_MKII_Plus
         path: artifacts
