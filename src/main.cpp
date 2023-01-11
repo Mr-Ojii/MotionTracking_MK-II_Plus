@@ -1058,10 +1058,10 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 	{
 		//AviUtl -> OCV
 		size_t frmsize = fpip->w* fpip->h;
-		PIXEL* aubuf = new PIXEL[frmsize];
-		PIXEL_YC* yc_src = new PIXEL_YC[frmsize];
+		std::unique_ptr<PIXEL[]> aubuf = std::make_unique<PIXEL[]>(frmsize);
+		std::unique_ptr<PIXEL_YC[]> yc_src = std::make_unique<PIXEL_YC[]>(frmsize);
 		byte* p1 = (byte*)fpip->ycp_edit;
-		byte* p2 = (byte*)yc_src;
+		byte* p2 = (byte*)yc_src.get();
 		size_t yc_linesize = sizeof(PIXEL_YC)*fpip->w;
 		size_t yc_maxlinesize = sizeof(PIXEL_YC)*fpip->max_w;
 		for (int line = 0; line < fpip->h; line++)
@@ -1070,8 +1070,8 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 			p1 += yc_maxlinesize;
 			p2 += yc_linesize;
 		}
-		fp->exfunc->yc2rgb(aubuf, yc_src, frmsize);
-		cv::Mat ocvbuf(fpip->h, fpip->w, CV_8UC3, aubuf);
+		fp->exfunc->yc2rgb(aubuf.get(), yc_src.get(), frmsize);
+		cv::Mat ocvbuf(fpip->h, fpip->w, CV_8UC3, aubuf.get());
 		//
 		//Convert to greyscale
 		cv::Mat ocvGrey;
@@ -1083,7 +1083,6 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 		if (!frontface.load("haarcascade_frontalface_default.xml"))
 		{
 			frontface.load("./plugins/haarcascade_frontalface_default.xml");
-
 		}
 		if (!profileface.load("haarcascade_profileface.xml"))
 		{
@@ -1142,8 +1141,6 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 			//Clean up
 						
 			ocvbuf.~Mat();
-			delete[] aubuf;
-			delete[] yc_src;
 			redraw = true;
 		}
 	}
