@@ -512,7 +512,6 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 
 			track_result.clear();
 			track_found.clear();
-			ocvImage.empty();
 			cv::Rect2d box = boundingBox;
 			//Correct for out-of-bound box
 			if (box.br().x > frmw)
@@ -574,7 +573,6 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 
 				cv::Mat cvNext(frmh, frmw, CV_8UC3, nextau.get(), step);
 				cv::flip(cvNext, cvNext, 0);
-				cvNext.copyTo(ocvImage);
 
 				if (!track_init)
 				{
@@ -582,7 +580,7 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 					SecureZeroMemory(shortmsg, sizeof(TCHAR[64]));
 					sprintf_s(shortmsg, "%s tracker initializing...", track_method[fp->track[0] - 1]);
 					SetWindowText(fp->hwnd, shortmsg);
-					if (!tracker->init(ocvImage, boundingBox))
+					if (!tracker->init(cvNext, boundingBox))
 					{
 						MessageBox(NULL, "Error initializing tracker", "OpenCV3 Error", MB_OK);
 						return FALSE;
@@ -602,7 +600,7 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 					prev_stamp = cv::getTickCount();
 
 					try {
-						if (tracker->update(ocvImage, box))
+						if (tracker->update(cvNext, box))
 						{
 							track_found.push_back(true);
 						}
