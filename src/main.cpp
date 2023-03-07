@@ -271,7 +271,7 @@ static void onMouse(int event, int x, int y, int, void*)
 			//draw the bounding box
 			cv::Mat currentFrame;
 			ocvImage.copyTo(currentFrame);
-			cv::rectangle(currentFrame, cv::Point((int)boundingBox.x, (int)boundingBox.y), cv::Point(x, y), cv::Scalar(0, 255, 0), 1, 1);
+			cv::rectangle(currentFrame, cv::Point((int)boundingBox.x, (int)boundingBox.y), cv::Point(x, y), cv::Scalar(0, 255, 0), 2);
 
 			imshow("Object Selection", currentFrame);
 		}
@@ -465,8 +465,9 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 			cv::flip(cvBuffer, cvBuffer, 0);
 			cvBuffer.copyTo(ocvImage);
 
-			cv::namedWindow("Object Selection", cv::WINDOW_AUTOSIZE);
+			cv::namedWindow("Object Selection", cv::WINDOW_KEEPRATIO);
 			cv::setMouseCallback("Object Selection", onMouse, 0);
+			cv::resizeWindow("Object Selection", srcw, srch);
 			cv::imshow("Object Selection", ocvImage);
 			return TRUE;
 			break;
