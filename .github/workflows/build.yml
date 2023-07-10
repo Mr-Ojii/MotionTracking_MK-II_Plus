@@ -33,7 +33,7 @@ jobs:
         move src/build/Release/MotionTrackingMKIIPlus.auf MotionTrackingMKIIPlus.auf
         move opencv/data/haarcascades/haarcascade_frontalface_default.xml haarcascade_frontalface_default.xml
         move opencv/data/haarcascades/haarcascade_profileface.xml haarcascade_profileface.xml
-        7z a MotionTrackingMKIIPlus.zip haarcascade_profileface.xml haarcascade_frontalface_default.xml MotionTrackingMKIIPlus.auf Original_Readme.txt README.md Licenses
+        7z a MotionTrackingMKIIPlus.zip haarcascade_profileface.xml haarcascade_frontalface_default.xml MotionTrackingMKIIPlus.auf README.md Licenses
 
     - name: Upload artifact
       uses: actions/upload-artifact@v3
