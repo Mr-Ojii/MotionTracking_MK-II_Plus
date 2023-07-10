@@ -2,18 +2,15 @@
 AviUtl object tracking (rubbish) plugin based on LKT/optical flow. Use OpenCV 4.5.1 or newer.
 
 ## System Requirement
-*- Intel Core-i series processor  
-OR  
 *- CPU with AVX support (Not tested on SSE-only CPU)  
 *- \>= 2GB RAM  
 *- Windows 7 or later  
-*- AviUtl 1.10 and Adv.Editing 0.92
+*- AviUtl 1.10  
+*- Adv.Editing 0.92
 
 ## Installation
-Dump the .AUF and .XML files into either  
-`AviUtl's root folder`  
-or  
-`the ./Plugins sub-folder`
+Dump the .AUF and .XML files into  
+`AviUtl's root folder`
 
 The menu name should be "MotionTracking MK-II Plus"
 
