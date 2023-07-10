@@ -47,7 +47,7 @@ AviUtlのフィルタメニューに"MotionTracking MK-II Plus"が追加され�
 一つのAUFファイルに2つのヘルパープラグインを同梱しています。
 
 1. Pre-track: HSV Cvt  
-RGB画像をHSVに変換し、それをRGB画像の様に表示させます。また、HSVチャンネルの一つのみを表示させることができます It can also display only one of the HSV channels.
+RGB画像をHSVに変換し、それをRGB画像の様に表示させます。また、HSVチャンネルの一つのみを表示させることができます。
 
 2. Pre-track: BGSubtraction
 背景から動く物体を分離することを目的とするプラグインです。分離したRGB画像を出力するか、グレースケールのマスクを出力することができます。Rangeの値を大きくしすぎた場合、メモリ不足を引き起こす可能性がありますので、ご注意ください。
