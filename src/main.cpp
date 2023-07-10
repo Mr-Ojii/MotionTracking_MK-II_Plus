@@ -7,17 +7,17 @@
 #include "opencv2\core\utility.hpp"
 #include "opencv2\highgui.hpp"
 #include "opencv2\tracking.hpp"
-#include "opencv2\tracking\tracking_legacy.hpp"
 #include "opencv2\objdetect.hpp"
 #include "opencv2\video.hpp"
+#include "opencv2\video\tracking.hpp"
 #include "resource.h"
 
-#define METHOD_N 7
-TCHAR* track_method[] = { "BOOSTING", "MIL", "MEDIANFLOW", "TLD", "KCF", "CSRT", "MOSSE" };
+#define METHOD_N 3
+TCHAR* track_method[] = { "MIL", "KCF", "CSRT"};
 
 #define	TRACK_N	1														//	トラックバーの数
 TCHAR	*track_name[] = { "Method" };	//	トラックバーの名前
-int		track_default[] = { 2 };	//	トラックバーの初期値
+int		track_default[] = { 3 };	//	トラックバーの初期値
 int		track_s[] = { 1 };	//	トラックバーの下限値
 int		track_e[] = { METHOD_N };	//	トラックバーの上限値
 
@@ -47,13 +47,9 @@ TCHAR* verstr = { "MotionTracking MK-II Plus SSE2 by Mr-Ojii\0" };
 const TCHAR *help_text =
 {
 	"=Method=\n"
-	"1. AdaBoost\n"
-	"2. Multi Instance Learning\n"
-	"3. MediaFlow\n"
-	"4. TLD\n"
-	"5. KCF\n"
-	"6. CSRT\n"
-	"7. MOSSE\n"
+	"1. Multi Instance Learning\n"
+	"2. KCF\n"
+	"3. CSRT\n"
 	"\n=Steps=\n"
 	"0. Mark a section to track\n"
 	"1. Click 1st button, Drag a box on the object to be tracked(in popup Window).\n"
@@ -513,7 +509,7 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 
 			track_result.clear();
 			track_found.clear();
-			cv::Rect2d box = boundingBox;
+			cv::Rect2i box = boundingBox;
 			//Correct for out-of-bound box
 			if (box.br().x > frmw)
 			{
@@ -525,29 +521,30 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 			}
 			int64 start_time = cv::getTickCount();
 			// Create Tracker
-			cv::Ptr<cv::legacy::Tracker> tracker;
-			switch (fp->track[0] - 1) {
-			case 0:
-				tracker = cv::legacy::TrackerBoosting::create();
-				break;
-			case 1:
-				tracker = cv::legacy::TrackerMIL::create();
-				break;
-			case 2:
-				tracker = cv::legacy::TrackerMedianFlow::create();
-				break;
-			case 3:
-				tracker = cv::legacy::TrackerTLD::create();
-				break;
-			case 4:
-				tracker = cv::legacy::TrackerKCF::create();
-				break;
-			case 5:
-				tracker = cv::legacy::TrackerCSRT::create();
-				break;
-			default:
-				tracker = cv::legacy::TrackerMOSSE::create();
-				break;
+			cv::Ptr<cv::Tracker> tracker;
+			try
+			{
+				switch (fp->track[0] - 1) {
+				case 0:
+					tracker = cv::TrackerMIL::create();
+					break;
+				case 1:
+					tracker = cv::TrackerKCF::create();
+					break;
+				default:
+					tracker = cv::TrackerCSRT::create();
+					break;
+				}
+			}
+			catch (cv::Exception e)
+			{
+				MessageBox(NULL, e.what(), "OpenCV3 Error", MB_OK);
+				return FALSE;
+			}
+			catch (...)
+			{
+				//nullptr
+				tracker = cv::Ptr<cv::Tracker>();
 			}
 			if (!tracker)
 			{
@@ -581,7 +578,11 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 					SecureZeroMemory(shortmsg, sizeof(TCHAR[64]));
 					sprintf_s(shortmsg, "%s tracker initializing...", track_method[fp->track[0] - 1]);
 					SetWindowText(fp->hwnd, shortmsg);
-					if (!tracker->init(cvNext, boundingBox))
+					try
+					{
+						tracker->init(cvNext, boundingBox);
+					}
+					catch (...)
 					{
 						MessageBox(NULL, "Error initializing tracker", "OpenCV3 Error", MB_OK);
 						return FALSE;
