@@ -12,8 +12,8 @@
 #include "opencv2\video\tracking.hpp"
 #include "resource.h"
 
-#define METHOD_N 3
-TCHAR* track_method[] = { "MIL", "KCF", "CSRT"};
+#define METHOD_N 6
+TCHAR* track_method[] = { "MIL", "KCF", "CSRT", "GOTURN", "DaSiamRPN", "Nano"};
 
 #define	TRACK_N	1														//	トラックバーの数
 TCHAR	*track_name[] = { "Method" };	//	トラックバーの名前
@@ -50,6 +50,9 @@ const TCHAR *help_text =
 	"1. Multi Instance Learning\n"
 	"2. KCF\n"
 	"3. CSRT\n"
+	"4. GOTURN\n"
+	"5. DaSiamRPN\n"
+	"6. Nano\n"
 	"\n=Steps=\n"
 	"0. Mark a section to track\n"
 	"1. Click 1st button, Drag a box on the object to be tracked(in popup Window).\n"
@@ -531,9 +534,34 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 				case 1:
 					tracker = cv::TrackerKCF::create();
 					break;
-				default:
+				case 2:
 					tracker = cv::TrackerCSRT::create();
 					break;
+				case 3:
+				{
+					auto params = cv::TrackerGOTURN::Params();
+					params.modelBin = "goturn.caffemodel";
+					params.modelTxt = "goturn.prototxt";
+					tracker = cv::TrackerGOTURN::create(params);
+					break;
+				}
+				case 4:
+				{
+					auto params = cv::TrackerDaSiamRPN::Params();
+					params.model = "dasiamrpn_model.onnx";
+					params.kernel_r1 = "dasiamrpn_kernel_r1.onnx";
+					params.kernel_cls1 = "dasiamrpn_kernel_cls1.onnx";
+					tracker = cv::TrackerDaSiamRPN::create(params);
+					break;
+				}
+				default:
+				{
+					auto params = cv::TrackerNano::Params();
+					params.backbone = "nanotrack_backbone.onnx";
+					params.neckhead = "nanotrack_head.onnx";
+					tracker = cv::TrackerNano::create(params);
+					break;
+				}
 				}
 			}
 			catch (cv::Exception e)
