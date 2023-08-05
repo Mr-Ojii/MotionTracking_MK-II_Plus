@@ -55,9 +55,35 @@ BGSubtraction aims to isolate the moving object from the background. It can outp
 
 
 ## Help
-1. Load some video/New project
-2. Activate the plugin
-3. Click on the "HELP" button
+### MotionTracking MK-II Plus
+#### Method
+1. Multi Instance Learning
+2. KCF
+3. CSRT
+4. GOTURN
+5. DaSiamRPN
+6. Nano
+#### Steps
+0. Mark a section to track
+1. Click 1st button, Drag a box on the object to be tracked(in popup Window). Close the popup Window.
+2. Click Analyze, wait for completion.
+3. Activate the View Result and check. IF result is good, click SaveEXO or check QuickBlur. Otherwise, click Clear Result and go back to step 0 or 1.
+#### Save EXO
+Auto correct for single sandwiched error result.  
+Support CJK filename
+#### Options
+- Quick Blur : Direct blur on AviUtl Window according to tracking result.
+- Easy Privacy : Blur all detected faces(real face only), No tracking is needed. Works well on frontal face, poor on profile face.
+
+### Pre-track:BGSubtraction
+#### Common Parameters
+- Range : Use <Range> no. of frames before and after current frame for analysis.[30]
+- Shadow : 1= Extract shadow [0]
+#### MOG2-Only
+- NMix : Number of Gaussian mixtures [5]
+- BG% : Background ratio [70%] 
+#### KNN-Only
+- d2T : Threshold on the squared distance between the pixel and the sample to decide whether a pixel is close to that sample.
 
 
 ## Building From Source

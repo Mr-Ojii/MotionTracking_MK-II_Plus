@@ -21,16 +21,16 @@ int		track_default[] = { 3 };	//	トラックバーの初期値
 int		track_s[] = { 1 };	//	トラックバーの下限値
 int		track_e[] = { METHOD_N };	//	トラックバーの上限値
 
-#define	CHECK_N	10														//	チェックボックスの数
-TCHAR	*check_name[] = { "1. Select Object", "2. Analyze", "3A. View Result", "3B. Clear Result", "4. As English EXO?", "5. As Sub-filter/部分フィルター?", "6. Save EXO", "Quick Blur", "Easy Privacy", "⑨HELP" };				//	チェックボックスの名前
+#define	CHECK_N	9														//	チェックボックスの数
+TCHAR	*check_name[] = { "1. Select Object", "2. Analyze", "3A. View Result", "3B. Clear Result", "4. As English EXO?", "5. As Sub-filter/部分フィルター?", "6. Save EXO", "Quick Blur", "Easy Privacy" };				//	チェックボックスの名前
 int		check_default[] = { -1, -1, 0, -1, 0, 0, -1, 0, 0, -1 };				//	チェックボックスの初期値 (値は0か1)
 
 #define HSV_CHECK_N 4
 TCHAR   *hsv_check_name[] = { "HSV", "Hue only", "Saturation only", "Value only" };
 int     hsv_check_default[] = { 1, 0, 0, 0 };
 
-#define BGS_CHECK_N 5
-TCHAR *bgs_check_name[] = { "MOG2", "KNN","MOG2(Mask)", "KNN(Mask)", "HELP" };
+#define BGS_CHECK_N 4
+TCHAR *bgs_check_name[] = { "MOG2", "KNN","MOG2(Mask)", "KNN(Mask)" };
 int bgs_check_default[] = { 0, 0, 0, 1, -1 };
 
 #define BGS_TRACK_N 5
@@ -44,52 +44,6 @@ TCHAR* verstr={ "MotionTracking MK-II Plus AVX by Mr-Ojii\0" };
 #else
 TCHAR* verstr = { "MotionTracking MK-II Plus SSE2 by Mr-Ojii\0" };
 #endif
-const TCHAR *help_text =
-{
-	"=Method=\n"
-	"1. Multi Instance Learning\n"
-	"2. KCF\n"
-	"3. CSRT\n"
-	"4. GOTURN\n"
-	"5. DaSiamRPN\n"
-	"6. Nano\n"
-	"\n=Steps=\n"
-	"0. Mark a section to track\n"
-	"1. Click 1st button, Drag a box on the object to be tracked(in popup Window).\n"
-	"   Close the popup Window.\n"
-	"2. Click Analyze, wait for completion.\n"
-	"3. Activate the View Result and check.\n"
-	"IF result is good, click SaveEXO or check QuickBlur.\n"
-	"Otherwise, click Clear Result and go back to step 0 or 1.\n\n"
-	"=Save EXO=\n"
-	"Auto correct for single sandwiched error result.\n"
-	"Support CJK filename\n\n"
-	"=Options=\n"
-	"Quick Blur: Direct blur on AviUtl Window according to\n"
-	"  tracking result.\n"
-	"Easy Privacy: Blur all detected faces(real face only),\n"
-	"  No tracking is needed.\n"
-	"  Works well on frontal face, poor on profile face.\n\n"
-	"⑨HELP: by チルノ\n"
-	"\nLicense: 3-clause BSD License"
-};
-
-const TCHAR* bg_help = {
-	"Common Parameters\n"
-	"==================\n"
-	"Range: Use <Range> no. of frames before and after\n"
-	"           current frame for analysis.[30]\n"
-	"Shadow: 1= Extract shadow [0]\n\n"
-	"MOG2-Only\n"
-	"===========\n"
-	"NMix: Number of Gaussian mixtures [5]\n"
-	"BG%: Background ratio [70%]\n\n"
-	"kNN-Only\n"
-	"==========\n"
-	"d2T: Threshold on the squared distance between\n"
-	"        the pixel and the sample to decide whether\n"
-	"        a pixel is close to that sample.\n"
-};
 
 FILTER_DLL filter = {
 	FILTER_FLAG_EX_INFORMATION,	//	フィルタのフラグ
@@ -160,7 +114,6 @@ FILTER_DLL filter_hsv = {
 };
 
 BOOL bgs_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip);
-BOOL bgs_func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *editp, FILTER *fp);
 FILTER_DLL filter_bgs = {
 	FILTER_FLAG_EX_INFORMATION | FILTER_FLAG_RADIO_BUTTON,	//	フィルタのフラグ
 	0, 0,						//	設定ウインドウのサイズ (FILTER_FLAG_WINDOW_SIZEが立っている時に有効)
@@ -176,7 +129,7 @@ FILTER_DLL filter_bgs = {
 	NULL,						//	開始時に呼ばれる関数へのポインタ (NULLなら呼ばれません)
 	NULL,						//	終了時に呼ばれる関数へのポインタ (NULLなら呼ばれません)
 	NULL,						//	設定が変更されたときに呼ばれる関数へのポインタ (NULLなら呼ばれません)
-	bgs_func_WndProc,						//	設定ウィンドウにウィンドウメッセージが来た時に呼ばれる関数へのポインタ (NULLなら呼ばれません)
+	NULL,						//	設定ウィンドウにウィンドウメッセージが来た時に呼ばれる関数へのポインタ (NULLなら呼ばれません)
 	NULL, NULL,					//	システムで使いますので使用しないでください
 	NULL,						//  拡張データ領域へのポインタ (FILTER_FLAG_EX_DATAが立っている時に有効)
 	NULL,						//  拡張データサイズ (FILTER_FLAG_EX_DATAが立っている時に有効)
@@ -954,13 +907,6 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 			return TRUE;
 			break;
 		}
-
-		case MID_FILTER_BUTTON + 9: //Help button
-		{
-			MessageBoxEx(NULL, help_text, "Who... gonna to help you!", MB_OK | MB_ICONINFORMATION, MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN));
-			return TRUE;
-			break;
-		}
 		default:
 		{
 			//TODO
@@ -1435,16 +1381,6 @@ BOOL bgs_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 		fpip->ycp_edit = fpip->ycp_temp;
 		fpip->ycp_temp = swap;
 		return TRUE;
-	}
-	return FALSE;
-}
-
-BOOL bgs_func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *editp, FILTER *fp)
-{
-	if (wparam == MID_FILTER_BUTTON + 4)
-	{
-		MessageBox(hwnd, bg_help, "INFO", MB_OK);
-		return FALSE;
 	}
 	return FALSE;
 }
