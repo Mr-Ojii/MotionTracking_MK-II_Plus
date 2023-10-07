@@ -69,4 +69,4 @@ jobs:
         for asset in ${{ github.workspace }}/artifacts/*.zip; do
           assets+=("-a" "$asset")
         done
-        hub release create "${assets[@]}" -m "$RELEASE_NAME" "$TAG_NAME"
+        gh release create "${assets[@]}" -m "$RELEASE_NAME" "$TAG_NAME"
