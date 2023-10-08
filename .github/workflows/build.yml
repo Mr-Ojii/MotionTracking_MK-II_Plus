@@ -57,7 +57,6 @@ jobs:
         name: MotionTracking_MKII_Plus
         path: artifacts
     
-    # https://gist.github.com/superbrothers/af84a2f8af394a62352e06537a640746        
     - name: Create a Release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -65,8 +64,4 @@ jobs:
         REVCOUNT=`git rev-list --count HEAD`
         RELEASE_NAME=r${REVCOUNT}
         TAG_NAME=r${REVCOUNT}
-        assets=()
-        for asset in ${{ github.workspace }}/artifacts/*.zip; do
-          assets+=("-a" "$asset")
-        done
-        gh release create "${assets[@]}" -m "$RELEASE_NAME" "$TAG_NAME"
+        gh release create "${TAG_NAME}" ${{ github.workspace }}/artifacts/*.zip -t "${RELEASE_NAME}" 
