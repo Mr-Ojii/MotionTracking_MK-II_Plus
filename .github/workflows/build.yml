@@ -36,7 +36,7 @@ jobs:
         7z a MotionTrackingMKIIPlus.zip haarcascade_profileface.xml haarcascade_frontalface_default.xml MotionTrackingMKIIPlus.auf README.md README.ja.md Licenses
 
     - name: Upload artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: MotionTracking_MKII_Plus
         path: ${{ github.workspace }}/MotionTrackingMKIIPlus.zip
