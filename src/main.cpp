@@ -12,8 +12,8 @@
 #include "opencv2\video\tracking.hpp"
 #include "resource.h"
 
-#define METHOD_N 6
-TCHAR* track_method[] = { "MIL", "KCF", "CSRT", "GOTURN", "DaSiamRPN", "Nano"};
+#define METHOD_N 7
+TCHAR* track_method[] = { "MIL", "KCF", "CSRT", "GOTURN", "DaSiamRPN", "Nano", "Vit"};
 
 #define	TRACK_N	1														//	トラックバーの数
 TCHAR	*track_name[] = { "Method" };	//	トラックバーの名前
@@ -507,12 +507,23 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 					tracker = cv::TrackerDaSiamRPN::create(params);
 					break;
 				}
-				default:
+				case 5:
 				{
 					auto params = cv::TrackerNano::Params();
 					params.backbone = "nanotrack_backbone.onnx";
 					params.neckhead = "nanotrack_head.onnx";
 					tracker = cv::TrackerNano::create(params);
+					break;
+				}
+				default:
+				{
+					//なんか2つモデルがあるが、上のほうが良い？
+					//https://github.com/opencv/opencv_extra/blob/4.x/testdata/dnn/onnx/models/vitTracker.onnx
+					//https://github.com/opencv/opencv_zoo/blob/main/models/object_tracking_vittrack/object_tracking_vittrack_2023sep.onnx
+
+					auto params = cv::TrackerVit::Params();
+					params.net = "vitTracker.onnx";
+					tracker = cv::TrackerVit::create(params);
 					break;
 				}
 				}

@@ -43,6 +43,12 @@ Additional work is required if Methods 4, 5, or 6 are to be used.
 
 2. Dump each files into `AviUtl's root folder`
 
+### For Method 7 (Vit)
+1. Download the following file from [this URL](https://github.com/opencv/opencv_extra/blob/4.x/testdata/dnn/onnx/models/vitTracker.onnx)
+
+- vitTracker.onnx
+
+2. Dump each files into `AviUtl's root folder`
 
 ## Helper Plugins
 The single AUF actually contains two more helper plugins:
@@ -63,6 +69,7 @@ BGSubtraction aims to isolate the moving object from the background. It can outp
 4. GOTURN
 5. DaSiamRPN
 6. Nano
+7. Vit
 #### Steps
 0. Mark a section to track
 1. Click 1st button, Drag a box on the object to be tracked(in popup Window). Close the popup Window.
@@ -88,7 +95,7 @@ Support CJK filename
 
 ## Building From Source
 1. Run `git clone https://github.com/Mr-Ojii/MotionTracking_MKII_Plus.git`
-2. Build your own OpenCV 4.8.0 STATIC (Both Debug and Release builds)
+2. Build your own OpenCV 4.9.0 STATIC (Both Debug and Release builds)
 3. Generate VS project file from src/CMakeLists.txt
 4. Build with Visual Studio
 

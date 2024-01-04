@@ -15,7 +15,7 @@ zip内の.aufファイルと.xmlファイルを`aviutl.exeと同じディレク�
 
 AviUtlのフィルタメニューに"MotionTracking MK-II Plus"が追加されていたら成功です。
 
-また、機械学習を用いたトラッキングアルゴリズムであるMethod 4, 5, 6を使用する場合、追加で作業が必要です。(学習データを同梱することが困難であるため)
+また、機械学習を用いたトラッキングアルゴリズムであるMethod 4, 5, 6, 7を使用する場合、追加で作業が必要です。(学習データを同梱することが困難であるため)
 
 ### Method 4 (GOTURN)用
 [こちらのURL](https://github.com/opencv/opencv_extra/tree/c4219d5eb3105ed8e634278fad312a1a8d2c182d/testdata/tracking)よりそれぞれのデータをダウンロード・分割ZIPを解凍し、
@@ -42,6 +42,12 @@ AviUtlのフィルタメニューに"MotionTracking MK-II Plus"が追加され�
 
 をダウンロードし、`aviutl.exeと同じディレクトリ`に置いてください。
 
+### Method 7 (Vit)用
+[こちらのURL](https://github.com/opencv/opencv_extra/blob/4.x/testdata/dnn/onnx/models/vitTracker.onnx)より
+
+- vitTracker.onnx
+
+をダウンロードし、`aviutl.exeと同じディレクトリ`に置いてください。
 
 ## ヘルパープラグイン
 一つのAUFファイルに2つのヘルパープラグインを同梱しています。
@@ -49,7 +55,7 @@ AviUtlのフィルタメニューに"MotionTracking MK-II Plus"が追加され�
 1. Pre-track: HSV Cvt  
 RGB画像をHSVに変換し、それをRGB画像の様に表示させます。また、HSVチャンネルの一つのみを表示させることができます。
 
-2. Pre-track: BGSubtraction
+2. Pre-track: BGSubtraction  
 背景から動く物体を分離することを目的とするプラグインです。分離したRGB画像を出力するか、グレースケールのマスクを出力することができます。Rangeの値を大きくしすぎた場合、メモリ不足を引き起こす可能性がありますので、ご注意ください。
 
 
@@ -62,6 +68,7 @@ RGB画像をHSVに変換し、それをRGB画像の様に表示させます。�
 4. GOTURN
 5. DaSiamRPN
 6. Nano
+7. Vit
 #### 使用方法
 0. トラッキングしたいフレームの範囲を選択する。
 1. 「1. Select Object」ボタンをクリックし、ポップアップウィンドウ内で追跡するオブジェクトをドラッグして指定する。ポップアップウィンドウを閉じる。
@@ -87,7 +94,7 @@ CJKファイル名もサポートされています。
 
 ## ソースからのビルド
 1. `git clone https://github.com/Mr-Ojii/MotionTracking_MKII_Plus.git`を実行
-2. OpenCV 4.8.0 を静的ライブラリとしてビルド(DebugとRelease両方)
+2. OpenCV 4.9.0 を静的ライブラリとしてビルド(DebugとRelease両方)
 3. `src/CMakeLists.txt`よりVSのプロジェクトを生成
 4. Visual Studioを用いてビルド
 
