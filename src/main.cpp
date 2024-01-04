@@ -21,9 +21,9 @@ int		track_default[] = { 3 };	//	トラックバーの初期値
 int		track_s[] = { 1 };	//	トラックバーの下限値
 int		track_e[] = { METHOD_N };	//	トラックバーの上限値
 
-#define	CHECK_N	9														//	チェックボックスの数
-TCHAR	*check_name[] = { "1. Select Object", "2. Analyze", "3A. View Result", "3B. Clear Result", "4. As English EXO?", "5. As Sub-filter/部分フィルター?", "6. Save EXO", "Quick Blur", "Easy Privacy" };				//	チェックボックスの名前
-int		check_default[] = { -1, -1, 0, -1, 0, 0, -1, 0, 0, -1 };				//	チェックボックスの初期値 (値は0か1)
+#define	CHECK_N	10														//	チェックボックスの数
+TCHAR	*check_name[] = { "1. Select Object", "2. Analyze", "3A. View Result", "3B. Clear Result", "4. As English EXO?", "5. As Sub-filter/部分フィルター?", "6. Invert Position", "7. Save EXO", "Quick Blur", "Easy Privacy"};				//	チェックボックスの名前
+int		check_default[] = { -1, -1, 0, -1, 0, 0, 0, -1, 0, 0 };				//	チェックボックスの初期値 (値は0か1)
 
 #define HSV_CHECK_N 4
 TCHAR   *hsv_check_name[] = { "HSV", "Hue only", "Saturation only", "Value only" };
@@ -662,7 +662,7 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 			return TRUE;
 			break;
 		}
-		case MID_FILTER_BUTTON + 6: //Save EXO
+		case MID_FILTER_BUTTON + 7: //Save EXO
 		{
 			//TODO
 			if (track_result.size() <= 0)
@@ -795,6 +795,14 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 							}
 						}
 
+						if (fp->check[6]) //Invert Position
+						{
+							Xi = -Xi;
+							Xf = -Xf;
+							Yi = -Yi;
+							Yf = -Yf;
+						}
+
 						sprintf_s(fmtstr, sizeof(TCHAR[2048]), boilerplate, (double)Xi, (double)Xf, (double)Yi, (double)Yf, size_st, size_ed, rAsp_st, rAsp_ed);//X-st, X-ed, Y-st, Y-ed, size_start, size_end, rAsp-st, rAsp-ed
 						strbuf << fmtstr;
 						SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
@@ -889,6 +897,13 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 						else //JP
 						{
 							LoadString(fp->dll_hinst, IDS_STDDRAW_JP, boilerplate, 2048);//TODO: Set JP text
+						}
+						if (fp->check[6]) // invert position
+						{
+							Xi = -Xi;
+							Xf = -Xf;
+							Yi = -Yi;
+							Yf = -Yf;
 						}
 						sprintf_s(fmtstr, sizeof(TCHAR[2048]), boilerplate, (double)Xi, (double)Xf, (double)Yi, (double)Yf);
 						strbuf << fmtstr;
@@ -987,7 +1002,7 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 		fpip->ycp_edit = ycswap;
 	}
 
-	if (isFilterActive && isEditing && fp->check[7] && hasResult && isFrameInRng)
+	if (isFilterActive && isEditing && fp->check[8] && hasResult && isFrameInRng)
 	{
 		if (track_found[fpip->frame - selA])
 		{
@@ -1032,7 +1047,7 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 			redraw = true;
 		}
 	}
-	if (fp->check[8] && isFilterActive && isEditing)
+	if (fp->check[9] && isFilterActive && isEditing)
 	{
 		//AviUtl -> OCV
 		size_t frmsize = fpip->w* fpip->h;

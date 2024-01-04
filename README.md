@@ -74,7 +74,7 @@ BGSubtraction aims to isolate the moving object from the background. It can outp
 0. Mark a section to track
 1. Click 1st button, Drag a box on the object to be tracked(in popup Window). Close the popup Window.
 2. Click Analyze, wait for completion.
-3. Activate the View Result and check. IF result is good, click SaveEXO or check QuickBlur. Otherwise, click Clear Result and go back to step 0 or 1.
+3. Activate the View Result and check. IF result is good, check Invert Position if necessary, click SaveEXO or check QuickBlur. Otherwise, click Clear Result and go back to step 0 or 1.
 #### Save EXO
 Auto correct for single sandwiched error result.  
 Support CJK filename
