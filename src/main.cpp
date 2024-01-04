@@ -22,7 +22,7 @@ int		track_s[] = { 1 };	//	トラックバーの下限値
 int		track_e[] = { METHOD_N };	//	トラックバーの上限値
 
 #define	CHECK_N	10														//	チェックボックスの数
-TCHAR	*check_name[] = { "1. Select Object", "2. Analyze", "3A. View Result", "3B. Clear Result", "4. As English EXO?", "5. As Sub-filter/部分フィルター?", "6. Invert Position", "7. Save EXO", "Quick Blur", "Easy Privacy"};				//	チェックボックスの名前
+TCHAR	*check_name[] = { "Select Object", "Analyze", "View Result", "Clear Result", "As English EXO?", "As Sub-filter/部分フィルター?", "Invert Position", "Save EXO", "Quick Blur", "Easy Privacy"};				//	チェックボックスの名前
 int		check_default[] = { -1, -1, 0, -1, 0, 0, 0, -1, 0, 0 };				//	チェックボックスの初期値 (値は0か1)
 
 #define HSV_CHECK_N 4
