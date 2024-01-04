@@ -1,5 +1,5 @@
 # MotionTracking_MKII_Plus
-AviUtl object tracking (rubbish) plugin based on LKT/optical flow. Use OpenCV 4.5.1 or newer.
+AviUtl object tracking (rubbish) plugin based on LKT/optical flow. Use OpenCV 4.9.0 or newer.
 
 
 ## System Requirement
