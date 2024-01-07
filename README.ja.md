@@ -35,10 +35,10 @@ AviUtlのフィルタメニューに"MotionTracking MK-II Plus"が追加され�
 をダウンロードし、`aviutl.exeと同じディレクトリ`に置いてください。
 
 ### Method 6 (Nano)用
-[こちらのURL](https://github.com/HonglinChu/SiamTrackers/tree/8211ff3f862fc68a870dde1ab00451f35af3b1d4/NanoTrack/models/nanotrackv2)より
+[こちらのURL](https://github.com/HonglinChu/SiamTrackers/tree/18b7791360acb3f6d276d47376a6f1ed516f1628/NanoTrack/models/nanotrackv2)より
 
-- nanotrack_backbone.onnx
-- nanotrack_head.onnx
+- nanotrack_backbone_sim.onnx
+- nanotrack_head_sim.onnx
 
 をダウンロードし、`aviutl.exeと同じディレクトリ`に置いてください。
 

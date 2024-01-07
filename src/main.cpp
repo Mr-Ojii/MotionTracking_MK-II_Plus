@@ -510,8 +510,8 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 				case 5:
 				{
 					auto params = cv::TrackerNano::Params();
-					params.backbone = "nanotrack_backbone.onnx";
-					params.neckhead = "nanotrack_head.onnx";
+					params.backbone = "nanotrack_backbone_sim.onnx";
+					params.neckhead = "nanotrack_head_sim.onnx";
 					tracker = cv::TrackerNano::create(params);
 					break;
 				}

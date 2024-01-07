@@ -36,10 +36,10 @@ Additional work is required if Methods 4, 5, or 6 are to be used.
 2. Dump each files into `AviUtl's root folder`
 
 ### For Method 6 (Nano)
-1. Download the following file from [this URL](https://github.com/HonglinChu/SiamTrackers/tree/211ff3f862fc68a870dde1ab00451f35af3b1d4/NanoTrack/models/nanotrackv2)
+1. Download the following file from [this URL](https://github.com/HonglinChu/SiamTrackers/tree/18b7791360acb3f6d276d47376a6f1ed516f1628/NanoTrack/models/nanotrackv2)
 
-- nanotrack_backbone.onnx
-- nanotrack_head.onnx
+- nanotrack_backbone_sim.onnx
+- nanotrack_head_sim.onnx
 
 2. Dump each files into `AviUtl's root folder`
 
