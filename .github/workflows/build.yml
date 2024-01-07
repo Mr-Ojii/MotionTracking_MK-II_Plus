@@ -34,7 +34,7 @@ jobs:
         mkdir MotionTracking_model
         move opencv/data/haarcascades/haarcascade_frontalface_default.xml MotionTracking_model/haarcascade_frontalface_default.xml
         move opencv/data/haarcascades/haarcascade_profileface.xml MotionTracking_model/haarcascade_profileface.xml
-        7z a MotionTrackingMKIIPlus.zip haarcascade_profileface.xml haarcascade_frontalface_default.xml MotionTrackingMKIIPlus.auf README.md README.ja.md Licenses MotionTracking_model
+        7z a MotionTrackingMKIIPlus.zip MotionTrackingMKIIPlus.auf README.md README.ja.md Licenses MotionTracking_model
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
