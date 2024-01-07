@@ -11,12 +11,12 @@ AviUtl object tracking (rubbish) plugin based on LKT/optical flow. Use OpenCV 4.
 
 
 ## Installation
-Dump the .AUF and .XML files into  
-`AviUtl's root folder`
+Dump the .AUF and MotionTracking_model folder into  
+`your favorite folder where AviUtl loads filter plug-ins`
 
 The menu name should be "MotionTracking MK-II Plus"
 
-Additional work is required if Methods 4, 5, or 6 are to be used.
+Additional work is required if Methods 4, 5, 6 or 7 are to be used.
 
 ### For Method 4 (GOTURN)
 1. Download each data from [this URL](https://github.com/opencv/opencv_extra/tree/c4219d5eb3105ed8e634278fad312a1a8d2c182d/testdata/tracking) 
@@ -24,7 +24,7 @@ Additional work is required if Methods 4, 5, or 6 are to be used.
 3. Dump the
     - goturn.caffemodel
     - goturn.prototxt  
-  into `AviUtl's root folder`
+  into `MotionTracking_model folder`
 
 ### For Method 5 (DaSiamRPN)
 1. Download the following file from the URL listed as a comment out in the source code at [this URL](https://github.com/opencv/opencv/blob/4.x/samples/dnn/dasiamrpn_tracker.cpp)
@@ -33,7 +33,7 @@ Additional work is required if Methods 4, 5, or 6 are to be used.
 - dasiamrpn_kernel_r1.onnx
 - dasiamrpn_kernel_cls1.onnx
 
-2. Dump each files into `AviUtl's root folder`
+2. Dump each files into `MotionTracking_model folder`
 
 ### For Method 6 (Nano)
 1. Download the following file from [this URL](https://github.com/HonglinChu/SiamTrackers/tree/18b7791360acb3f6d276d47376a6f1ed516f1628/NanoTrack/models/nanotrackv2)
@@ -41,14 +41,14 @@ Additional work is required if Methods 4, 5, or 6 are to be used.
 - nanotrack_backbone_sim.onnx
 - nanotrack_head_sim.onnx
 
-2. Dump each files into `AviUtl's root folder`
+2. Dump each files into `MotionTracking_model folder`
 
 ### For Method 7 (Vit)
 1. Download the following file from [this URL](https://github.com/opencv/opencv_extra/blob/4.x/testdata/dnn/onnx/models/vitTracker.onnx)
 
 - vitTracker.onnx
 
-2. Dump each files into `AviUtl's root folder`
+2. Dump each files into `MotionTracking_model folder`
 
 ## Helper Plugins
 The single AUF actually contains two more helper plugins:

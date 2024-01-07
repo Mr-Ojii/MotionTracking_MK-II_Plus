@@ -11,7 +11,7 @@ AviUtlでオブジェクトトラッキングを行うプラグイン
 
 
 ## インストール
-zip内の.aufファイルと.xmlファイルを`aviutl.exeと同じディレクトリ`に置いてください。
+zip内の.aufファイルとMotionTracking_modelディレクトリを`AviUtlがフィルタプラグインを読み込むお好きなディレクトリ`に置いてください。
 
 AviUtlのフィルタメニューに"MotionTracking MK-II Plus"が追加されていたら成功です。
 
@@ -23,7 +23,7 @@ AviUtlのフィルタメニューに"MotionTracking MK-II Plus"が追加され�
 - goturn.caffemodel
 - goturn.prototxt
 
-を`aviutl.exeと同じディレクトリ`に置いてください。
+を`MotionTracking_modelディレクトリ内`に置いてください。
 
 ### Method 5 (DaSiamRPN)用
 [こちらのURL](https://github.com/opencv/opencv/blob/4.x/samples/dnn/dasiamrpn_tracker.cpp)のソースコードにコメントアウトとして記載されているURLより
@@ -32,7 +32,7 @@ AviUtlのフィルタメニューに"MotionTracking MK-II Plus"が追加され�
 - dasiamrpn_kernel_r1.onnx
 - dasiamrpn_kernel_cls1.onnx
 
-をダウンロードし、`aviutl.exeと同じディレクトリ`に置いてください。
+をダウンロードし、`MotionTracking_modelディレクトリ内`に置いてください。
 
 ### Method 6 (Nano)用
 [こちらのURL](https://github.com/HonglinChu/SiamTrackers/tree/18b7791360acb3f6d276d47376a6f1ed516f1628/NanoTrack/models/nanotrackv2)より
@@ -40,14 +40,14 @@ AviUtlのフィルタメニューに"MotionTracking MK-II Plus"が追加され�
 - nanotrack_backbone_sim.onnx
 - nanotrack_head_sim.onnx
 
-をダウンロードし、`aviutl.exeと同じディレクトリ`に置いてください。
+をダウンロードし、`MotionTracking_modelディレクトリ内`に置いてください。
 
 ### Method 7 (Vit)用
 [こちらのURL](https://github.com/opencv/opencv_extra/blob/4.x/testdata/dnn/onnx/models/vitTracker.onnx)より
 
 - vitTracker.onnx
 
-をダウンロードし、`aviutl.exeと同じディレクトリ`に置いてください。
+をダウンロードし、`MotionTracking_modelディレクトリ内`に置いてください。
 
 ## ヘルパープラグイン
 一つのAUFファイルに2つのヘルパープラグインを同梱しています。

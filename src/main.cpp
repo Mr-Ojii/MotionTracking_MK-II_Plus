@@ -12,6 +12,8 @@
 #include "opencv2\video\tracking.hpp"
 #include "resource.h"
 
+HINSTANCE hModuleDLL = nullptr;
+
 #define METHOD_N 7
 TCHAR* track_method[] = { "MIL", "KCF", "CSRT", "GOTURN", "DaSiamRPN", "Nano", "Vit"};
 
@@ -164,6 +166,7 @@ typedef struct{
 	int vi_end;
 }FRMGROUP;
 
+std::string modelDir;
 
 
 //---------------------------------------------------------------------
@@ -172,6 +175,20 @@ typedef struct{
 FILTER_DLL* filterlist[] = { &filter, &filter_hsv, &filter_bgs, NULL };
 EXTERN_C FILTER_DLL __declspec(dllexport) ** __stdcall GetFilterTableList(void)
 {
+	char path[MAX_PATH * 2];
+	if (GetModuleFileNameA(hModuleDLL, path, MAX_PATH * 2))
+	{
+		char* p = path;
+		while (*p != '\0')
+			p++;
+		while (*p != '\\')
+			p--;
+		p++;
+		*p = '\0';
+		modelDir = std::string(path);
+		modelDir += "MotionTracking_Model\\";
+	}
+
 	return (FILTER_DLL**)&filterlist;
 }
 
@@ -493,25 +510,25 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 				case 3:
 				{
 					auto params = cv::TrackerGOTURN::Params();
-					params.modelBin = "goturn.caffemodel";
-					params.modelTxt = "goturn.prototxt";
+					params.modelBin = modelDir + "goturn.caffemodel";
+					params.modelTxt = modelDir + "goturn.prototxt";
 					tracker = cv::TrackerGOTURN::create(params);
 					break;
 				}
 				case 4:
 				{
 					auto params = cv::TrackerDaSiamRPN::Params();
-					params.model = "dasiamrpn_model.onnx";
-					params.kernel_r1 = "dasiamrpn_kernel_r1.onnx";
-					params.kernel_cls1 = "dasiamrpn_kernel_cls1.onnx";
+					params.model = modelDir +  "dasiamrpn_model.onnx";
+					params.kernel_r1 = modelDir + "dasiamrpn_kernel_r1.onnx";
+					params.kernel_cls1 = modelDir + "dasiamrpn_kernel_cls1.onnx";
 					tracker = cv::TrackerDaSiamRPN::create(params);
 					break;
 				}
 				case 5:
 				{
 					auto params = cv::TrackerNano::Params();
-					params.backbone = "nanotrack_backbone_sim.onnx";
-					params.neckhead = "nanotrack_head_sim.onnx";
+					params.backbone = modelDir + "nanotrack_backbone_sim.onnx";
+					params.neckhead = modelDir + "nanotrack_head_sim.onnx";
 					tracker = cv::TrackerNano::create(params);
 					break;
 				}
@@ -522,7 +539,7 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 					//https://github.com/opencv/opencv_zoo/blob/main/models/object_tracking_vittrack/object_tracking_vittrack_2023sep.onnx
 
 					auto params = cv::TrackerVit::Params();
-					params.net = "vitTracker.onnx";
+					params.net = modelDir + "vitTracker.onnx";
 					tracker = cv::TrackerVit::create(params);
 					break;
 				}
@@ -1073,14 +1090,8 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 		//Check if XML exists in root or plugin folder
 		cv::CascadeClassifier frontface = cv::CascadeClassifier::CascadeClassifier();
 		cv::CascadeClassifier profileface = cv::CascadeClassifier::CascadeClassifier();
-		if (!frontface.load("haarcascade_frontalface_default.xml"))
-		{
-			frontface.load("./plugins/haarcascade_frontalface_default.xml");
-		}
-		if (!profileface.load("haarcascade_profileface.xml"))
-		{
-			profileface.load("./plugins/haarcascade_profileface.xml");
-		}
+		frontface.load(modelDir + "haarcascade_frontalface_default.xml");
+		profileface.load(modelDir + "haarcascade_profileface.xml");
 		//if XML loaded, proceed
 		if (!frontface.empty() && !profileface.empty())
 		{
@@ -1409,4 +1420,15 @@ BOOL bgs_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 		return TRUE;
 	}
 	return FALSE;
+}
+
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
+{
+	switch (fdwReason)
+	{
+	case DLL_PROCESS_ATTACH:
+		hModuleDLL = hinstDLL;
+		break;
+	}
+	return TRUE;
 }
