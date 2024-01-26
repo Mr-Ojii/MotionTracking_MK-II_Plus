@@ -11,7 +11,7 @@ set(OPENCV_INCLUDE_DIR CACHE PATH "OpenCV include directory")
 set(OPENCV_LIBRARY_DIR CACHE PATH "OpenCV library directory")
 
 
-target_sources(${PROJECT_NAME} PRIVATE main.cpp main.def resource.rc)
+target_sources(${PROJECT_NAME} PRIVATE main.cpp main.def bgs.cpp hsv.cpp resource.rc)
 set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ".auf")
 target_include_directories(${PROJECT_NAME} PRIVATE ${OPENCV_INCLUDE_DIR})
 target_link_directories(${PROJECT_NAME} PRIVATE ${OPENCV_LIBRARY_DIR})
