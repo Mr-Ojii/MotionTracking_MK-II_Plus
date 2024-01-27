@@ -16,18 +16,26 @@
 
 HINSTANCE hModuleDLL = nullptr;
 
-#define METHOD_N 7
-TCHAR* track_method[] = { "MIL", "KCF", "CSRT", "GOTURN", "DaSiamRPN", "Nano", "Vit"};
 
-#define	TRACK_N	1														//	トラックバーの数
-TCHAR	*track_name[] = { "Method" };	//	トラックバーの名前
-int		track_default[] = { 3 };	//	トラックバーの初期値
-int		track_s[] = { 1 };	//	トラックバーの下限値
-int		track_e[] = { METHOD_N };	//	トラックバーの上限値
+constexpr TCHAR* track_method[] = { "MIL", "KCF", "CSRT", "GOTURN", "DaSiamRPN", "Nano", "Vit"};
+constexpr int METHOD_N = sizeof(track_method) / sizeof(TCHAR*);
 
-#define	CHECK_N	10														//	チェックボックスの数
-TCHAR	*check_name[] = { "Select Object", "Analyze", "View Result", "Clear Result", "As English EXO?", "As Sub-filter/部分フィルター?", "Invert Position", "Save EXO", "Quick Blur", "Easy Privacy"};				//	チェックボックスの名前
-int		check_default[] = { -1, -1, 0, -1, 0, 0, 0, -1, 0, 0 };				//	チェックボックスの初期値 (値は0か1)
+constexpr TCHAR* track_name[] = { "Method" };   // トラックバーの名前
+constexpr int    track_default[] = { 3 };       // トラックバーの初期値
+constexpr int    track_s[] = { 1 };             // トラックバーの下限値
+constexpr int    track_e[] = { METHOD_N };      // トラックバーの上限値
+constexpr int    TRACK_N = sizeof(track_name) / sizeof(TCHAR*);
+
+static_assert(TRACK_N == sizeof(track_default) / sizeof(int), "size of track_default mismatch with TRACK_N");
+static_assert(TRACK_N == sizeof(track_s) / sizeof(int), "size of track_s mismatch with TRACK_N");
+static_assert(TRACK_N == sizeof(track_e) / sizeof(int), "size of track_e mismatch with TRACK_N");
+
+
+constexpr TCHAR *check_name[] = { "Select Object", "Analyze", "View Result", "Clear Result", "As English EXO?", "As Sub-filter/部分フィルター?", "Invert Position", "Save EXO", "Quick Blur", "Easy Privacy"}; // チェックボックスの名前
+constexpr int   check_default[] = { -1, -1, 0, -1, 0, 0, 0, -1, 0, 0 }; // チェックボックスの初期値 (値は0か1)
+constexpr int   CHECK_N = sizeof(check_name) / sizeof(TCHAR*);
+
+static_assert(CHECK_N == sizeof(check_default) / sizeof(int), "size of check_default mismatch with CHECK_N");
 
 #ifdef __AVX__
 TCHAR* verstr={ "MotionTracking MK-II Plus AVX by Mr-Ojii\0" };
@@ -55,20 +63,20 @@ FILTER_DLL filter = {
 	//	FILTER_FLAG_WINDOW_VSCROLL		: 垂直スクロールバーを持つウィンドウを作ります
 	//	FILTER_FLAG_IMPORT				: インポートメニューを作ります
 	//	FILTER_FLAG_EXPORT				: エクスポートメニューを作ります
-	0, 0,						//	設定ウインドウのサイズ (FILTER_FLAG_WINDOW_SIZEが立っている時に有効)
-	"MotionTracking MK-II Plus",//	フィルタの名前
-	TRACK_N,					//	トラックバーの数 (0なら名前初期値等もNULLでよい)
-	track_name,					//	トラックバーの名前郡へのポインタ
-	track_default,				//	トラックバーの初期値郡へのポインタ
-	track_s, track_e,			//	トラックバーの数値の下限上限 (NULLなら全て0～256)
-	CHECK_N,					//	チェックボックスの数 (0なら名前初期値等もNULLでよい)
-	check_name,					//	チェックボックスの名前郡へのポインタ
-	check_default,				//	チェックボックスの初期値郡へのポインタ
+	0, 0,							//	設定ウインドウのサイズ (FILTER_FLAG_WINDOW_SIZEが立っている時に有効)
+	"MotionTracking MK-II Plus",	//	フィルタの名前
+	TRACK_N,						//	トラックバーの数 (0なら名前初期値等もNULLでよい)
+	const_cast<TCHAR **>(track_name),								//	トラックバーの名前郡へのポインタ
+	const_cast<int *>(track_default),								//	トラックバーの初期値郡へのポインタ
+	const_cast<int *>(track_s), const_cast<int *>(track_e),			//	トラックバーの数値の下限上限 (NULLなら全て0～256)
+	CHECK_N,								//	チェックボックスの数 (0なら名前初期値等もNULLでよい)
+	const_cast<TCHAR **>(check_name),		//	チェックボックスの名前郡へのポインタ
+	const_cast<int *>(check_default),		//	チェックボックスの初期値郡へのポインタ
 	func_proc,					//	フィルタ処理関数へのポインタ (NULLなら呼ばれません)
 	NULL,						//	開始時に呼ばれる関数へのポインタ (NULLなら呼ばれません)
 	NULL,						//	終了時に呼ばれる関数へのポインタ (NULLなら呼ばれません)
 	NULL,						//	設定が変更されたときに呼ばれる関数へのポインタ (NULLなら呼ばれません)
-	func_WndProc,						//	設定ウィンドウにウィンドウメッセージが来た時に呼ばれる関数へのポインタ (NULLなら呼ばれません)
+	func_WndProc,				//	設定ウィンドウにウィンドウメッセージが来た時に呼ばれる関数へのポインタ (NULLなら呼ばれません)
 	NULL, NULL,					//	システムで使いますので使用しないでください
 	NULL,						//  拡張データ領域へのポインタ (FILTER_FLAG_EX_DATAが立っている時に有効)
 	NULL,						//  拡張データサイズ (FILTER_FLAG_EX_DATAが立っている時に有効)

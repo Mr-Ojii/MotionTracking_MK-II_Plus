@@ -3,29 +3,38 @@
 #include "main.h"
 #include "opencv2/opencv.hpp"
 
-#define BGS_CHECK_N 4
-TCHAR *bgs_check_name[] = { "MOG2", "KNN","MOG2(Mask)", "KNN(Mask)" };
-int bgs_check_default[] = { 0, 0, 0, 1, -1 };
 
-#define BGS_TRACK_N 5
-TCHAR *bgs_track_name[] = { "Range", "Shadow","NMix", "BG%", "d2T" };
-int bgs_track_default[] = { 30, 0, 5, 70, 400 };
-int bgs_track_s[] = { 1, 0, 1, 1, 100 };
-int bgs_track_e[] = { 250, 1, 30, 99, 1000 };
+constexpr TCHAR *bgs_check_name[] = { "MOG2", "KNN","MOG2(Mask)", "KNN(Mask)" };
+constexpr int bgs_check_default[] = { 0, 0, 0, 1 };
+constexpr int BGS_CHECK_N = sizeof(bgs_check_name) / sizeof(TCHAR*);
+
+static_assert(BGS_CHECK_N == sizeof(bgs_check_default) / sizeof(int), "size of bgs_check_default mismatch with BGS_CHECK_N");
+
+
+constexpr TCHAR *bgs_track_name[] = { "Range", "Shadow","NMix", "BG%", "d2T" };
+constexpr int bgs_track_default[] = { 30, 0, 5, 70, 400 };
+constexpr int bgs_track_s[] = { 1, 0, 1, 1, 100 };
+constexpr int bgs_track_e[] = { 250, 1, 30, 99, 1000 };
+constexpr int BGS_TRACK_N = sizeof(bgs_track_name) / sizeof(TCHAR*);
+
+static_assert(BGS_TRACK_N == sizeof(bgs_track_default) / sizeof(int), "size of bgs_track_default mismatch with BGS_TRACK_N");
+static_assert(BGS_TRACK_N == sizeof(bgs_track_s) / sizeof(int), "size of bgs_track_s mismatch with BGS_TRACK_N");
+static_assert(BGS_TRACK_N == sizeof(bgs_track_e) / sizeof(int), "size of bgs_track_e mismatch with BGS_TRACK_N");
+
 
 BOOL bgs_func_proc(FILTER *fp, FILTER_PROC_INFO *fpip);
 FILTER_DLL filter_bgs = {
-	FILTER_FLAG_EX_INFORMATION | FILTER_FLAG_RADIO_BUTTON,	//	フィルタのフラグ
-	0, 0,						//	設定ウインドウのサイズ (FILTER_FLAG_WINDOW_SIZEが立っている時に有効)
-	"Pre-track:BGSubtraction",			//	フィルタの名前
-	BGS_TRACK_N,					//	トラックバーの数 (0なら名前初期値等もNULLでよい)
-	bgs_track_name,					//	トラックバーの名前郡へのポインタ
-	bgs_track_default,				//	トラックバーの初期値郡へのポインタ
-	bgs_track_s, bgs_track_e,			//	トラックバーの数値の下限上限 (NULLなら全て0～256)
-	BGS_CHECK_N,					//	チェックボックスの数 (0なら名前初期値等もNULLでよい)
-	bgs_check_name,					//	チェックボックスの名前郡へのポインタ
-	bgs_check_default,				//	チェックボックスの初期値郡へのポインタ
-	bgs_func_proc,					//	フィルタ処理関数へのポインタ (NULLなら呼ばれません)
+	FILTER_FLAG_EX_INFORMATION | FILTER_FLAG_RADIO_BUTTON,			//	フィルタのフラグ
+	0, 0,															//	設定ウインドウのサイズ (FILTER_FLAG_WINDOW_SIZEが立っている時に有効)
+	"Pre-track:BGSubtraction",										//	フィルタの名前
+	BGS_TRACK_N,													//	トラックバーの数 (0なら名前初期値等もNULLでよい)
+	const_cast<TCHAR **>(bgs_track_name),							//	トラックバーの名前郡へのポインタ
+	const_cast<int *>(bgs_track_default),							//	トラックバーの初期値郡へのポインタ
+	const_cast<int *>(bgs_track_s), const_cast<int *>(bgs_track_e),	//	トラックバーの数値の下限上限 (NULLなら全て0～256)
+	BGS_CHECK_N,													//	チェックボックスの数 (0なら名前初期値等もNULLでよい)
+	const_cast<TCHAR **>(bgs_check_name),							//	チェックボックスの名前郡へのポインタ
+	const_cast<int *>(bgs_check_default),							//	チェックボックスの初期値郡へのポインタ
+	bgs_func_proc,				//	フィルタ処理関数へのポインタ (NULLなら呼ばれません)
 	NULL,						//	開始時に呼ばれる関数へのポインタ (NULLなら呼ばれません)
 	NULL,						//	終了時に呼ばれる関数へのポインタ (NULLなら呼ばれません)
 	NULL,						//	設定が変更されたときに呼ばれる関数へのポインタ (NULLなら呼ばれません)
