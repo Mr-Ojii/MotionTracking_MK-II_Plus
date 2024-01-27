@@ -153,28 +153,8 @@ static void onMouse(int event, int x, int y, int, void*)
 		//set with and height of the bounding box
 		boundingBox.width = std::abs(x - boundingBox.x);
 		boundingBox.height = std::abs(y - boundingBox.y);
-		if (x < boundingBox.x)
-		{
-			if (x > 0)
-			{
-				boundingBox.x = x;
-			}
-			else
-			{
-				boundingBox.x = 0;
-			}
-		}
-		if (y < boundingBox.y)
-		{
-			if (y > 0)
-			{
-				boundingBox.y = y;
-			}
-			else
-			{
-				boundingBox.y = 0;
-			}
-		}
+		boundingBox.x = std::clamp(static_cast<double>(x), 0.0, boundingBox.x);
+		boundingBox.y = std::clamp(static_cast<double>(y), 0.0, boundingBox.y);
 		selectObj = true;
 		startSel = false;
 		break;
