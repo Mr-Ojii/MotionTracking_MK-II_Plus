@@ -131,7 +131,7 @@ EXTERN_C FILTER_DLL __declspec(dllexport) ** __stdcall GetFilterTableList(void)
 		p++;
 		*p = '\0';
 		modelDir = std::string(path);
-		modelDir += "MotionTracking_Model\\";
+		modelDir += "MotionTracking_model\\";
 	}
 
 	return (FILTER_DLL**)&filterlist;
