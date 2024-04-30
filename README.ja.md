@@ -1,4 +1,4 @@
-# MotionTracking_MKII_Plus
+# MotionTracking MK-II Plus
 AviUtlでオブジェクトトラッキングを行うプラグイン
 
 
@@ -93,11 +93,11 @@ CJKファイル名もサポートされています。
 
 
 ## ソースからのビルド
-1. `git clone https://github.com/Mr-Ojii/MotionTracking_MKII_Plus.git`を実行
+1. `git clone https://github.com/Mr-Ojii/MotionTracking_MK-II_Plus.git`を実行
 2. OpenCV 4.9.0 を静的ライブラリとしてビルド(DebugとRelease両方)
 3. `src/CMakeLists.txt`よりVSのプロジェクトを生成
 4. Visual Studioを用いてビルド
 
 
 ## バグ報告
-* [GitHub](https://github.com/Mr-Ojii/MotionTracking_MKII_Plus)
+* [GitHub](https://github.com/Mr-Ojii/MotionTracking_MK-II_Plus)

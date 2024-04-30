@@ -19,7 +19,7 @@ jobs:
         cmake --build opencv/build --config Release
         cmake --install opencv/build
 
-    - name: Build MotionTracking_MKII_Plus
+    - name: Build MotionTracking_MK-II_Plus
       run: |
         cmake -S src -B src/build -D CMAKE_GENERATOR_PLATFORM=Win32 -D OPENCV_INCLUDE_DIR=opencv/build/install/include -D OPENCV_LIBRARY_DIR=opencv/build/install/x86/vc17/staticlib
         cmake --build src/build --config Release
@@ -27,7 +27,7 @@ jobs:
     - name: Create Archive
       run: |
         cd ${{ github.workspace }}
-        move LICENSE Licenses/MotionTracking_MKII.txt
+        move LICENSE Licenses/MotionTrackingMKII.txt
         move opencv/LICENSE Licenses/opencv.txt
         move opencv_contrib/LICENSE Licenses/opencv_contrib.txt
         move src/build/Release/MotionTrackingMKIIPlus.auf MotionTrackingMKIIPlus.auf
@@ -39,7 +39,7 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: MotionTracking_MKII_Plus
+        name: MotionTrackingMKIIPlus
         path: ${{ github.workspace }}/MotionTrackingMKIIPlus.zip
 
   create_release:
@@ -55,7 +55,7 @@ jobs:
     
     - uses: actions/download-artifact@v4
       with:
-        name: MotionTracking_MKII_Plus
+        name: MotionTrackingMKIIPlus
         path: artifacts
     
     - name: Create a Release

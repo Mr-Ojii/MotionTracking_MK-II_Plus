@@ -1,4 +1,4 @@
-# MotionTracking_MKII_Plus
+# MotionTracking MK-II Plus
 AviUtl object tracking (rubbish) plugin based on LKT/optical flow. Use OpenCV 4.9.0 or newer.
 
 
@@ -94,10 +94,10 @@ Support CJK filename
 
 
 ## Building From Source
-1. Run `git clone https://github.com/Mr-Ojii/MotionTracking_MKII_Plus.git`
+1. Run `git clone https://github.com/Mr-Ojii/MotionTracking_MK-II_Plus.git`
 2. Build your own OpenCV 4.9.0 STATIC (Both Debug and Release builds)
 3. Generate VS project file from src/CMakeLists.txt
 4. Build with Visual Studio
 
 ## Bug Report
-* [GitHub](https://github.com/Mr-Ojii/MotionTracking_MKII_Plus)
+* [GitHub](https://github.com/Mr-Ojii/MotionTracking_MK-II_Plus)

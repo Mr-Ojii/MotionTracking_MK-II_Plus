@@ -399,7 +399,7 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 					"正常な結果が得られない可能性があります。\n"
 					"リサイズを無効化することをお勧めします。\n"
 					"Analyzeを続行しますか？"
-					, "MotionTracking MKII Plus", MB_ICONWARNING | MB_YESNO);
+					, "MotionTracking MK-II Plus", MB_ICONWARNING | MB_YESNO);
 				if (res == IDNO) {
 					return FALSE;
 				}
