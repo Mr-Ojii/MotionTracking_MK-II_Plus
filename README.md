@@ -78,6 +78,8 @@ BGSubtraction aims to isolate the moving object from the background. It can outp
 #### Save EXO
 Auto correct for single sandwiched error result.  
 Support CJK filename
+##### Save EXO Options
+- Invert Position : Reverse the position of the tracking result.
 #### Options
 - Quick Blur : Direct blur on AviUtl Window according to tracking result.
 - Easy Privacy : Blur all detected faces(real face only), No tracking is needed. Works well on frontal face, poor on profile face.
