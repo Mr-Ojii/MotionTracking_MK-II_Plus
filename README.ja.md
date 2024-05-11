@@ -61,14 +61,6 @@ RGB画像をHSVに変換し、それをRGB画像の様に表示させます。�
 
 ## ヘルプ
 ### MotionTracking MK-II Plus
-#### メソッド一覧
-1. Multi Instance Learning
-2. KCF
-3. CSRT
-4. GOTURN
-5. DaSiamRPN
-6. Nano
-7. Vit
 #### 使用方法
 0. トラッキングしたいフレームの範囲を選択する。
 1. 「Select Object」ボタンをクリックし、ポップアップウィンドウ内で追跡するオブジェクトをドラッグして指定する。ポップアップウィンドウを閉じる。
@@ -77,9 +69,22 @@ RGB画像をHSVに変換し、それをRGB画像の様に表示させます。�
 #### Save EXO
 正常な結果に1フレームのみ挟まれたエラーの自動補正機能が搭載されています。
 CJKファイル名もサポートされています。
-##### Save EXOのオプション
-- Invert Position : トラッキング結果の座標を反転させる。
 #### オプション
+##### トラックバーのオプション
+###### Method
+解析で使用するアルゴリズムを指定します
+1. Multi Instance Learning
+2. KCF
+3. CSRT
+4. GOTURN
+5. DaSiamRPN
+6. Nano
+7. Vit
+##### Save EXOのオプション
+- As English EXO? : 英語版パッチを当てた拡張編集用のexoを出力するか
+- As Sub-filter/部分フィルター？ : 部分フィルタとして出力するか
+- Invert Position : トラッキング結果の座標を反転させるか
+##### 映像エフェクトオプション
 - Quick Blur : トラッキング結果を元に、直接ぼかしをかける。
 - Easy Privacy : 検出されたすべての顔(実写のみ)をぼかします。正面からの顔は検出精度が高いですが、横顔には弱いです。
 

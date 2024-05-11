@@ -62,14 +62,6 @@ BGSubtraction aims to isolate the moving object from the background. It can outp
 
 ## Help
 ### MotionTracking MK-II Plus
-#### Method
-1. Multi Instance Learning
-2. KCF
-3. CSRT
-4. GOTURN
-5. DaSiamRPN
-6. Nano
-7. Vit
 #### Steps
 0. Mark a section to track
 1. Click 1st button, Drag a box on the object to be tracked(in popup Window). Close the popup Window.
@@ -78,9 +70,20 @@ BGSubtraction aims to isolate the moving object from the background. It can outp
 #### Save EXO
 Auto correct for single sandwiched error result.  
 Support CJK filename
-##### Save EXO Options
-- Invert Position : Reverse the position of the tracking result.
 #### Options
+##### Method
+1. Multi Instance Learning
+2. KCF
+3. CSRT
+4. GOTURN
+5. DaSiamRPN
+6. Nano
+7. Vit
+##### Save EXO Options
+- As English EXO? : Output exo for English patched exedit.
+- As Sub-filter/部分フィルター？ : Output as a sub filter.
+- Invert Position : Reverse the position of the tracking result.
+##### Video Effect Options
 - Quick Blur : Direct blur on AviUtl Window according to tracking result.
 - Easy Privacy : Blur all detected faces(real face only), No tracking is needed. Works well on frontal face, poor on profile face.
 
