@@ -357,7 +357,7 @@ BOOL func_update(FILTER *fp, int status)
 			update_object_selection_window(boundingBox.x, boundingBox.y, boundingBox.x + boundingBox.width, boundingBox.y + boundingBox.height, fp);
 		
 		// View Result
-		if (fp->track[2])
+		if (fp->check[2])
 			return TRUE;
 	}
 	return FALSE;
