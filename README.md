@@ -72,6 +72,7 @@ Auto correct for single sandwiched error result.
 Support CJK filename
 #### Options
 ##### Method
+Specifies the algorithm to be used in the analysis.
 1. Multi Instance Learning
 2. KCF
 3. CSRT
@@ -79,6 +80,8 @@ Support CJK filename
 5. DaSiamRPN
 6. Nano
 7. Vit
+##### Rect Hue
+Specifies the hue of the rectangle displayed in Object Selection and View Result.
 ##### Save EXO Options
 - As English EXO? : Output exo for English patched exedit.
 - As Sub-filter/部分フィルター？ : Output as a sub filter.

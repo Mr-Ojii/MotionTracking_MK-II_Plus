@@ -80,6 +80,8 @@ CJKファイル名もサポートされています。
 5. DaSiamRPN
 6. Nano
 7. Vit
+###### Rect Hue
+Object SelectionやView Resultで表示される矩形の色相を指定します
 ##### Save EXOのオプション
 - As English EXO? : 英語版パッチを当てた拡張編集用のexoを出力するか
 - As Sub-filter/部分フィルター？ : 部分フィルタとして出力するか

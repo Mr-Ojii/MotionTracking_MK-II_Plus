@@ -20,10 +20,10 @@ HINSTANCE hModuleDLL = nullptr;
 constexpr TCHAR* track_method[] = { "MIL", "KCF", "CSRT", "GOTURN", "DaSiamRPN", "Nano", "Vit"};
 constexpr int METHOD_N = sizeof(track_method) / sizeof(TCHAR*);
 
-constexpr TCHAR* track_name[] = { "Method" };   // トラックバーの名前
-constexpr int    track_default[] = { 3 };       // トラックバーの初期値
-constexpr int    track_s[] = { 1 };             // トラックバーの下限値
-constexpr int    track_e[] = { METHOD_N };      // トラックバーの上限値
+constexpr TCHAR* track_name[] = { "Method", "Rect Hue" };   // トラックバーの名前
+constexpr int    track_default[] = { 3, 120 };       // トラックバーの初期値
+constexpr int    track_s[] = { 1, 0 };             // トラックバーの下限値
+constexpr int    track_e[] = { METHOD_N, 359 };      // トラックバーの上限値
 constexpr int    TRACK_N = sizeof(track_name) / sizeof(TCHAR*);
 
 static_assert(TRACK_N == sizeof(track_default) / sizeof(int), "size of track_default mismatch with TRACK_N");
@@ -75,7 +75,7 @@ FILTER_DLL filter = {
 	func_proc,					//	フィルタ処理関数へのポインタ (NULLなら呼ばれません)
 	NULL,						//	開始時に呼ばれる関数へのポインタ (NULLなら呼ばれません)
 	NULL,						//	終了時に呼ばれる関数へのポインタ (NULLなら呼ばれません)
-	NULL,						//	設定が変更されたときに呼ばれる関数へのポインタ (NULLなら呼ばれません)
+	func_update,						//	設定が変更されたときに呼ばれる関数へのポインタ (NULLなら呼ばれません)
 	func_WndProc,				//	設定ウィンドウにウィンドウメッセージが来た時に呼ばれる関数へのポインタ (NULLなら呼ばれません)
 	NULL, NULL,					//	システムで使いますので使用しないでください
 	NULL,						//  拡張データ領域へのポインタ (FILTER_FLAG_EX_DATAが立っている時に有効)
@@ -137,9 +137,42 @@ EXTERN_C FILTER_DLL __declspec(dllexport) ** __stdcall GetFilterTableList(void)
 	return (FILTER_DLL**)&filterlist;
 }
 
-// Mouse callback function for object selection
-static void onMouse(int event, int x, int y, int, void*)
+static cv::Scalar hue_to_scalar(int hue)
 {
+	hue = hue % 360;
+
+	if (hue < 60)
+		return cv::Scalar(255, hue * 255 / 60, 0);
+	else if (hue < 120)
+		return cv::Scalar((120-hue) * 255 / 60, 255, 0);
+	else if (hue < 180)
+		return cv::Scalar(0, 255, (hue - 120) * 255 / 60);
+	else if (hue < 240)
+		return cv::Scalar(0, (240 - hue) * 255 / 60, 255);
+	else if (hue < 300)
+		return cv::Scalar((hue - 240) * 255 / 60, 0, 255);
+	else
+		return cv::Scalar(255, 0, (360 - hue) * 255 / 60);
+}
+
+static void update_object_selection_window(int x1, int y1, int x2, int y2, FILTER* fp)
+{
+	//update only if visible
+	if(!static_cast<bool>(cv::getWindowProperty("Object Selection", cv::WND_PROP_VISIBLE)))
+		return;
+
+	//draw the bounding box
+	cv::Mat currentFrame;
+	ocvImage.copyTo(currentFrame);
+	cv::rectangle(currentFrame, cv::Point(x1, y1), cv::Point(x2, y2), hue_to_scalar(fp->track[1]), 2);
+
+	imshow("Object Selection", currentFrame);
+}
+
+// Mouse callback function for object selection
+static void onMouse(int event, int x, int y, int, void* fp_v)
+{
+	FILTER* fp = reinterpret_cast<FILTER*>(fp_v);
 	switch (event)
 	{
 	case cv::EVENT_LBUTTONDOWN:
@@ -162,12 +195,7 @@ static void onMouse(int event, int x, int y, int, void*)
 
 		if (startSel && !selectObj)
 		{
-			//draw the bounding box
-			cv::Mat currentFrame;
-			ocvImage.copyTo(currentFrame);
-			cv::rectangle(currentFrame, cv::Point((int)boundingBox.x, (int)boundingBox.y), cv::Point(x, y), cv::Scalar(0, 255, 0), 2);
-
-			imshow("Object Selection", currentFrame);
+			update_object_selection_window(boundingBox.x, boundingBox.y, x, y, fp);
 		}
 		break;
 	}
@@ -321,7 +349,19 @@ static void groupObject(std::vector<FRMFIX> &fixedframes, std::vector<FRMGROUP> 
 //BOOL func_init(FILTER *fp);
 
 //BOOL func_exit(FILTER *fp);
-//BOOL func_update(FILTER *fp, int status);
+BOOL func_update(FILTER *fp, int status)
+{
+	if (status == FILTER_UPDATE_STATUS_TRACK + 1)
+	{
+		if (selectObj)
+			update_object_selection_window(boundingBox.x, boundingBox.y, boundingBox.x + boundingBox.width, boundingBox.y + boundingBox.height, fp);
+		
+		// View Result
+		if (fp->track[2])
+			return TRUE;
+	}
+	return FALSE;
+}
 BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *editp, FILTER *fp)
 {
 	if (!fp->exfunc->is_filter_active(fp) || !fp->exfunc->is_editing(editp))
@@ -336,7 +376,7 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 		case MID_FILTER_BUTTON: //Object selection
 		{
 			int srcw, srch;
-			if (!fp->exfunc->get_select_frame(editp, &selA, &selB)) 
+			if (!fp->exfunc->get_select_frame(editp, &selA, &selB))
 			{
 				MessageBox(NULL, "Cannot get selected frame number", "AviUtl API Error", MB_OK);
 				return FALSE;
@@ -360,7 +400,7 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 			cvBuffer.copyTo(ocvImage);
 
 			cv::namedWindow("Object Selection", cv::WINDOW_KEEPRATIO);
-			cv::setMouseCallback("Object Selection", onMouse, 0);
+			cv::setMouseCallback("Object Selection", onMouse, fp);
 			cv::resizeWindow("Object Selection", srcw, srch);
 			cv::imshow("Object Selection", ocvImage);
 			return TRUE;
@@ -917,7 +957,7 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 
 		if (track_found[fpip->frame - selA])
 		{
-			cv::rectangle(disp, track_result[fpip->frame - selA], cv::Scalar(255, 0, 0), 2, 1);
+			cv::rectangle(disp, track_result[fpip->frame - selA], hue_to_scalar(fp->track[1]), 2, 1);
 			cv::putText(disp, "OK", cv::Point(0, 50), cv::FONT_HERSHEY_PLAIN, 2.0, cv::Scalar(0, 255, 0), 2);
 		}
 		else
