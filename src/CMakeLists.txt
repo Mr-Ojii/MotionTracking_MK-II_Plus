@@ -15,7 +15,10 @@ target_sources(${PROJECT_NAME} PRIVATE main.cpp main.def bgs.cpp hsv.cpp resourc
 set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ".auf")
 target_include_directories(${PROJECT_NAME} PRIVATE ${OPENCV_INCLUDE_DIR})
 target_link_directories(${PROJECT_NAME} PRIVATE ${OPENCV_LIBRARY_DIR})
-target_link_libraries(${PROJECT_NAME} PRIVATE comctl32 ippicvmt debug ippiwd debug ittnotifyd debug opencv_core490d debug opencv_highgui490d debug opencv_imgcodecs490d debug opencv_imgproc490d debug opencv_objdetect490d debug opencv_tracking490d debug opencv_video490d debug opencv_calib3d490d debug opencv_flann490d debug opencv_features2d490d debug opencv_dnn490d debug zlibd debug libprotobufd optimized ippiw optimized ittnotify optimized opencv_core490 optimized opencv_highgui490 optimized opencv_imgcodecs490 optimized opencv_imgproc490 optimized opencv_objdetect490 optimized opencv_tracking490 optimized opencv_video490 optimized opencv_calib3d490 optimized opencv_flann490 optimized opencv_features2d490 optimized opencv_dnn490 optimized zlib optimized libprotobuf)
+target_link_libraries(${PROJECT_NAME} PRIVATE comctl32 ippicvmt
+                        debug     ippiwd debug     ittnotifyd debug     opencv_core4100d debug     opencv_highgui4100d debug     opencv_imgcodecs4100d debug     opencv_imgproc4100d debug     opencv_objdetect4100d debug     opencv_tracking4100d debug     opencv_video4100d debug     opencv_calib3d4100d debug     opencv_flann4100d debug     opencv_features2d4100d debug     opencv_dnn4100d debug     zlibd debug     libprotobufd
+                        optimized ippiw  optimized ittnotify  optimized opencv_core4100  optimized opencv_highgui4100  optimized opencv_imgcodecs4100  optimized opencv_imgproc4100  optimized opencv_objdetect4100  optimized opencv_tracking4100  optimized opencv_video4100  optimized opencv_calib3d4100  optimized opencv_flann4100  optimized opencv_features2d4100  optimized opencv_dnn4100  optimized zlib  optimized libprotobuf
+                        )
 
 if("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
     set_property(TARGET ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
