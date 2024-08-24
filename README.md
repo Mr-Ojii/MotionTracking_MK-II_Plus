@@ -16,17 +16,9 @@ Dump the .AUF and MotionTracking_model folder into
 
 The menu name should be "MotionTracking MK-II Plus"
 
-Additional work is required if Methods 4, 5, 6 or 7 are to be used.
+Additional work is required if Methods 4, 5 or 6 are to be used.
 
-### For Method 4 (GOTURN)
-1. Download each data from [this URL](https://github.com/opencv/opencv_extra/tree/c4219d5eb3105ed8e634278fad312a1a8d2c182d/testdata/tracking) 
-2. Extract the splited ZIP file
-3. Dump the
-    - goturn.caffemodel
-    - goturn.prototxt  
-  into `MotionTracking_model folder`
-
-### For Method 5 (DaSiamRPN)
+### For Method 4 (DaSiamRPN)
 1. Download the following file from the URL listed as a comment out in the source code at [this URL](https://github.com/opencv/opencv/blob/4.x/samples/dnn/dasiamrpn_tracker.cpp)
 
 - dasiamrpn_model.onnx
@@ -35,7 +27,7 @@ Additional work is required if Methods 4, 5, 6 or 7 are to be used.
 
 2. Dump each files into `MotionTracking_model folder`
 
-### For Method 6 (Nano)
+### For Method 5 (Nano)
 1. Download the following file from [this URL](https://github.com/HonglinChu/SiamTrackers/tree/18b7791360acb3f6d276d47376a6f1ed516f1628/NanoTrack/models/nanotrackv2)
 
 - nanotrack_backbone_sim.onnx
@@ -43,7 +35,7 @@ Additional work is required if Methods 4, 5, 6 or 7 are to be used.
 
 2. Dump each files into `MotionTracking_model folder`
 
-### For Method 7 (Vit)
+### For Method 6 (Vit)
 1. Download the following file from [this URL](https://github.com/opencv/opencv_extra/blob/4.x/testdata/dnn/onnx/models/vitTracker.onnx)
 
 - vitTracker.onnx
@@ -76,10 +68,9 @@ Specifies the algorithm to be used in the analysis.
 1. Multi Instance Learning
 2. KCF
 3. CSRT
-4. GOTURN
-5. DaSiamRPN
-6. Nano
-7. Vit
+4. DaSiamRPN
+5. Nano
+6. Vit
 ##### Rect Hue
 Specifies the hue of the rectangle displayed in Object Selection and View Result.
 ##### Save EXO Options

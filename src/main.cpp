@@ -17,7 +17,7 @@
 HINSTANCE hModuleDLL = nullptr;
 
 
-constexpr TCHAR* track_method[] = { "MIL", "KCF", "CSRT", "GOTURN", "DaSiamRPN", "Nano", "Vit"};
+constexpr TCHAR* track_method[] = { "MIL", "KCF", "CSRT", "DaSiamRPN", "Nano", "Vit"};
 constexpr int METHOD_N = sizeof(track_method) / sizeof(TCHAR*);
 
 constexpr TCHAR* track_name[] = { "Method", "Rect Hue" };   // トラックバーの名前
@@ -474,14 +474,6 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 					break;
 				case 3:
 				{
-					auto params = cv::TrackerGOTURN::Params();
-					params.modelBin = modelDir + "goturn.caffemodel";
-					params.modelTxt = modelDir + "goturn.prototxt";
-					tracker = cv::TrackerGOTURN::create(params);
-					break;
-				}
-				case 4:
-				{
 					auto params = cv::TrackerDaSiamRPN::Params();
 					params.model = modelDir +  "dasiamrpn_model.onnx";
 					params.kernel_r1 = modelDir + "dasiamrpn_kernel_r1.onnx";
@@ -489,7 +481,7 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 					tracker = cv::TrackerDaSiamRPN::create(params);
 					break;
 				}
-				case 5:
+				case 4:
 				{
 					auto params = cv::TrackerNano::Params();
 					params.backbone = modelDir + "nanotrack_backbone_sim.onnx";

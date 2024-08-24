@@ -15,17 +15,9 @@ zip内の.aufファイルとMotionTracking_modelディレクトリを`AviUtlが�
 
 AviUtlのフィルタメニューに"MotionTracking MK-II Plus"が追加されていたら成功です。
 
-また、機械学習を用いたトラッキングアルゴリズムであるMethod 4, 5, 6, 7を使用する場合、追加で作業が必要です。(学習データを同梱することが困難であるため)
+また、機械学習を用いたトラッキングアルゴリズムであるMethod 4, 5, 6を使用する場合、追加で作業が必要です。(学習データを同梱することが困難であるため)
 
-### Method 4 (GOTURN)用
-[こちらのURL](https://github.com/opencv/opencv_extra/tree/c4219d5eb3105ed8e634278fad312a1a8d2c182d/testdata/tracking)よりそれぞれのデータをダウンロード・分割ZIPを解凍し、
-
-- goturn.caffemodel
-- goturn.prototxt
-
-を`MotionTracking_modelディレクトリ内`に置いてください。
-
-### Method 5 (DaSiamRPN)用
+### Method 4 (DaSiamRPN)用
 [こちらのURL](https://github.com/opencv/opencv/blob/4.x/samples/dnn/dasiamrpn_tracker.cpp)のソースコードにコメントアウトとして記載されているURLより
 
 - dasiamrpn_model.onnx
@@ -34,7 +26,7 @@ AviUtlのフィルタメニューに"MotionTracking MK-II Plus"が追加され�
 
 をダウンロードし、`MotionTracking_modelディレクトリ内`に置いてください。
 
-### Method 6 (Nano)用
+### Method 5 (Nano)用
 [こちらのURL](https://github.com/HonglinChu/SiamTrackers/tree/18b7791360acb3f6d276d47376a6f1ed516f1628/NanoTrack/models/nanotrackv2)より
 
 - nanotrack_backbone_sim.onnx
@@ -42,7 +34,7 @@ AviUtlのフィルタメニューに"MotionTracking MK-II Plus"が追加され�
 
 をダウンロードし、`MotionTracking_modelディレクトリ内`に置いてください。
 
-### Method 7 (Vit)用
+### Method 6 (Vit)用
 [こちらのURL](https://github.com/opencv/opencv_extra/blob/4.x/testdata/dnn/onnx/models/vitTracker.onnx)より
 
 - vitTracker.onnx
@@ -76,10 +68,9 @@ CJKファイル名もサポートされています。
 1. Multi Instance Learning
 2. KCF
 3. CSRT
-4. GOTURN
-5. DaSiamRPN
-6. Nano
-7. Vit
+4. DaSiamRPN
+5. Nano
+6. Vit
 ###### Rect Hue
 Object SelectionやView Resultで表示される矩形の色相を指定します
 ##### Save EXOのオプション
