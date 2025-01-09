@@ -9,7 +9,13 @@ add_library(${PROJECT_NAME} SHARED)
 
 set(OPENCV_INCLUDE_DIR CACHE PATH "OpenCV include directory")
 set(OPENCV_LIBRARY_DIR CACHE PATH "OpenCV library directory")
+if(NOT MSVC_ARCH)
+    set(MSVC_ARCH "AVX")
+endif()
 
+message("-- OPTIONS --")
+message("-- MSVC_ARCH: ${MSVC_ARCH}")
+message("-------------")
 
 target_sources(${PROJECT_NAME} PRIVATE main.cpp main.def bgs.cpp hsv.cpp resource.rc)
 set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ".auf")
@@ -23,7 +29,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE comctl32 ippicvmt
 if("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
     set_property(TARGET ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
     set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/LARGEADDRESSAWARE")
-    target_compile_options(${PROJECT_NAME} PRIVATE /arch:AVX /source-charset:utf-8 /execution-charset:shift_jis)
+    target_compile_options(${PROJECT_NAME} PRIVATE /arch:${MSVC_ARCH} /source-charset:utf-8 /execution-charset:shift_jis)
 elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
     target_link_options(${PROJECT_NAME} PRIVATE -static-libstdc++ -static)
 endif()
