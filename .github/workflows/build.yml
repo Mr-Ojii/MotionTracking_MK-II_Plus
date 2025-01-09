@@ -5,7 +5,6 @@ on:
 
 jobs:
   build:
-    strategy:
     runs-on: windows-latest
     strategy:
       matrix:
