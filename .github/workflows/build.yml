@@ -5,7 +5,11 @@ on:
 
 jobs:
   build:
+    strategy:
     runs-on: windows-latest
+    strategy:
+      matrix:
+        arch: [AVX, SSE2]
 
     steps:
     - name: Checkout repository
@@ -21,7 +25,7 @@ jobs:
 
     - name: Build MotionTracking_MK-II_Plus
       run: |
-        cmake -S src -B src/build -D CMAKE_GENERATOR_PLATFORM=Win32 -D OPENCV_INCLUDE_DIR=opencv/build/install/include -D OPENCV_LIBRARY_DIR=opencv/build/install/x86/vc17/staticlib
+        cmake -S src -B src/build -D CMAKE_GENERATOR_PLATFORM=Win32 -D OPENCV_INCLUDE_DIR=opencv/build/install/include -D OPENCV_LIBRARY_DIR=opencv/build/install/x86/vc17/staticlib -D MSVC_ARCH=${{ matrix.arch }}
         cmake --build src/build --config Release
 
     - name: Create Archive
@@ -34,13 +38,13 @@ jobs:
         mkdir MotionTracking_model
         move opencv/data/haarcascades/haarcascade_frontalface_default.xml MotionTracking_model/haarcascade_frontalface_default.xml
         move opencv/data/haarcascades/haarcascade_profileface.xml MotionTracking_model/haarcascade_profileface.xml
-        7z a MotionTrackingMKIIPlus.zip MotionTrackingMKIIPlus.auf README.md README.ja.md Licenses MotionTracking_model
+        7z a MotionTrackingMKIIPlus-${{ matrix.arch }}.zip MotionTrackingMKIIPlus.auf README.md README.ja.md Licenses MotionTracking_model
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: MotionTrackingMKIIPlus
-        path: ${{ github.workspace }}/MotionTrackingMKIIPlus.zip
+        name: MotionTrackingMKIIPlus-${{ matrix.arch }}
+        path: ${{ github.workspace }}/MotionTrackingMKIIPlus-${{ matrix.arch }}.zip
 
   create_release:
     name: Create release
@@ -55,14 +59,16 @@ jobs:
     
     - uses: actions/download-artifact@v4
       with:
-        name: MotionTrackingMKIIPlus
         path: artifacts
     
     - name: Create a Release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
+        cd ${{ github.workspace }}/artifacts
+        mv ./*/*.zip ./
         REVCOUNT=`git rev-list --count HEAD`
         RELEASE_NAME=r${REVCOUNT}
         TAG_NAME=r${REVCOUNT}
-        gh release create "${TAG_NAME}" ${{ github.workspace }}/artifacts/*.zip -t "${RELEASE_NAME}" 
+        echo "通常はAVX版を使用することをお勧めします。AVX版が動作しない場合のみSSE2版をお使いください。" >> ReleaseNotes.txt
+        gh release create "${TAG_NAME}" ${{ github.workspace }}/artifacts/*.zip -t "${RELEASE_NAME}" -F ReleaseNotes.txt
