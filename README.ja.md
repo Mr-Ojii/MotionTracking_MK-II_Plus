@@ -74,9 +74,10 @@ CJKファイル名もサポートされています。
 ###### Rect Hue
 Object SelectionやView Resultで表示される矩形の色相を指定します
 ##### Save EXOのオプション
-- As English EXO? : 英語版パッチを当てた拡張編集用のexoを出力するか
 - As Sub-filter/部分フィルター？ : 部分フィルタとして出力するか
 - Invert Position : トラッキング結果の座標を反転させるか
+###### Note
+「As English EXO?」オプションは削除されました。英語版AviUtlにexoを読み込みたい場合は[AviUtl-Exo-Language-Converter](https://github.com/Mr-Ojii/AviUtl-Exo-Language-Converter)や[ごちゃまぜドロップス](https://github.com/oov/aviutl_gcmzdrops)を代わりに使用してください。  
 ##### 映像エフェクトオプション
 - Quick Blur : トラッキング結果を元に、直接ぼかしをかける。
 - Easy Privacy : 検出されたすべての顔(実写のみ)をぼかします。正面からの顔は検出精度が高いですが、横顔には弱いです。

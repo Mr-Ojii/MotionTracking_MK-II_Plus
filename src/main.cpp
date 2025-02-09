@@ -31,8 +31,8 @@ static_assert(TRACK_N == sizeof(track_s) / sizeof(int), "size of track_s mismatc
 static_assert(TRACK_N == sizeof(track_e) / sizeof(int), "size of track_e mismatch with TRACK_N");
 
 
-constexpr TCHAR *check_name[] = { "Select Object", "Analyze", "View Result", "Clear Result", "As English EXO?", "As Sub-filter/部分フィルター?", "Invert Position", "Save EXO", "Quick Blur", "Easy Privacy"}; // チェックボックスの名前
-constexpr int   check_default[] = { -1, -1, 0, -1, 0, 0, 0, -1, 0, 0 }; // チェックボックスの初期値 (値は0か1)
+constexpr TCHAR *check_name[] = { "Select Object", "Analyze", "View Result", "Clear Result", "As Sub-filter/部分フィルター?", "Invert Position", "Save EXO", "Quick Blur", "Easy Privacy"}; // チェックボックスの名前
+constexpr int   check_default[] = { -1, -1, 0, -1, 0, 0, -1, 0, 0 }; // チェックボックスの初期値 (値は0か1)
 constexpr int   CHECK_N = sizeof(check_name) / sizeof(TCHAR*);
 
 static_assert(CHECK_N == sizeof(check_default) / sizeof(int), "size of check_default mismatch with CHECK_N");
@@ -636,7 +636,7 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
             return TRUE;
             break;
         }
-        case MID_FILTER_BUTTON + 7: //Save EXO
+        case MID_FILTER_BUTTON + 6: //Save EXO
         {
             //TODO
             if (track_result.size() <= 0)
@@ -696,7 +696,7 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
                     SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
                     SecureZeroMemory(fmtstr, sizeof(TCHAR[2048]));
                     //2 more param for Figure obj
-                    if (!fp->check[5])
+                    if (!fp->check[4])
                     {
                         LoadString(fp->dll_hinst, IDS_FIGUREPARAMA, boilerplate, 2048);
                         strbuf << boilerplate; //verbatim copy
@@ -712,16 +712,9 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
                     sprintf_s(head_num, sizeof(char[32]), "[%d.0]\n\0", object_id);
                     strbuf << head_num;
                     //
-                    if (fp->check[5]) //Sub-filter
+                    if (fp->check[4]) //Sub-filter
                     {
-                        if (fp->check[4])//English EXO
-                        {
-                            LoadString(fp->dll_hinst, IDS_SFPARAM_EN, boilerplate, 2048);
-                        }
-                        else //JP
-                        {
-                            LoadString(fp->dll_hinst, IDS_SFPARAM_JP, boilerplate, 2048);//TODO: Set JP text
-                        }
+                        LoadString(fp->dll_hinst, IDS_SFPARAM_JP, boilerplate, 2048);//TODO: Set JP text
                         int Xi, Xf, Yi, Yf, size_st, size_ed;
                         double  rAsp_st, rAsp_ed;
                         Xi = fixedFrm[f].cx;
@@ -769,7 +762,7 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
                             }
                         }
 
-                        if (fp->check[6]) //Invert Position
+                        if (fp->check[5]) //Invert Position
                         {
                             Xi = -Xi;
                             Xf = -Xf;
@@ -784,14 +777,7 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
                     }
                     else //Graphics
                     {
-                        if (fp->check[4])//English EXO
-                        {
-                            LoadString(fp->dll_hinst, IDS_FIGUREPARAMB_EN, boilerplate, 2048);
-                        }
-                        else //JP
-                        {
-                            LoadString(fp->dll_hinst, IDS_FIGUREPARAMB_JP, boilerplate, 2048);//TODO: Set JP text
-                        }
+                        LoadString(fp->dll_hinst, IDS_FIGUREPARAMB_JP, boilerplate, 2048);//TODO: Set JP text
                         strbuf << boilerplate;
                         SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
 
@@ -800,16 +786,9 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
                     sprintf_s(head_num, sizeof(char[32]), "[%d.1]\n\0", object_id);
                     strbuf << head_num;
                     //
-                    if (fp->check[5])// Mono FX for Sub-filter
+                    if (fp->check[4])// Mono FX for Sub-filter
                     {
-                        if (fp->check[4])//English EXO
-                        {
-                            LoadString(fp->dll_hinst, IDS_FXMONO_EN, boilerplate, 2048);
-                        }
-                        else //JP
-                        {
-                            LoadString(fp->dll_hinst, IDS_FXMONO_JP, boilerplate, 2048);//TODO: Set JP text
-                        }
+                        LoadString(fp->dll_hinst, IDS_FXMONO_JP, boilerplate, 2048);//TODO: Set JP text
                         strbuf << boilerplate;
                         SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
                     }
@@ -831,14 +810,7 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
                             Hf = fixedFrm[f + 1].height;
                         }
 
-                        if (fp->check[4])//English EXO
-                        {
-                            LoadString(fp->dll_hinst, IDS_FXRESIZE_EN, boilerplate, 2048);
-                        }
-                        else //JP
-                        {
-                            LoadString(fp->dll_hinst, IDS_FXRESIZE_JP, boilerplate, 2048);//TODO: Set JP text
-                        }
+                        LoadString(fp->dll_hinst, IDS_FXRESIZE_JP, boilerplate, 2048);//TODO: Set JP text
                         sprintf_s(fmtstr, sizeof(TCHAR[2048]), boilerplate, (double)Wi, (double)Wf, (double)Hi, (double)Hf);
                         strbuf << fmtstr;
                         SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
@@ -846,7 +818,7 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
                     }
                     //Section [*.2] Std Drawing for Graphics
                     //Coordinate animation part for Graphics
-                    if (!fp->check[5]) //only for graphics
+                    if (!fp->check[4]) //only for graphics
                     {
                         sprintf_s(head_num, sizeof(char[32]), "[%d.2]\n\0", object_id);
                         strbuf << head_num;
@@ -864,15 +836,8 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
                             Xf = fixedFrm[f + 1].cx;
                             Yf = fixedFrm[f + 1].cy;
                         }
-                        if (fp->check[4])//English EXO
-                        {
-                            LoadString(fp->dll_hinst, IDS_STDDRAW_EN, boilerplate, 2048);
-                        }
-                        else //JP
-                        {
-                            LoadString(fp->dll_hinst, IDS_STDDRAW_JP, boilerplate, 2048);//TODO: Set JP text
-                        }
-                        if (fp->check[6]) // invert position
+                        LoadString(fp->dll_hinst, IDS_STDDRAW_JP, boilerplate, 2048);//TODO: Set JP text
+                        if (fp->check[5]) // invert position
                         {
                             Xi = -Xi;
                             Xf = -Xf;
@@ -976,7 +941,7 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
         fpip->ycp_edit = ycswap;
     }
 
-    if (isFilterActive && isEditing && fp->check[8] && hasResult && isFrameInRng)
+    if (isFilterActive && isEditing && fp->check[7] && hasResult && isFrameInRng)
     {
         if (track_found[fpip->frame - selA])
         {
@@ -1021,7 +986,7 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
             redraw = true;
         }
     }
-    if (fp->check[9] && isFilterActive && isEditing)
+    if (fp->check[8] && isFilterActive && isEditing)
     {
         //AviUtl -> OCV
         size_t frmsize = fpip->w* fpip->h;

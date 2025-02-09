@@ -74,9 +74,10 @@ Specifies the algorithm to be used in the analysis.
 ##### Rect Hue
 Specifies the hue of the rectangle displayed in Object Selection and View Result.
 ##### Save EXO Options
-- As English EXO? : Output exo for English patched exedit.
 - As Sub-filter/部分フィルター？ : Output as a sub filter.
 - Invert Position : Reverse the position of the tracking result.
+###### Note
+“As English EXO?” option has been removed. If you want to load .exo into the English version of AviUtl, please use [AviUtl-Exo-Language-Converter](https://github.com/Mr-Ojii/AviUtl-Exo-Language-Converter) or [GCMZDrops](https://github.com/oov/aviutl_gcmzdrops) instead.  
 ##### Video Effect Options
 - Quick Blur : Direct blur on AviUtl Window according to tracking result.
 - Easy Privacy : Blur all detected faces(real face only), No tracking is needed. Works well on frontal face, poor on profile face.
