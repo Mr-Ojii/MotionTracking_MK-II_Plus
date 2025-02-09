@@ -596,11 +596,11 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
                     box.height += box.y;
                     box.y = 0;
                 }
-                if (box.br().x > frmw)
+                if (box.x + box.width > frmw)
                 {
                     box.width = frmw - box.x;
                 }
-                if (box.br().y > frmh)
+                if (box.y + box.height > frmh)
                 {
                     box.height = frmh - box.y;
                 }
