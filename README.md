@@ -96,7 +96,7 @@ Specifies the hue of the rectangle displayed in Object Selection and View Result
 
 ## Building From Source
 1. Run `git clone https://github.com/Mr-Ojii/MotionTracking_MK-II_Plus.git`
-2. Build your own OpenCV 4.9.0 STATIC (Both Debug and Release builds)
+2. Build your own OpenCV 4.11.0 STATIC (Both Debug and Release builds)
 3. Generate VS project file from src/CMakeLists.txt
 4. Build with Visual Studio
 
