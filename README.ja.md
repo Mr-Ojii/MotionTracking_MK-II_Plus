@@ -76,6 +76,7 @@ Object SelectionやView Resultで表示される矩形の色相を指定しま�
 ##### Save EXOのオプション
 - As Sub-filter/部分フィルター？ : 部分フィルタとして出力するか
 - Invert Position : トラッキング結果の座標を反転させるか
+- Ignore Aspect Ratio : アスペクト比を無視し、拡大率で出力するか
 ###### Note
 「As English EXO?」オプションは削除されました。英語版AviUtlにexoを読み込みたい場合は[AviUtl-Exo-Language-Converter](https://github.com/Mr-Ojii/AviUtl-Exo-Language-Converter)や[ごちゃまぜドロップス](https://github.com/oov/aviutl_gcmzdrops)を代わりに使用してください。  
 ##### 映像エフェクトオプション

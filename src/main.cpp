@@ -31,8 +31,8 @@ static_assert(TRACK_N == sizeof(track_s) / sizeof(int), "size of track_s mismatc
 static_assert(TRACK_N == sizeof(track_e) / sizeof(int), "size of track_e mismatch with TRACK_N");
 
 
-constexpr TCHAR *check_name[] = { "Select Object", "Analyze", "View Result", "Clear Result", "As Sub-filter/部分フィルター?", "Invert Position", "Save EXO", "Quick Blur", "Easy Privacy"}; // チェックボックスの名前
-constexpr int   check_default[] = { -1, -1, 0, -1, 0, 0, -1, 0, 0 }; // チェックボックスの初期値 (値は0か1)
+constexpr TCHAR *check_name[] = { "Select Object", "Analyze", "View Result", "Clear Result", "As Sub-filter/部分フィルター?", "Invert Position", "Ignore Aspect Ratio", "Save EXO", "Quick Blur", "Easy Privacy"}; // チェックボックスの名前
+constexpr int   check_default[] = { -1, -1, 0, -1, 0, 0, 1, -1, 0, 0 }; // チェックボックスの初期値 (値は0か1)
 constexpr int   CHECK_N = sizeof(check_name) / sizeof(TCHAR*);
 
 static_assert(CHECK_N == sizeof(check_default) / sizeof(int), "size of check_default mismatch with CHECK_N");
@@ -101,6 +101,7 @@ typedef struct{
     int cy;
     int width;
     int height;
+    float scale;
     bool error;
 }FRMFIX;
 
@@ -296,6 +297,7 @@ static void fix_frame(std::vector<cv::Rect2d> &rect_list, std::vector<bool> &err
         buf.cy = center.y + dY;
         buf.width = (int)rect_list[i].width;
         buf.height = (int)rect_list[i].height;
+        buf.scale = std::max(rect_list[i].width, rect_list[i].height);
         buf.frame = i + selA + 1;
         buf.error = err_list[i];
         out.push_back(buf); //store to output vector
@@ -636,7 +638,7 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
             return TRUE;
             break;
         }
-        case MID_FILTER_BUTTON + 6: //Save EXO
+        case MID_FILTER_BUTTON + 7: //Save EXO
         {
             //TODO
             if (track_result.size() <= 0)
@@ -761,6 +763,11 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
                                 rAsp_ed = 0.0;
                             }
                         }
+                        if (fp->check[6]) // Ignore Aspect Ratio
+                        {
+                            rAsp_st = 0.0;
+                            rAsp_ed = 0.0;
+                        }
 
                         if (fp->check[5]) //Invert Position
                         {
@@ -780,7 +787,6 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
                         LoadString(fp->dll_hinst, IDS_FIGUREPARAMB_JP, boilerplate, 2048);//TODO: Set JP text
                         strbuf << boilerplate;
                         SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
-
                     }
                     //Section [*.1] Resize FX or Mono FX
                     sprintf_s(head_num, sizeof(char[32]), "[%d.1]\n\0", object_id);
@@ -795,23 +801,34 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
                     else //Resize FX for Graphics
                     {
                         int Wi, Wf, Hi, Hf;
+                        float Si, Sf;
 
                         Wi = fixedFrm[f].width;
                         Hi = fixedFrm[f].height;
+                        Si = fixedFrm[f].scale;
 
                         if ((size_t)f >= (fixedFrm.size() - 1)) //Last frame
                         {
                             Wf = Wi;
                             Hf = Hi;
+                            Sf = Si;
                         }
                         else // Normal
                         {
                             Wf = fixedFrm[f + 1].width;
                             Hf = fixedFrm[f + 1].height;
+                            Sf = fixedFrm[f + 1].scale;
                         }
 
                         LoadString(fp->dll_hinst, IDS_FXRESIZE_JP, boilerplate, 2048);//TODO: Set JP text
-                        sprintf_s(fmtstr, sizeof(TCHAR[2048]), boilerplate, (double)Wi, (double)Wf, (double)Hi, (double)Hf);
+                        if (fp->check[6]) // Ignore Aspect Ratio
+                        {
+                            sprintf_s(fmtstr, sizeof(TCHAR[2048]), boilerplate, (double)Si, Sf, 100.0, 100.0, 100.0, 100.0, !fp->check[6]);
+                        }
+                        else
+                        {
+                            sprintf_s(fmtstr, sizeof(TCHAR[2048]), boilerplate, 100.0, 100.0, (double)Wi, (double)Wf, (double)Hi, (double)Hf, !fp->check[6]);
+                        }
                         strbuf << fmtstr;
                         SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
                         SecureZeroMemory(fmtstr, sizeof(TCHAR[2048]));
@@ -941,7 +958,7 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
         fpip->ycp_edit = ycswap;
     }
 
-    if (isFilterActive && isEditing && fp->check[7] && hasResult && isFrameInRng)
+    if (isFilterActive && isEditing && fp->check[8] && hasResult && isFrameInRng)
     {
         if (track_found[fpip->frame - selA])
         {
@@ -986,7 +1003,7 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
             redraw = true;
         }
     }
-    if (fp->check[8] && isFilterActive && isEditing)
+    if (fp->check[9] && isFilterActive && isEditing)
     {
         //AviUtl -> OCV
         size_t frmsize = fpip->w* fpip->h;

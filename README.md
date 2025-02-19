@@ -76,6 +76,7 @@ Specifies the hue of the rectangle displayed in Object Selection and View Result
 ##### Save EXO Options
 - As Sub-filter/部分フィルター？ : Output as a sub filter.
 - Invert Position : Reverse the position of the tracking result.
+- Ignore Aspect Ratio : Ignore the aspect ratio and output in scale.
 ###### Note
 “As English EXO?” option has been removed. If you want to load .exo into the English version of AviUtl, please use [AviUtl-Exo-Language-Converter](https://github.com/Mr-Ojii/AviUtl-Exo-Language-Converter) or [GCMZDrops](https://github.com/oov/aviutl_gcmzdrops) instead.  
 ##### Video Effect Options
