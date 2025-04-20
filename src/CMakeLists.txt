@@ -26,6 +26,13 @@ target_link_libraries(${PROJECT_NAME} PRIVATE comctl32 ippicvmt
                         optimized ippiw  optimized ittnotify  optimized opencv_core4110  optimized opencv_highgui4110  optimized opencv_imgcodecs4110  optimized opencv_imgproc4110  optimized opencv_objdetect4110  optimized opencv_tracking4110  optimized opencv_video4110  optimized opencv_calib3d4110  optimized opencv_flann4110  optimized opencv_features2d4110  optimized opencv_dnn4110  optimized zlib  optimized libprotobuf
                         )
 
+execute_process(COMMAND git rev-list --count HEAD
+    OUTPUT_VARIABLE GIT_REV
+    ERROR_QUIET)
+string(REPLACE "\n" "" GIT_REV "${GIT_REV}")
+set(GIT_REV "#define GIT_REV \"${GIT_REV}\"")
+file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/config.h "${GIT_REV}")
+
 if("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
     set_property(TARGET ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
     set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/LARGEADDRESSAWARE")

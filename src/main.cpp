@@ -13,6 +13,7 @@
 #include "resource.h"
 #include "hsv.h"
 #include "bgs.h"
+#include "config.h"
 
 HINSTANCE hModuleDLL = nullptr;
 
@@ -38,9 +39,9 @@ constexpr int   CHECK_N = sizeof(check_name) / sizeof(TCHAR*);
 static_assert(CHECK_N == sizeof(check_default) / sizeof(int), "size of check_default mismatch with CHECK_N");
 
 #ifdef __AVX__
-TCHAR* verstr={ "MotionTracking MK-II Plus AVX by Mr-Ojii\0" };
+TCHAR* verstr={ "MotionTracking MK-II Plus AVX r" GIT_REV " by Mr-Ojii\0" };
 #else
-TCHAR* verstr = { "MotionTracking MK-II Plus SSE2 by Mr-Ojii\0" };
+TCHAR* verstr = { "MotionTracking MK-II Plus SSE2 r" GIT_REV " by Mr-Ojii\0" };
 #endif
 
 FILTER_DLL filter = {
