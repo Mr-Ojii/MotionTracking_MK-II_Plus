@@ -3,7 +3,7 @@ AviUtlでオブジェクトトラッキングを行うプラグイン
 
 
 ## 必要動作環境
-- AVXをサポートしたCPU
+- SSE2をサポートしたCPU
 - 2GB以上のメインメモリ
 - Windows 7以降のOS
 - AviUtl 1.10
@@ -95,10 +95,7 @@ Object SelectionやView Resultで表示される矩形の色相を指定しま�
 
 
 ## ソースからのビルド
-1. `git clone https://github.com/Mr-Ojii/MotionTracking_MK-II_Plus.git`を実行
-2. OpenCV 4.11.0 を静的ライブラリとしてビルド(DebugとRelease両方)
-3. `src/CMakeLists.txt`よりVSのプロジェクトを生成
-4. Visual Studioを用いてビルド
+`.github/workflows/build.yml`をご覧ください。
 
 
 ## バグ報告

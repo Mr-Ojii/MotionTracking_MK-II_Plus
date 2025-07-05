@@ -3,7 +3,7 @@ AviUtl object tracking (rubbish) plugin based on LKT/optical flow. Use OpenCV 4.
 
 
 ## System Requirement
-*- CPU with AVX support (Not tested on SSE-only CPU)  
+*- CPU with SSE2 support
 *- \>= 2GB RAM  
 *- Windows 7 or later  
 *- AviUtl 1.10  
@@ -95,10 +95,7 @@ Specifies the hue of the rectangle displayed in Object Selection and View Result
 
 
 ## Building From Source
-1. Run `git clone https://github.com/Mr-Ojii/MotionTracking_MK-II_Plus.git`
-2. Build your own OpenCV 4.11.0 STATIC (Both Debug and Release builds)
-3. Generate VS project file from src/CMakeLists.txt
-4. Build with Visual Studio
+Please read `.github/workflows/build.yml`
 
 ## Bug Report
 * [GitHub](https://github.com/Mr-Ojii/MotionTracking_MK-II_Plus)
