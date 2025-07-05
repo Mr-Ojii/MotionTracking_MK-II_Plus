@@ -1,4 +1,5 @@
 #include <Windows.h>
+#include <mutex>
 #include <string>
 #include <sstream>
 #include <fstream>
@@ -157,18 +158,31 @@ static cv::Scalar hue_to_scalar(int hue)
         return cv::Scalar(255, 0, (360 - hue) * 255 / 60);
 }
 
+static std::mutex g_mutex;
+
 static void update_object_selection_window(int x1, int y1, int x2, int y2, FILTER* fp)
 {
+    std::lock_guard<std::mutex> lg(g_mutex);
+
     //update only if visible
     if(!static_cast<bool>(cv::getWindowProperty("Object Selection", cv::WND_PROP_VISIBLE)))
         return;
 
-    //draw the bounding box
-    cv::Mat currentFrame;
-    ocvImage.copyTo(currentFrame);
-    cv::rectangle(currentFrame, cv::Point(x1, y1), cv::Point(x2, y2), hue_to_scalar(fp->track[1]), 2);
+    x1 = std::clamp(x1, 0, ocvImage.cols);
+    y1 = std::clamp(y1, 0, ocvImage.rows);
+    x2 = std::clamp(x2, 0, ocvImage.cols);
+    y2 = std::clamp(y2, 0, ocvImage.rows);
 
-    imshow("Object Selection", currentFrame);
+    //draw the bounding box
+    auto displayFrame = ocvImage.clone();
+    cv::Rect2i rect(std::min(x1, x2), std::min(y1, y2), std::abs(x1 - x2), std::abs(y1 - y2));
+    cv::Mat renderFrame;
+    if (rect.area() > 0) {
+        renderFrame = displayFrame(rect);
+        renderFrame /= 2;
+        renderFrame += hue_to_scalar(fp->track[1]) / 2;
+    }
+    cv::imshow("Object Selection", displayFrame);
 }
 
 // Mouse callback function for object selection
