@@ -42,7 +42,7 @@ jobs:
         7z a MotionTrackingMKIIPlus-${{ matrix.arch }}.zip MotionTrackingMKIIPlus.auf README.md README.ja.md Licenses MotionTracking_model
 
     - name: Upload artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: MotionTrackingMKIIPlus-${{ matrix.arch }}
         path: ${{ github.workspace }}/MotionTrackingMKIIPlus-${{ matrix.arch }}.zip
