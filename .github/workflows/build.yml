@@ -12,7 +12,7 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0
 
@@ -42,7 +42,7 @@ jobs:
         7z a MotionTrackingMKIIPlus-${{ matrix.arch }}.zip MotionTrackingMKIIPlus.auf README.md README.ja.md Licenses MotionTracking_model
 
     - name: Upload artifact
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: MotionTrackingMKIIPlus-${{ matrix.arch }}
         path: ${{ github.workspace }}/MotionTrackingMKIIPlus-${{ matrix.arch }}.zip
@@ -58,7 +58,7 @@ jobs:
       with:
         fetch-depth: 0
 
-    - uses: actions/download-artifact@v6
+    - uses: actions/download-artifact@v7
       with:
         path: artifacts
 
