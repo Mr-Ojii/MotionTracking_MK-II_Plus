@@ -1,4 +1,4 @@
-# MotionTracking MK-II Plus
+# MotionTracking_MK-II_Plus_for_AviUtl2
 AviUtl object tracking (rubbish) plugin based on LKT/optical flow.
 
 
@@ -98,4 +98,4 @@ Specifies the hue of the rectangle displayed in Object Selection and View Result
 Please read `.github/workflows/build.yml`
 
 ## Bug Report
-* [GitHub](https://github.com/Mr-Ojii/MotionTracking_MK-II_Plus)
+* [GitHub](https://github.com/nullru/MotionTracking_MK-II_Plus)
