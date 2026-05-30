@@ -197,3 +197,6 @@ FakesAssemblies/
 
 # Auto-generated config files
 config.*
+
+# Ignore compile_flags
+compile_flags.*

@@ -1,0 +1,13 @@
+services:
+  mk2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mk2
+    environment:
+      TZ: Asia/Tokyo
+      DISPLAY: host.docker.internal:0.0 # https://qiita.com/miraijin/items/e29b7a60db6d181ffe35
+    volumes:
+      - "C:/Users/${USERNAME}:/root/workspace" # USERNAME 以降マウント
+    working_dir: /root/workspace # docker exec で入った時のカレントがここになる
+    tty: true
