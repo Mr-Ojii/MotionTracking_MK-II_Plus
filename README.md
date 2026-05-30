@@ -98,4 +98,4 @@ Specifies the hue of the rectangle displayed in Object Selection and View Result
 Please read `.github/workflows/build.yml`
 
 ## Bug Report
-* [GitHub](https://github.com/nullru/MotionTracking_MK-II_Plus)
+* [GitHub](https://github.com/nullruptr/MotionTracking_MK-II_Plus_for_AviUtl2)

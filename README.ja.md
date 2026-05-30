@@ -99,4 +99,4 @@ Object SelectionやView Resultで表示される矩形の色相を指定しま�
 
 
 ## バグ報告
-* [GitHub](https://github.com/nullruptr/MotionTracking_MK-II_Plus)
+* [GitHub](https://github.com/nullruptr/MotionTracking_MK-II_Plus_for_AviUtl2)
