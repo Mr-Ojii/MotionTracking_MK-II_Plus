@@ -1,5 +1,5 @@
-# MotionTracking MK-II Plus
-AviUtlでオブジェクトトラッキングを行うプラグイン
+# MotionTracker_M
+AviUtl ExEdit2でオブジェクトトラッキングを行うプラグイン
 
 
 ## 必要動作環境

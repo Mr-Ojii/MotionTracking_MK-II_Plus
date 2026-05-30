@@ -1,0 +1,91 @@
+#:schema ./.aviutl2-cli/aviutl2.schema.json
+# 設定ファイルについては https://github.com/sevenc-nanashi/aviutl2-cli を参照してください。
+[project]
+id = "aviutl2-community.aviutl2_sdk_mirror"
+name = "aviutl2_sdk_mirror"
+version = "0.0.0"
+
+[build_group]
+cmake_debug = ["cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug", "cmake --build build --config Debug"]
+cmake_release = ["cmake -S . -B build -DCMAKE_BUILD_TYPE=Release", "cmake --build build --config Release"]
+
+[development]
+aviutl2_version = "latest"
+
+[artifacts.avi_reader_aui2]
+destination = "Plugin/AviReader.aui2"
+
+[artifacts.avi_reader_aui2.profiles.debug]
+build = { group = "cmake_debug" }
+source = "build/Debug/AviReader.dll"
+
+[artifacts.avi_reader_aui2.profiles.release]
+build = { group = "cmake_release" }
+source = "build/Release/AviReader.dll"
+
+[artifacts.avi_saver_auo2]
+destination = "Plugin/AviSaver.auo2"
+
+[artifacts.avi_saver_auo2.profiles.debug]
+build = { group = "cmake_debug" }
+source = "build/Debug/AviSaver.dll"
+
+[artifacts.avi_saver_auo2.profiles.release]
+build = { group = "cmake_release" }
+source = "build/Release/AviSaver.dll"
+
+[artifacts.media_object_auf2]
+destination = "Plugin/MediaObject.auf2"
+
+[artifacts.media_object_auf2.profiles.debug]
+build = { group = "cmake_debug" }
+source = "build/Debug/MediaObject.dll"
+
+[artifacts.media_object_auf2.profiles.release]
+build = { group = "cmake_release" }
+source = "build/Release/MediaObject.dll"
+
+[artifacts.media_filter_auf2]
+destination = "Plugin/MediaFilter.auf2"
+
+[artifacts.media_filter_auf2.profiles.debug]
+build = { group = "cmake_debug" }
+source = "build/Debug/MediaFilter.dll"
+
+[artifacts.media_filter_auf2.profiles.release]
+build = { group = "cmake_release" }
+source = "build/Release/MediaFilter.dll"
+
+[artifacts.window_client_aux2]
+destination = "Plugin/WindowClient.aux2"
+
+[artifacts.window_client_aux2.profiles.debug]
+build = { group = "cmake_debug" }
+source = "build/Debug/WindowClient.dll"
+
+[artifacts.window_client_aux2.profiles.release]
+build = { group = "cmake_release" }
+source = "build/Release/WindowClient.dll"
+
+[artifacts.script_module_mod2]
+destination = "Script/ScriptModule.mod2"
+
+[artifacts.script_module_mod2.profiles.debug]
+build = { group = "cmake_debug" }
+source = "build/Debug/ScriptModule.dll"
+
+[artifacts.script_module_mod2.profiles.release]
+build = { group = "cmake_release" }
+source = "build/Release/ScriptModule.dll"
+
+[artifacts.script_module_sample_obj2]
+source = "examples/ScriptModuleSample.obj2"
+destination = "Script/ScriptModuleSample.obj2"
+
+[artifacts.english_media_filter_aul2]
+source = "examples/English.MediaFilter.aul2"
+destination = "Language/English.MediaFilter.aul2"
+
+[artifacts.english_window_client_aul2]
+source = "examples/English.WindowClient.aul2"
+destination = "Language/English.WindowClient.aul2"

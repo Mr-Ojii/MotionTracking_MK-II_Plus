@@ -1,0 +1,8 @@
+{
+  "name": "scripts",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "prettier": "^3.6.2"
+  }
+}

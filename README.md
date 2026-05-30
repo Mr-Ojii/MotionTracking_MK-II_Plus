@@ -1,13 +1,13 @@
 # MotionTracking MK-II Plus
-AviUtl object tracking (rubbish) plugin based on LKT/optical flow. Use OpenCV 4.9.0 or newer.
+AviUtl object tracking (rubbish) plugin based on LKT/optical flow.
 
 
 ## System Requirement
-*- CPU with SSE2 support
-*- \>= 2GB RAM  
-*- Windows 7 or later  
-*- AviUtl 1.10  
-*- Adv.Editing 0.92
+- CPU with SSE2 support
+- \>= 2GB RAM
+- Windows 7 or later
+- AviUtl 1.10
+- Adv.Editing 0.92
 
 
 ## Installation

@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.20.0)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-project(MotionTrackingMKIIPlus CXX)
+project(MotionTracker_M CXX)
 
 add_library(${PROJECT_NAME} SHARED)
 
@@ -17,9 +17,10 @@ message("-- OPTIONS --")
 message("-- MSVC_ARCH: ${MSVC_ARCH}")
 message("-------------")
 
-target_sources(${PROJECT_NAME} PRIVATE main.cpp main.def bgs.cpp hsv.cpp resource.rc)
-set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ".auf")
-target_include_directories(${PROJECT_NAME} PRIVATE ${OPENCV_INCLUDE_DIR})
+target_sources(${PROJECT_NAME} PRIVATE main.cpp main.def filter.cpp utils.cpp)
+target_compile_definitions(${PROJECT_NAME} PRIVATE UNICODE _UNICODE)
+set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ".aux2")
+target_include_directories(${PROJECT_NAME} PRIVATE ${OPENCV_INCLUDE_DIR} ./aviutl2_sdk/include)
 target_link_directories(${PROJECT_NAME} PRIVATE ${OPENCV_LIBRARY_DIR})
 target_link_libraries(${PROJECT_NAME} PRIVATE comctl32 ippicvmt
                         debug     ippiwd debug     ipphald debug     ittnotifyd debug     opencv_core4120d debug     opencv_highgui4120d debug     opencv_imgcodecs4120d debug     opencv_imgproc4120d debug     opencv_objdetect4120d debug     opencv_tracking4120d debug     opencv_video4120d debug     opencv_calib3d4120d debug     opencv_flann4120d debug     opencv_features2d4120d debug     opencv_dnn4120d debug     zlibd debug     libprotobufd
@@ -30,13 +31,13 @@ execute_process(COMMAND git rev-list --count HEAD
     OUTPUT_VARIABLE GIT_REV
     ERROR_QUIET)
 string(REPLACE "\n" "" GIT_REV "${GIT_REV}")
-set(GIT_REV "#define GIT_REV \"${GIT_REV}\"")
+set(GIT_REV "#define GIT_REV L\"${GIT_REV}\"")
 file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/config.h "${GIT_REV}")
 
 if("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
     set_property(TARGET ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
     set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/LARGEADDRESSAWARE")
-    target_compile_options(${PROJECT_NAME} PRIVATE /arch:${MSVC_ARCH} /source-charset:utf-8 /execution-charset:shift_jis)
+    target_compile_options(${PROJECT_NAME} PRIVATE /arch:${MSVC_ARCH} /utf-8)
 elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
     target_link_options(${PROJECT_NAME} PRIVATE -static-libstdc++ -static)
 endif()
