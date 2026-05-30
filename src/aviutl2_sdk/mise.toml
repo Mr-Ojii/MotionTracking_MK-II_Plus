@@ -1,5 +1,0 @@
-[settings]
-lockfile = true
-
-[tools]
-"cargo:aviutl2-cli" = "latest"
