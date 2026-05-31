@@ -36,6 +36,7 @@ set(OPENCV_LIBRARY_DIR "/usr/x86_64-w64-mingw32/lib")
 target_sources(
     ${PROJECT_NAME}
     PRIVATE
+    ui/mainframe.cpp
     filter.cpp
     main.cpp
     utils.cpp
@@ -44,6 +45,7 @@ target_sources(
 set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ".aux2")
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${OPENCV_INCLUDE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/aviutl2_sdk/include
 )
 target_link_directories(${PROJECT_NAME} PRIVATE
