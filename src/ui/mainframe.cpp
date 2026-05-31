@@ -1,45 +1,11 @@
-#define NOMINMAX
-#include <windows.h>
-#include <commctrl.h>
-#include <mutex>
-#include <unordered_map>
+#include "mainframe.hpp"
 #include "aviutl2_sdk/plugin2.h"
-#include "aviutl2_sdk/logger2.h"
-#include "aviutl2_sdk/config2.h"
-#include "opencv2/core/utility.hpp"
-#include "opencv2/highgui.hpp"
-#include "opencv2/tracking.hpp"
-#include "opencv2/objdetect.hpp"
-#include "opencv2/video.hpp"
-#include "opencv2/video/tracking.hpp"
-#include "utils.hpp"
-//#include "TrackedData.hpp"
-#include "config.h"
-
-#define WindowName L"MotionTracker_M"
-enum class IDC_Button : int {
-    SelectObject = 1001,
-    Analyze,
-    ClearResult,
-    InsertObject,
-    TrackingMethodCombo,
-    HueTrackbar,
-    HueValue,
-    ViewResult,
-    AsSubFilter,
-    InvertPosition,
-    IgnoreAspectRatio,
-    QuickBlur,
-    EasyPrivacy,
-};
 
 extern FILTER_PLUGIN_TABLE filter;
 
 static std::string modelDir;
 
-HINSTANCE hModuleDLL = nullptr;
 LOG_HANDLE* logger = nullptr;
-EDIT_HANDLE* edit_handle = nullptr;
 CONFIG_HANDLE* config = nullptr;
 
 // 画像をとってくるときに使う変数で、向こうではexternで配置されているはず
@@ -73,17 +39,6 @@ struct SystemColors {
 constexpr const wchar_t* track_method[] = { L"MIL", L"KCF", L"CSRT", L"DaSiamRPN", L"Nano", L"Vit"};
 constexpr int METHOD_N = sizeof(track_method) / sizeof(track_method[0]);
 
-#ifdef __AVX__
-static wchar_t verstr[] = L"MotionTracker_M AVX r" GIT_REV L" by Mr-Ojii";
-#else
-static wchar_t verstr[] = L"MotionTracker_M SSE2 r" GIT_REV L" by Mr-Ojii";
-#endif
-
-// いつもの外部公開
-COMMON_PLUGIN_TABLE common_plugin_table = {
-    L"MotionTracker_M",
-    verstr,
-};
 
 EXTERN_C __declspec(dllexport) DWORD RequiredVersion() {
     return 2003300;
@@ -105,9 +60,6 @@ EXTERN_C __declspec(dllexport) void UninitializePlugin() {
 }
 
 
-EXTERN_C __declspec(dllexport) COMMON_PLUGIN_TABLE* GetCommonPluginTable(void) {
-    return &common_plugin_table;
-}
 // --
 
 const char alias[] = u8R"(
@@ -397,7 +349,7 @@ LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
                     OBJECT_LAYER_FRAME olf = {};
                     if (!get_effected_object_layer_frame(edit_handle, &olf)) {
                         if (!create_alias_object_and_set_olf(edit_handle, &olf)) {
-                            MessageBox(hwnd, config->translate(config, L"Please select an object with MotionTracker_M Filter effect or create an alias object."), WindowName, MB_OK | MB_ICONINFORMATION);
+                            MessageBox(hwnd, config->translate(config, L"Please select an object with MotionTracker_M Filter effect or create an alias object."), constants::WindowName, MB_OK | MB_ICONINFORMATION);
                             return 0;
                         }
                     }
@@ -415,7 +367,7 @@ LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 
                     getImageFromAUX = false;
                     if (ocvImage.empty()) {
-                        MessageBox(hwnd, config->translate(config, L"Failed to get image from AviUtl. Please make sure AviUtl is in a state where it can provide images."), WindowName, MB_OK | MB_ICONERROR);
+                        MessageBox(hwnd, config->translate(config, L"Failed to get image from AviUtl. Please make sure AviUtl is in a state where it can provide images."), constants::WindowName, MB_OK | MB_ICONERROR);
                         return 0;
                     }
                     cv::namedWindow("Object Selection", cv::WINDOW_KEEPRATIO);
@@ -431,7 +383,7 @@ LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
                     OBJECT_LAYER_FRAME olf = {};
                     if (!get_effected_object_layer_frame(edit_handle, &olf)) {
                         if (!create_alias_object_and_set_olf(edit_handle, &olf)) {
-                            MessageBox(hwnd, config->translate(config, L"Please select an object with MotionTracker_M Filter effect or create an alias object."), WindowName, MB_OK | MB_ICONINFORMATION);
+                            MessageBox(hwnd, config->translate(config, L"Please select an object with MotionTracker_M Filter effect or create an alias object."), constants::WindowName, MB_OK | MB_ICONINFORMATION);
                             return 0;
                         }
                     }
@@ -503,7 +455,7 @@ LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
                         }
                         default:
                             // 選択されていない、または不正なインデックス
-                            MessageBox(hwnd, config->translate(config, L"Please select a tracking method."), WindowName, MB_OK | MB_ICONERROR);
+                            MessageBox(hwnd, config->translate(config, L"Please select a tracking method."), constants::WindowName, MB_OK | MB_ICONERROR);
                             return 0;
                         }
                     }
@@ -908,11 +860,16 @@ LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
     return DefWindowProc(hwnd, message, wparam, lparam);
 }
 
-EXTERN_C __declspec(dllexport) void RegisterPlugin(HOST_APP_TABLE* host) {
+MainFrame::MainFrame(HINSTANCE hInst, HOST_APP_TABLE* host, EDIT_HANDLE* edit_handle)
+    : m_hInst(hInst)
+    , m_host(host)
+{
+    // メンバ変数にハンドル渡す
+    m_edit_handle = edit_handle;
 
     // モデルファイルのパスを設定
     char path[MAX_PATH * 2];
-    if (GetModuleFileNameA(hModuleDLL, path, sizeof(path)))
+    if (GetModuleFileNameA(m_hInst, path, sizeof(path)))
     {
         char* p = strrchr(path, '\\');
         if (p) {
@@ -925,25 +882,25 @@ EXTERN_C __declspec(dllexport) void RegisterPlugin(HOST_APP_TABLE* host) {
     // 自身のウィンドウを作成
     WNDCLASSEXW wcex = {};
     wcex.cbSize = sizeof(WNDCLASSEX);
-    wcex.lpszClassName = WindowName;
+    wcex.lpszClassName = constants::WindowName;
     wcex.lpfnWndProc = wnd_proc;
-    wcex.hInstance = hModuleDLL;
+    wcex.hInstance = m_hInst;
     wcex.hbrBackground = CreateSolidBrush((COLORREF)systemColors.background);
     wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
     if (!RegisterClassEx(&wcex)) {
         return;
     }
-    auto hwnd = CreateWindowEx(
+    m_hwnd = CreateWindowEx(
         0,
-        WindowName,
-        WindowName,
+        constants::WindowName,
+        constants::WindowName,
         WS_POPUP, // 親ウィンドウの指定無しでWS_CHILDが作れないので一旦WS_POPUPで作成しています
         CW_USEDEFAULT, CW_USEDEFAULT, 320, CW_USEDEFAULT,
         nullptr,
         nullptr,
-        hModuleDLL,
+        hInst,
         nullptr);
-    if (!hwnd) {
+    if (!m_hwnd) {
         return;
     }
     // 色情報の取得
@@ -977,9 +934,9 @@ EXTERN_C __declspec(dllexport) void RegisterPlugin(HOST_APP_TABLE* host) {
         config->translate(config, L"Method"),
         WS_VISIBLE | WS_CHILD,
         10, y_pos, 100, item_height,
-        hwnd,
+        m_hwnd,
         (HMENU)-1,
-        hModuleDLL,
+        m_hInst,
         nullptr);
     SendMessage(label_track, WM_SETFONT, (WPARAM)hfont, TRUE);
 
@@ -990,9 +947,9 @@ EXTERN_C __declspec(dllexport) void RegisterPlugin(HOST_APP_TABLE* host) {
         nullptr,
         WS_VISIBLE | WS_CHILD | CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS,
         75, y_pos, 195, 200, // ドロップダウンが開くように高さを大きめに確保
-        hwnd,
+        m_hwnd,
         (HMENU)IDC_Button::TrackingMethodCombo,
-        hModuleDLL,
+        m_hInst,
         nullptr);
     SendMessage(combo_track, WM_SETFONT, (WPARAM)hfont, TRUE);
     for (int i = 0; i < METHOD_N; i++) {
@@ -1009,9 +966,9 @@ EXTERN_C __declspec(dllexport) void RegisterPlugin(HOST_APP_TABLE* host) {
         config->translate(config, L"Hue"),
         WS_VISIBLE | WS_CHILD,
         10, y_pos, 60, item_height,
-        hwnd,
+        m_hwnd,
         (HMENU)-1,
-        hModuleDLL,
+        m_hInst,
         nullptr);
     SendMessage(label_hue, WM_SETFONT, (WPARAM)hfont, TRUE);
 
@@ -1022,9 +979,9 @@ EXTERN_C __declspec(dllexport) void RegisterPlugin(HOST_APP_TABLE* host) {
         L"Hue",
         WS_VISIBLE | WS_CHILD,
         75, y_pos, 205, item_height,
-        hwnd,
+        m_hwnd,
         (HMENU)IDC_Button::HueTrackbar,
-        hModuleDLL,
+        m_hInst,
         nullptr);
     SendMessage(trackbar_hue, TBM_SETRANGE, (WPARAM)TRUE, (LPARAM)MAKELONG(0, 359));
     SendMessage(trackbar_hue, TBM_SETPOS, (WPARAM)TRUE, (LPARAM)hueValue);
@@ -1037,9 +994,9 @@ EXTERN_C __declspec(dllexport) void RegisterPlugin(HOST_APP_TABLE* host) {
         L"180",
         WS_VISIBLE | WS_CHILD | SS_CENTER,
         285, y_pos, 25, item_height,
-        hwnd,
+        m_hwnd,
         (HMENU)IDC_Button::HueValue,
-        hModuleDLL,
+        m_hInst,
         nullptr);
     SendMessage(hue_value_display, WM_SETFONT, (WPARAM)hfont, TRUE);
 
@@ -1052,9 +1009,9 @@ EXTERN_C __declspec(dllexport) void RegisterPlugin(HOST_APP_TABLE* host) {
         config->translate(config, L"Select Object"),
         WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
         10, y_pos, 300, item_height,
-        hwnd,
+        m_hwnd,
         (HMENU)IDC_Button::SelectObject,
-        hModuleDLL,
+        m_hInst,
         nullptr);
     SendMessage(button0, WM_SETFONT, (WPARAM)hfont, TRUE);
 
@@ -1067,9 +1024,9 @@ EXTERN_C __declspec(dllexport) void RegisterPlugin(HOST_APP_TABLE* host) {
         config->translate(config, L"Analyze"),
         WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
         10, y_pos, 300, item_height,
-        hwnd,
+        m_hwnd,
         (HMENU)IDC_Button::Analyze,
-        hModuleDLL,
+        m_hInst,
         nullptr);
     SendMessage(button1, WM_SETFONT, (WPARAM)hfont, TRUE);
 
@@ -1082,9 +1039,9 @@ EXTERN_C __declspec(dllexport) void RegisterPlugin(HOST_APP_TABLE* host) {
         config->translate(config, L"View Result"),
         WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
         10, y_pos, 300, item_height,
-        hwnd,
+        m_hwnd,
         (HMENU)IDC_Button::ViewResult,
-        hModuleDLL,
+        m_hInst,
         nullptr);
     SendMessage(check_view_result, WM_SETFONT, (WPARAM)hfont, TRUE);
 
@@ -1097,9 +1054,9 @@ EXTERN_C __declspec(dllexport) void RegisterPlugin(HOST_APP_TABLE* host) {
         config->translate(config, L"Clear Result"),
         WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
         10, y_pos, 300, item_height,
-        hwnd,
+        m_hwnd,
         (HMENU)IDC_Button::ClearResult,
-        hModuleDLL,
+        m_hInst,
         nullptr);
     SendMessage(button2, WM_SETFONT, (WPARAM)hfont, TRUE);
 
@@ -1112,9 +1069,9 @@ EXTERN_C __declspec(dllexport) void RegisterPlugin(HOST_APP_TABLE* host) {
         config->translate(config, L"As Sub-filter/部分フィルター?"),
         WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
         10, y_pos, 300, item_height,
-        hwnd,
+        m_hwnd,
         (HMENU)IDC_Button::AsSubFilter,
-        hModuleDLL,
+        m_hInst,
         nullptr);
     SendMessage(check_sub_filter, WM_SETFONT, (WPARAM)hfont, TRUE);
 
@@ -1127,9 +1084,9 @@ EXTERN_C __declspec(dllexport) void RegisterPlugin(HOST_APP_TABLE* host) {
         config->translate(config, L"Invert Position"),
         WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
         10, y_pos, 300, item_height,
-        hwnd,
+        m_hwnd,
         (HMENU)IDC_Button::InvertPosition,
-        hModuleDLL,
+        m_hInst,
         nullptr);
     SendMessage(check_invert, WM_SETFONT, (WPARAM)hfont, TRUE);
 
@@ -1142,9 +1099,9 @@ EXTERN_C __declspec(dllexport) void RegisterPlugin(HOST_APP_TABLE* host) {
         config->translate(config, L"Ignore Aspect Ratio"),
         WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
         10, y_pos, 300, item_height,
-        hwnd,
+        m_hwnd,
         (HMENU)IDC_Button::IgnoreAspectRatio,
-        hModuleDLL,
+        m_hInst,
         nullptr);
     SetWindowLongPtr(check_ignore_aspect, GWLP_USERDATA, 1);
     SendMessage(check_ignore_aspect, WM_SETFONT, (WPARAM)hfont, TRUE);
@@ -1158,9 +1115,9 @@ EXTERN_C __declspec(dllexport) void RegisterPlugin(HOST_APP_TABLE* host) {
         config->translate(config, L"Insert Object"),
         WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
         10, y_pos, 300, item_height,
-        hwnd,
+        m_hwnd,
         (HMENU)IDC_Button::InsertObject,
-        hModuleDLL,
+        m_hInst,
         nullptr);
     SendMessage(button_save, WM_SETFONT, (WPARAM)hfont, TRUE);
 
@@ -1173,9 +1130,9 @@ EXTERN_C __declspec(dllexport) void RegisterPlugin(HOST_APP_TABLE* host) {
         config->translate(config, L"Quick Blur"),
         WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
         10, y_pos, 300, item_height,
-        hwnd,
+        m_hwnd,
         (HMENU)IDC_Button::QuickBlur,
-        hModuleDLL,
+        m_hInst,
         nullptr);
     SendMessage(check_quick_blur, WM_SETFONT, (WPARAM)hfont, TRUE);
 
@@ -1188,23 +1145,14 @@ EXTERN_C __declspec(dllexport) void RegisterPlugin(HOST_APP_TABLE* host) {
         config->translate(config, L"Easy Privacy"),
         WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
         10, y_pos, 300, item_height,
-        hwnd,
+        m_hwnd,
         (HMENU)IDC_Button::EasyPrivacy,
-        hModuleDLL,
+        m_hInst,
         nullptr);
     SendMessage(check_easy_privacy, WM_SETFONT, (WPARAM)hfont, TRUE);
-
-    // ウィンドウを登録
-    host->register_window_client(WindowName, hwnd);
-
-    // フィルターを登録
-    host->register_filter_plugin(&filter);
-
-    // 編集ハンドルを作成
-    edit_handle = host->create_edit_handle();
 }
 
-
+// RegisterPlugin は main.cpp に移動しました
 
 // typedef struct{
 //     UINT32 frame;
@@ -2109,15 +2057,3 @@ EXTERN_C __declspec(dllexport) void RegisterPlugin(HOST_APP_TABLE* host) {
 //     }
 //     return redraw;
 // }
-
-
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
-{
-    switch (fdwReason)
-    {
-    case DLL_PROCESS_ATTACH:
-        hModuleDLL = hinstDLL;
-        break;
-    }
-    return TRUE;
-}
