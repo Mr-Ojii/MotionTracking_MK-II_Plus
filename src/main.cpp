@@ -1,5 +1,8 @@
 #include "main.hpp"
 #include "config.h"
+#include "aviutl2_sdk/filter2.h"
+
+extern FILTER_PLUGIN_TABLE filter; // filter.cpp で定義
 
 HINSTANCE hModuleDLL = nullptr;
 MainFrame* g_frame   = nullptr;
@@ -27,7 +30,7 @@ EXTERN_C __declspec(dllexport) void RegisterPlugin(HOST_APP_TABLE* host)
     edit_handle = host->create_edit_handle();
 
     // フィルターを登録
-    // host->register_filter_plugin(&filter);
+    host->register_filter_plugin(&filter);
 
     g_frame = new MainFrame(hModuleDLL, host, edit_handle); // ウィンドウ作成
 
