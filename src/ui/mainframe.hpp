@@ -10,13 +10,6 @@
 #include "aviutl2_sdk/plugin2.h"
 #include "aviutl2_sdk/logger2.h"
 #include "aviutl2_sdk/config2.h"
-#include "opencv2/core/utility.hpp"
-#include "opencv2/highgui.hpp"
-#include "opencv2/tracking.hpp"
-#include "opencv2/objdetect.hpp"
-#include "opencv2/video.hpp"
-#include "opencv2/video/tracking.hpp"
-#include "utils.hpp"
 //#include "TrackedData.hpp"
 #include "config.h"
 #include "tracker/tracker.hpp"
@@ -72,6 +65,7 @@ private:
     LOG_HANDLE*     m_logger     = nullptr;
     CONFIG_HANDLE*  m_config     = nullptr;
     std::string     m_modelDir;
+    LPARAM m_hueValue;
 
     // Tracker インスタンス
     Tracker m_tracker;
@@ -79,10 +73,4 @@ private:
     // システムカラー
     SystemColors m_colors;
 
-    // 状態
-    int        m_hueValue  = 180;
-    cv::Mat    m_image;
-    cv::Rect2d m_boundingBox;
-    bool       m_selectObj = false;
-    bool       m_startSel  = false;
 };

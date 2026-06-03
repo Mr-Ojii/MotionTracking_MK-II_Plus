@@ -1,6 +1,7 @@
 #include "mainframe.hpp"
 #include "ownerdraw.hpp"
 #include "aviutl2_sdk/plugin2.h"
+#include <windows.h>
 
 extern FILTER_PLUGIN_TABLE filter;
 
@@ -274,35 +275,8 @@ LRESULT CALLBACK MainFrame::wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPA
                 }
                 case IDC_Button::SelectObject:
                 {
-                    OBJECT_LAYER_FRAME olf = {};
-                    if (!get_effected_object_layer_frame(edit_handle, &olf)) {
-                        if (!create_alias_object_and_set_olf(edit_handle, &olf)) {
-                            MessageBox(hwnd, config->translate(config, L"Please select an object with MotionTracker_M Filter effect or create an alias object."), constants::WindowName, MB_OK | MB_ICONINFORMATION);
-                            return 0;
-                        }
-                    }
-
-                    finishedFilter = false;
-                    getImageFromAUX = true;
-
-                    edit_handle->call_edit_section_param(&olf.start, [](void* message, EDIT_SECTION* edit) {
-                        int* frame = (int*)message;
-                        edit->set_cursor_layer_frame(0, *frame);
-                    });
-                    // 描画待ち
-                    std::unique_lock<std::mutex> lock(mtx);
-                    cov.wait(lock, [] { return finishedFilter; });
-
-                    getImageFromAUX = false;
-                    if (ocvImage.empty()) {
-                        MessageBox(hwnd, config->translate(config, L"Failed to get image from AviUtl. Please make sure AviUtl is in a state where it can provide images."), constants::WindowName, MB_OK | MB_ICONERROR);
-                        return 0;
-                    }
-                    cv::namedWindow("Object Selection", cv::WINDOW_KEEPRATIO);
-                    cv::setMouseCallback("Object Selection", onMouse, nullptr); // TODO: nullptrの代わりにuserdata
-                    cv::resizeWindow("Object Selection", ocvImage.cols, ocvImage.rows);
-                    cv::imshow("Object Selection", ocvImage);
-
+                    logger->info(logger, L"SelectObject: start");
+                    self->m_tracker.SelectObject(self->m_edit_handle);
                     SetFocus(nullptr);
                     return 0;
                 }
