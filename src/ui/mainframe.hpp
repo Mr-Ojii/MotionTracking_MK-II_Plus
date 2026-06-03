@@ -20,6 +20,9 @@
 //#include "TrackedData.hpp"
 #include "config.h"
 
+// wnd_proc を下に仮置きするため、設置
+LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
+
 enum class IDC_Button : int {
     SelectObject = 1001,
     Analyze,
