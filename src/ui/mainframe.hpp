@@ -57,6 +57,8 @@ private:
     // -> static にして this を消す
     static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
 
+    void CreateControls();
+
     void OnSelectObject();
     void OnAnalyze();
     void OnInsertObject();
@@ -76,4 +78,11 @@ private:
 
     // システムカラー
     SystemColors m_colors;
+
+    // 状態
+    int        m_hueValue  = 180;
+    cv::Mat    m_image;
+    cv::Rect2d m_boundingBox;
+    bool       m_selectObj = false;
+    bool       m_startSel  = false;
 };

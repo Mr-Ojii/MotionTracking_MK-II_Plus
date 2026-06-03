@@ -38,6 +38,7 @@ target_sources(
     PRIVATE
     tracker/tracker.cpp
     ui/mainframe.cpp
+    ui/create_frame.cpp
     ui/ownerdraw.cpp
     filter.cpp
     main.cpp
