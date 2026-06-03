@@ -223,7 +223,7 @@ MainFrame::MainFrame(HINSTANCE hInst, HOST_APP_TABLE* host, EDIT_HANDLE* edit_ha
         nullptr,
         nullptr,
         hInst,
-        nullptr);
+        this); // wnd_proc で、this をWM_NCCREATE で回収して保存する
     if (!m_hwnd) {
         return;
     }
@@ -459,9 +459,35 @@ MainFrame::MainFrame(HINSTANCE hInst, HOST_APP_TABLE* host, EDIT_HANDLE* edit_ha
         m_hInst,
         nullptr);
     SendMessage(check_easy_privacy, WM_SETFONT, (WPARAM)hfont, TRUE);
+
 }
 
-LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam) {
+LRESULT CALLBACK MainFrame::wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam) {
+    MainFrame* self = nullptr;
+
+    // WM_NCCREATE は lparam に this が入ってくる一番最初のメッセージ
+    if (message == WM_NCCREATE) {
+
+        // CREATESTRUCT::lpCreateParams が CreateWindowEx の最後の引数 = this
+        // WM_NCCREATE 時、lparam は CREATESTRUCT 構造体へのポインタとなっている。
+        // そのメンバ lpCreateParams（void*型）に、CreateWindowEx の第12引数（this）が入っているため、MainFrame* にキャストして取り出す。
+        self = static_cast<MainFrame*>(reinterpret_cast<CREATESTRUCT*>(lparam)->lpCreateParams);
+
+        // HWND に this を紐付けて this を GWLP_USERDATA に格納
+        // 第3引数はLONG_PTRのため、cast
+        SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(self));
+
+        self->m_hwnd = hwnd; // この時点でまだ m_hwnd に入っていないので手動でセット
+
+    } else {
+        // WM_NCCREATE 以降は保存した値を取り出すだけ
+        self = reinterpret_cast<MainFrame*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+    }
+
+    // WM_NCCREATE より前のメッセージ（WM_GETMINMAXINFO等）は
+    // まだ保存していないので self が nullptr になる -> DefWindowProc に流す
+    if (!self) return DefWindowProc(hwnd, message, wparam, lparam);
+
     switch (message) {
         case WM_HSCROLL:
         case WM_VSCROLL: {

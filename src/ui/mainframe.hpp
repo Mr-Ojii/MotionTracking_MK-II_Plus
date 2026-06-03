@@ -20,8 +20,6 @@
 //#include "TrackedData.hpp"
 #include "config.h"
 
-// wnd_proc を下に仮置きするため、設置
-LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
 
 enum class IDC_Button : int {
     SelectObject = 1001,
@@ -50,10 +48,13 @@ public:
     HWND hwnd() const { return m_hwnd; }
 
 private:
-    void OnSelectObject();
-    void OnAnalyze();
-    void OnInsertObject();
-    void OnClearResult();
+    // this を渡したらクラッシュするため
+
+    // lpfnWndProc に渡せる関数は4引数固定
+    // 非 static メンバ関数はコンパイラが this を第1引数に追加するため形が合わない
+    // -> static にして this を消す
+    static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
+
 
     HWND            m_hwnd       = nullptr;
     HINSTANCE       m_hInst      = nullptr;
