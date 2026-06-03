@@ -356,18 +356,18 @@ MainFrame::MainFrame(HINSTANCE hInst, HOST_APP_TABLE* host, EDIT_HANDLE* edit_ha
 
     y_pos += item_height + 5;
 
-    // View Result チェックボックスを作成
-    HWND check_view_result = CreateWindowEx(
+    // Save EXO ボタンを作成
+    HWND button_save = CreateWindowEx(
         0,
         WC_BUTTON,
-        config->translate(config, L"View Result"),
+        config->translate(config, L"Insert Object"),
         WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
         10, y_pos, 300, item_height,
         m_hwnd,
-        (HMENU)IDC_Button::ViewResult,
+        (HMENU)IDC_Button::InsertObject,
         m_hInst,
         nullptr);
-    SendMessage(check_view_result, WM_SETFONT, (WPARAM)hfont, TRUE);
+    SendMessage(button_save, WM_SETFONT, (WPARAM)hfont, TRUE);
 
     y_pos += item_height + 5;
 
@@ -429,21 +429,6 @@ MainFrame::MainFrame(HINSTANCE hInst, HOST_APP_TABLE* host, EDIT_HANDLE* edit_ha
         nullptr);
     SetWindowLongPtr(check_ignore_aspect, GWLP_USERDATA, 1);
     SendMessage(check_ignore_aspect, WM_SETFONT, (WPARAM)hfont, TRUE);
-
-    y_pos += item_height + 5;
-
-    // Save EXO ボタンを作成
-    HWND button_save = CreateWindowEx(
-        0,
-        WC_BUTTON,
-        config->translate(config, L"Insert Object"),
-        WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
-        10, y_pos, 300, item_height,
-        m_hwnd,
-        (HMENU)IDC_Button::InsertObject,
-        m_hInst,
-        nullptr);
-    SendMessage(button_save, WM_SETFONT, (WPARAM)hfont, TRUE);
 
     y_pos += item_height + 5;
 

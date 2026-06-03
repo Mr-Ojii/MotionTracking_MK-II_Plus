@@ -50,6 +50,11 @@ public:
     HWND hwnd() const { return m_hwnd; }
 
 private:
+    void OnSelectObject();
+    void OnAnalyze();
+    void OnInsertObject();
+    void OnClearResult();
+
     HWND            m_hwnd       = nullptr;
     HINSTANCE       m_hInst      = nullptr;
     HOST_APP_TABLE* m_host       = nullptr;
