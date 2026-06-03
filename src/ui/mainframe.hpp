@@ -19,6 +19,8 @@
 #include "utils.hpp"
 //#include "TrackedData.hpp"
 #include "config.h"
+#include "tracker/tracker.hpp"
+#include "ownerdraw.hpp"
 
 
 enum class IDC_Button : int {
@@ -55,6 +57,11 @@ private:
     // -> static にして this を消す
     static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
 
+    void OnSelectObject();
+    void OnAnalyze();
+    void OnInsertObject();
+    void OnClearResult();
+    void OnCheckboxClick(HWND hBtn);
 
     HWND            m_hwnd       = nullptr;
     HINSTANCE       m_hInst      = nullptr;
@@ -63,4 +70,10 @@ private:
     LOG_HANDLE*     m_logger     = nullptr;
     CONFIG_HANDLE*  m_config     = nullptr;
     std::string     m_modelDir;
+
+    // Tracker インスタンス
+    Tracker m_tracker;
+
+    // システムカラー
+    SystemColors m_colors;
 };

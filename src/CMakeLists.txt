@@ -36,7 +36,9 @@ set(OPENCV_LIBRARY_DIR "/usr/x86_64-w64-mingw32/lib")
 target_sources(
     ${PROJECT_NAME}
     PRIVATE
+    tracker/tracker.cpp
     ui/mainframe.cpp
+    ui/ownerdraw.cpp
     filter.cpp
     main.cpp
     utils.cpp

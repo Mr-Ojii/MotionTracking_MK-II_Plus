@@ -1,4 +1,5 @@
 #include "mainframe.hpp"
+#include "ownerdraw.hpp"
 #include "aviutl2_sdk/plugin2.h"
 
 extern FILTER_PLUGIN_TABLE filter;
@@ -25,16 +26,6 @@ bool startSel = false;
 std::vector<bool> track_found;
 std::vector<cv::Rect2d> track_result;
 
-// config->get_color_code で取得した値を格納しておく
-struct SystemColors {
-    int background;
-    int buttonBody;
-    int buttonBodyPress;
-    int buttonBodyHover;
-    int buttonBodyDisable;
-    int text;
-    int textDisable;
-} systemColors = {};
 
 constexpr const wchar_t* track_method[] = { L"MIL", L"KCF", L"CSRT", L"DaSiamRPN", L"Nano", L"Vit"};
 constexpr int METHOD_N = sizeof(track_method) / sizeof(track_method[0]);
@@ -192,16 +183,7 @@ MainFrame::MainFrame(HINSTANCE hInst, HOST_APP_TABLE* host, EDIT_HANDLE* edit_ha
     m_edit_handle = edit_handle;
 
     // モデルファイルのパスを設定
-    char path[MAX_PATH * 2];
-    if (GetModuleFileNameA(m_hInst, path, sizeof(path)))
-    {
-        char* p = strrchr(path, '\\');
-        if (p) {
-            *(p + 1) = '\0';
-            modelDir = std::string(path);
-            modelDir += "MotionTracking_model\\";
-        }
-    }
+    m_tracker.SetModelDir(utils::get_model_dir(m_hInst));
 
     // 自身のウィンドウを作成
     WNDCLASSEXW wcex = {};
@@ -209,7 +191,7 @@ MainFrame::MainFrame(HINSTANCE hInst, HOST_APP_TABLE* host, EDIT_HANDLE* edit_ha
     wcex.lpszClassName = constants::WindowName;
     wcex.lpfnWndProc = wnd_proc;
     wcex.hInstance = m_hInst;
-    wcex.hbrBackground = CreateSolidBrush((COLORREF)systemColors.background);
+    wcex.hbrBackground = CreateSolidBrush((COLORREF)m_colors.background);
     wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
     if (!RegisterClassEx(&wcex)) {
         return;
@@ -228,13 +210,13 @@ MainFrame::MainFrame(HINSTANCE hInst, HOST_APP_TABLE* host, EDIT_HANDLE* edit_ha
         return;
     }
     // 色情報の取得
-    systemColors.background = systemColors.background;
-    systemColors.buttonBody = config->get_color_code(config, "ButtonBody");
-    systemColors.buttonBodyPress = config->get_color_code(config, "ButtonBodyPress");
-    systemColors.buttonBodyHover = config->get_color_code(config, "ButtonBodyHover");
-    systemColors.buttonBodyDisable = config->get_color_code(config, "ButtonBodyDisable");
-    systemColors.text = config->get_color_code(config, "Text");
-    systemColors.textDisable = config->get_color_code(config, "TextDisable");
+    m_colors.background = m_colors.background;
+    m_colors.buttonBody = config->get_color_code(config, "ButtonBody");
+    m_colors.buttonBodyPress = config->get_color_code(config, "ButtonBodyPress");
+    m_colors.buttonBodyHover = config->get_color_code(config, "ButtonBodyHover");
+    m_colors.buttonBodyDisable = config->get_color_code(config, "ButtonBodyDisable");
+    m_colors.text = config->get_color_code(config, "Text");
+    m_colors.textDisable = config->get_color_code(config, "TextDisable");
 
     // フォント情報の取得とフォント作成
     FONT_INFO* font_info = config->get_font_info(config, "Control");
@@ -499,139 +481,13 @@ LRESULT CALLBACK MainFrame::wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPA
             }
             break;
         }
-        case WM_CTLCOLORSTATIC: {
-            HDC hdc = (HDC)wparam;
-            SetTextColor(hdc, (COLORREF)systemColors.text);
-            SetBkColor(hdc, (COLORREF)systemColors.background);
-            return (LRESULT)CreateSolidBrush((COLORREF)systemColors.background);
-        }
-        case WM_CTLCOLORLISTBOX: {
-            HDC hdc = (HDC)wparam;
-            SetTextColor(hdc, (COLORREF)systemColors.text);
-            SetBkColor(hdc, (COLORREF)systemColors.background);
-            return (LRESULT)CreateSolidBrush((COLORREF)systemColors.background);
-        }
-        case WM_CTLCOLOREDIT: {
-            HDC hdc = (HDC)wparam;
-            SetTextColor(hdc, (COLORREF)systemColors.text);
-            SetBkColor(hdc, (COLORREF)systemColors.background);
-            return (LRESULT)CreateSolidBrush((COLORREF)systemColors.background);
-        }
-        case WM_CTLCOLORBTN: {
-            HDC hdc = (HDC)wparam;
-            SetTextColor(hdc, (COLORREF)systemColors.text);
-            SetBkColor(hdc, (COLORREF)systemColors.background);
-            return (LRESULT)CreateSolidBrush((COLORREF)systemColors.background);
-        }
-        case WM_DRAWITEM: {
-            // 背景色や文字色を指定のでdrawするためのOWNERDRAW
-            DRAWITEMSTRUCT* dis = (DRAWITEMSTRUCT*)lparam;
-
-            if (dis->CtlType == ODT_BUTTON) {
-                int id = dis->CtlID;
-                bool isCheckbox = (id == (int)IDC_Button::ViewResult || id == (int)IDC_Button::AsSubFilter ||
-                                   id == (int)IDC_Button::InvertPosition || id == (int)IDC_Button::IgnoreAspectRatio ||
-                                   id == (int)IDC_Button::QuickBlur || id == (int)IDC_Button::EasyPrivacy);
-
-                if (isCheckbox) {
-                    HBRUSH hbrBackground = CreateSolidBrush((COLORREF)systemColors.background);
-                    FillRect(dis->hDC, &dis->rcItem, hbrBackground);
-
-                    COLORREF textColor = (dis->itemState & ODS_DISABLED) ? (COLORREF)systemColors.textDisable : (COLORREF)systemColors.text;
-                    int state = (int)GetWindowLongPtr(dis->hwndItem, GWLP_USERDATA);
-
-                    RECT rcCheck = dis->rcItem;
-                    int checkSize = 15;
-                    rcCheck.left += 2;
-                    rcCheck.right = rcCheck.left + checkSize;
-                    rcCheck.top = rcCheck.top + (rcCheck.bottom - rcCheck.top - checkSize) / 2;
-                    rcCheck.bottom = rcCheck.top + checkSize;
-
-                    UINT uState = DFCS_BUTTONCHECK;
-                    if (state) uState |= DFCS_CHECKED;
-                    if (dis->itemState & ODS_DISABLED) uState |= DFCS_INACTIVE;
-                    if (dis->itemState & ODS_SELECTED) uState |= DFCS_PUSHED;
-
-                    DrawFrameControl(dis->hDC, &rcCheck, DFC_BUTTON, uState);
-
-                    RECT rcText = dis->rcItem;
-                    rcText.left = rcCheck.right + 5;
-
-                    SetTextColor(dis->hDC, textColor);
-                    SetBkMode(dis->hDC, TRANSPARENT);
-
-                    WCHAR text[256];
-                    GetWindowText(dis->hwndItem, text, sizeof(text) / sizeof(text[0]));
-                    DrawText(dis->hDC, text, -1, &rcText, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
-
-                    DeleteObject(hbrBackground);
-                } else {
-                    HBRUSH hbrBackground, hbrBorder;
-                    COLORREF textColor;
-
-                    if (dis->itemState & ODS_DISABLED) {
-                        hbrBackground = CreateSolidBrush((COLORREF)systemColors.buttonBodyDisable);
-                        textColor = (COLORREF)systemColors.textDisable;
-                    } else if (dis->itemState & ODS_SELECTED) {
-                        hbrBackground = CreateSolidBrush((COLORREF)systemColors.buttonBodyPress);
-                        textColor = (COLORREF)systemColors.text;
-                    } else {
-                        hbrBackground = CreateSolidBrush((COLORREF)systemColors.buttonBody);
-                        textColor = (COLORREF)systemColors.text;
-                    }
-
-                    FillRect(dis->hDC, &dis->rcItem, hbrBackground);
-
-                    if ((dis->itemState & ODS_FOCUS) == 0) {
-                        hbrBorder = CreateSolidBrush(RGB(128, 128, 128));
-                    } else {
-                        hbrBorder = CreateSolidBrush(RGB(64, 64, 64));
-                    }
-                    FrameRect(dis->hDC, &dis->rcItem, hbrBorder);
-
-                    SetTextColor(dis->hDC, textColor);
-                    SetBkMode(dis->hDC, TRANSPARENT);
-
-                    WCHAR text[256];
-                    GetWindowText(dis->hwndItem, text, sizeof(text) / sizeof(text[0]));
-
-                    DrawText(dis->hDC, text, -1, &dis->rcItem,
-                             DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-
-                    DeleteObject(hbrBackground);
-                    DeleteObject(hbrBorder);
-                }
-                return TRUE;
-            }
-            else if (dis->CtlType == ODT_COMBOBOX) {
-                HBRUSH hbrBackground;
-                COLORREF textColor = (COLORREF)systemColors.text;
-                COLORREF bgColor = (COLORREF)systemColors.background;
-
-                if (dis->itemState & ODS_DISABLED) {
-                    textColor = (COLORREF)systemColors.textDisable;
-                } else if (dis->itemState & ODS_SELECTED) {
-                    bgColor = (COLORREF)systemColors.buttonBodyPress;
-                }
-
-                hbrBackground = CreateSolidBrush(bgColor);
-                FillRect(dis->hDC, &dis->rcItem, hbrBackground);
-
-                SetTextColor(dis->hDC, textColor);
-                SetBkColor(dis->hDC, bgColor);
-                SetBkMode(dis->hDC, OPAQUE);
-
-                if (dis->itemID != (UINT)-1) {
-                    WCHAR text[256];
-                    SendMessage(dis->hwndItem, CB_GETLBTEXT, dis->itemID, (LPARAM)text);
-                    DrawText(dis->hDC, text, -1, &dis->rcItem, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
-                }
-
-                DeleteObject(hbrBackground);
-                return TRUE;
-            }
-            break;
-        }
+        case WM_CTLCOLORSTATIC:
+        case WM_CTLCOLORLISTBOX:
+        case WM_CTLCOLOREDIT:
+        case WM_CTLCOLORBTN:
+            return ownerdraw::OnCtlColor(wparam, self->m_colors);
+        case WM_DRAWITEM:
+            return ownerdraw::OnDrawItem(lparam, self->m_colors);
         case WM_COMMAND:
             switch (static_cast<IDC_Button>(LOWORD(wparam))) {
                 case IDC_Button::ViewResult:

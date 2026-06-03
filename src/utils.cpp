@@ -19,4 +19,16 @@ cv::Scalar hue_to_scalar(int hue) {
         return cv::Scalar(255, 0, (360 - hue) * 255 / 60);
 }
 
+std::string get_model_dir(HINSTANCE hInst) {
+    char path[MAX_PATH * 2];
+    if (GetModuleFileNameA(hInst, path, sizeof(path))) {
+        char* p = strrchr(path, '\\');
+        if (p) {
+            *(p + 1) = '\0';
+            return std::string(path) + "MotionTracking_model\\";
+        }
+    }
+    return {};
+    }
+
 }
