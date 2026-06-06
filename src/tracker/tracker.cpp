@@ -1,6 +1,7 @@
 #include "tracker.hpp"
 #include "aviutl2_sdk/config2.h"
 #include "constants.hpp"
+#include "opencv2/highgui.hpp"
 
 extern LOG_HANDLE* logger;
 extern CONFIG_HANDLE* config;
@@ -30,6 +31,10 @@ cv::Ptr<cv::Tracker> Tracker::CreateTracker(int method) {
 }
 
 bool Tracker::SelectObject(EDIT_HANDLE* edit_handle) {
+
+    // 前回の状態を保存
+    cv::Rect2d prevBoundingBox = m_boundingBox;
+    bool prevSelectObj = m_selectObj;
 
     RangeResult range;
 
@@ -70,23 +75,68 @@ bool Tracker::SelectObject(EDIT_HANDLE* edit_handle) {
 
 
     if (!renderIsOk) {
-    MessageBox(nullptr, config->translate(config, L"Cannot get image"), constants::APIerr, MB_OK | MB_ICONERROR);
-    return false;
-    }
-
-    if (m_image.empty()) {
-        MessageBox(nullptr, config->translate(config, L"Failed to get image from AviUtl. Please make sure AviUtl is in a state where it can provide images."), constants::WindowName, MB_OK | MB_ICONERROR);
-        return 0;
+        MessageBox(nullptr, config->translate(config, L"Cannot get image"), constants::APIerr, MB_OK | MB_ICONERROR);
+        return false;
     }
 
     edit_handle->wait_rendering_task();
+    logger->info(logger, L"SelectObject: rendering complete");
+
+    if (m_image.empty()) {
+        MessageBox(nullptr, config->translate(config, L"Failed to get image from AviUtl. Please make sure AviUtl is in a state where it can provide images."), constants::WindowName, MB_OK | MB_ICONERROR);
+        return false;
+    }
+
+    logger->info(logger, L"SelectObject: window opened");
     cv::namedWindow("Object Selection", cv::WINDOW_KEEPRATIO);
     cv::setMouseCallback("Object Selection", OnMouse, this);
     cv::resizeWindow("Object Selection", m_image.cols, m_image.rows);
     cv::imshow("Object Selection", m_image);
 
+    // 前回の選択範囲があれば表示
+    if (m_selectObj) {
+        UpdateObjectSelectionWindow(
+            m_boundingBox.x,
+            m_boundingBox.y,
+            m_boundingBox.x + m_boundingBox.width,
+            m_boundingBox.y + m_boundingBox.height
+        );
+    }
+
     SetFocus(nullptr);
-    return false;
+
+    // 解析場所を選択するまで待機 (モーダルみたいなの)
+    while (true) {
+        // 10ms 周期で観測
+        int key = cv::waitKey(10);
+
+        // ESC でキャンセル
+        if (GetAsyncKeyState(VK_ESCAPE) & 0x8000) { // OS の ESC を監視
+            HWND hwnd = FindWindowA(nullptr, "Object Selection");
+            // Object Selection ウィンドウが選択状態の時のみ発動させる
+            if (hwnd && GetForegroundWindow() == hwnd) {
+                // 前回の状態を復元
+                m_boundingBox = prevBoundingBox;
+                m_selectObj   = prevSelectObj;
+                PostMessage(hwnd, WM_CLOSE, 0, 0);
+                return false;
+            }
+        }
+
+        // F3 で確定 (x ボタンまで遠いので、キーボード操作できるように)
+        if (GetAsyncKeyState(VK_F3) & 0x8000) {
+            HWND hwnd = FindWindowA(nullptr, "Object Selection");
+            if (hwnd && GetForegroundWindow() == hwnd) {
+                PostMessage(hwnd, WM_CLOSE, 0, 0);
+                return m_selectObj;
+            }
+        }
+
+        // × で結果格納
+        if (!static_cast<bool>(cv::getWindowProperty("Object Selection", cv::WND_PROP_VISIBLE))) {
+            return m_selectObj;  // 選択していれば true、していなければ false
+        }
+    }
 }
 
 bool Tracker::Run(EDIT_HANDLE* edit, OBJECT_LAYER_FRAME olf, int method) {
@@ -106,6 +156,7 @@ void Tracker::OnMouse(int event, int x, int y, int, void* userdata) {
         tracker->m_selectObj = false;
         tracker->m_boundingBox.x = x;
         tracker->m_boundingBox.y = y;
+        logger->info(logger, std::format(L"OnMouse: LBUTTONDOWN x={}, y={}", x, y).c_str());
         break;
     case cv::EVENT_LBUTTONUP:
         //set with and height of the bounding box
@@ -115,6 +166,12 @@ void Tracker::OnMouse(int event, int x, int y, int, void* userdata) {
         tracker->m_boundingBox.y = std::clamp(static_cast<double>(y), 0.0, tracker->m_boundingBox.y);
         tracker->m_selectObj = true;
         tracker->m_startSel = false;
+        logger->info(logger, std::format(L"OnMouse: LBUTTONUP x={}, y={}, box=({}, {}, {}, {})",
+            x, y,
+            tracker->m_boundingBox.x,
+            tracker->m_boundingBox.y,
+            tracker->m_boundingBox.width,
+            tracker->m_boundingBox.height).c_str());
         break;
     case cv::EVENT_MOUSEMOVE:
 
