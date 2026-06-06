@@ -22,6 +22,12 @@ struct RangeResult {
     int end   = -1;
 };
 
+// 画像格納場所
+struct RenderParam {
+    cv::Mat* image;
+};
+
+
 class Tracker {
 public:
     Tracker() = default;
@@ -37,9 +43,12 @@ public:
     bool HasResult() const { return !m_trackResult.empty(); }
 
 private:
+    // 引数固定のため、static
     static void OnMouse(int event, int x, int y, int flags, void* userdata);
     cv::Ptr<cv::Tracker> CreateTracker(int method);
     cv::Mat RenderFrame(EDIT_HANDLE* edit, int frame);
+    // 選択範囲描画関数
+    void UpdateObjectSelectionWindow(int x1, int y1, int x2, int y2);
 
     std::string             m_modelDir;
     std::vector<cv::Rect2d> m_trackResult;
