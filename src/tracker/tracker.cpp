@@ -189,6 +189,10 @@ bool Tracker::Analyze(EDIT_HANDLE* edit, TrackingMethod method) {
             }
 
             m_track_result.push_back(box);
+            // ログ
+            int total = m_range.end - m_range.start + 1;
+            int current = frame - m_range.start + 1;
+            logger->info(logger, std::format(L"Analyzing: {}/{}", current, total).c_str());
         }
 
     int64 end_time = cv::getTickCount();
