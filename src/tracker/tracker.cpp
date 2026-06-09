@@ -1,7 +1,9 @@
 #include "tracker.hpp"
 #include "aviutl2_sdk/config2.h"
+#include "aviutl2_sdk/plugin2.h"
 #include "constants.hpp"
 #include "opencv2/highgui.hpp"
+#include "ui/mainframe.hpp"
 
 extern LOG_HANDLE* logger;
 extern CONFIG_HANDLE* config;
@@ -14,20 +16,9 @@ void Tracker::SetBox(cv::Rect2d box) {
     m_boundingBox = box;
 }
 
-void Tracker::Clear() {
-    m_trackResult.clear();
-    m_trackFound.clear();
-    m_boundingBox = {};
-}
-
 cv::Mat Tracker::RenderFrame(EDIT_HANDLE* edit, int frame) {
     // TODO: rendering_scene_video + wait_rendering_task で実装
     return cv::Mat{};
-}
-
-cv::Ptr<cv::Tracker> Tracker::CreateTracker(int method) {
-    // TODO: 旧 OnAnalyze の switch から移植
-    return nullptr;
 }
 
 bool Tracker::SelectObject(EDIT_HANDLE* edit_handle) {
@@ -36,11 +27,10 @@ bool Tracker::SelectObject(EDIT_HANDLE* edit_handle) {
     cv::Rect2d prevBoundingBox = m_boundingBox;
     bool prevSelectObj = m_selectObj;
 
-    RangeResult range;
 
     // フレーム選択範囲を取得
     // call_read_section_param を使うとなぜかクラッシュする
-    edit_handle->call_edit_section_param(&range, [](void* param, EDIT_SECTION* edit) {
+    edit_handle->call_edit_section_param(&m_range, [](void* param, EDIT_SECTION* edit) {
         auto* r = static_cast<RangeResult*>(param);
         r->start = edit->info->select_range_start;
         r->end = edit->info->select_range_end;
@@ -52,13 +42,13 @@ bool Tracker::SelectObject(EDIT_HANDLE* edit_handle) {
         }
     });
 
-    logger->info(logger, std::format(L"range: start={}, end={}", range.start, range.end).c_str());
+    logger->info(logger, std::format(L"range: start={}, end={}", m_range.start, m_range.end).c_str());
 
     RenderParam rp{ &m_image };
 
     // レンダリング結果取得
     bool renderIsOk = edit_handle->rendering_scene_video(
-    range.start, // 取得するフレーム番号
+    m_range.start, // 取得するフレーム番号
     &rp, // m_image のアドレス
     [](void* param, int frame, const void* buffer, int width, int height, int pitch) {
         // param を RenderParam に変換
@@ -139,9 +129,84 @@ bool Tracker::SelectObject(EDIT_HANDLE* edit_handle) {
     }
 }
 
-bool Tracker::Run(EDIT_HANDLE* edit, OBJECT_LAYER_FRAME olf, int method) {
-    // TODO
-    return false;
+bool Tracker::Analyze(EDIT_HANDLE* edit, TrackingMethod method) {
+    if (!m_selectObj)
+    {
+        MessageBoxA(NULL, "Nothing selected", "Operation Error", MB_OK);
+        return false;
+    }
+
+    m_track_result.clear();
+    m_track_found.clear();
+    //Correct for out-of-bound box
+    if (m_boundingBox.br().x > m_image.cols)
+    {
+        m_boundingBox.width = m_image.cols - m_boundingBox.x;
+    }
+    if (m_boundingBox.br().y > m_image.rows)
+    {
+        m_boundingBox.height = m_image.rows - m_boundingBox.y;
+    }
+    // Create Tracker
+    cv::Ptr<cv::Tracker> tracker = CreateTracker(method);
+
+    // 応答なしバグ対応
+    // mutable で、書き換え可能に
+    std::thread([this, edit, tracker]() mutable{
+        cv::Mat image;
+        cv::Rect2i box = m_boundingBox;
+        bool track_init = false;
+        int64 start_time = cv::getTickCount();
+
+        // 最初の1枚目は、SelectObject のレンダリング結果を代入
+        image = m_image;
+
+        for (int frame = m_range.start; frame <= m_range.end; frame++) {
+            if (frame + 1 <= m_range.end) {
+                edit->rendering_scene_video(frame + 1, &image,
+                    [](void* param, int, const void* buffer, int w, int h, int pitch) {
+                        auto* img = static_cast<cv::Mat*>(param);
+                        cv::Mat rgba(h, w, CV_8UC4, const_cast<void*>(buffer), (size_t)pitch);
+                        // BGRAではトラッキングができないものがあるため、RGBに変換（CSRTなど）
+                        cv::cvtColor(rgba, *img, cv::COLOR_RGBA2BGR);
+                });
+            }
+
+            edit->wait_rendering_task();
+
+            if (!track_init) {
+                // 追跡対象登録
+                tracker->init(image, box);
+                // 初回は必ず成功
+                track_init = true;
+                m_track_found.push_back(true);
+            } else {
+                if (tracker->update(image, box)) {
+                    m_track_found.push_back(true);
+                } else {
+                    m_track_found.push_back(false);
+                }
+            }
+
+            m_track_result.push_back(box);
+        }
+
+    int64 end_time = cv::getTickCount();
+    double run_time = (end_time - start_time) / cv::getTickFrequency();
+    char msg[64];
+    sprintf_s(msg, "Tracking Completed!\nAverage %.2f fps",
+              (m_range.end - m_range.start) / run_time);
+    MessageBoxA(nullptr, msg, "Tracking Completed!", MB_OK);
+
+    }).detach();
+
+    return true;
+}
+
+void Tracker::Clear() {
+    m_track_result.clear();
+    m_track_found.clear();
+    m_boundingBox = {};
 }
 
 void Tracker::OnMouse(int event, int x, int y, int, void* userdata) {
@@ -183,6 +248,7 @@ void Tracker::OnMouse(int event, int x, int y, int, void* userdata) {
     }
 }
 
+
 void Tracker::UpdateObjectSelectionWindow(int x1, int y1, int x2, int y2) {
     //update only if visible
     if(!static_cast<bool>(cv::getWindowProperty("Object Selection", cv::WND_PROP_VISIBLE)))
@@ -203,4 +269,71 @@ void Tracker::UpdateObjectSelectionWindow(int x1, int y1, int x2, int y2) {
         renderFrame += utils::hue_to_scalar(m_hueValue) / 2;
     }
     cv::imshow("Object Selection", displayFrame);
+}
+
+cv::Ptr<cv::Tracker> Tracker::CreateTracker(TrackingMethod method) {
+    cv::Ptr<cv::Tracker> tracker;
+    try
+    {
+        switch (method) {
+            case TrackingMethod::MIL:
+            tracker = cv::TrackerMIL::create();
+            break;
+            case TrackingMethod::KCF:
+            // KCFはOpenCVのextra modulesに移動されたため、環境によっては利用できない可能性があります
+            tracker = cv::TrackerKCF::create();
+            break;
+            case TrackingMethod::CSRT:
+            tracker = cv::TrackerCSRT::create();
+            break;
+            case TrackingMethod::DaSiamRPN:
+        {
+            auto params = cv::TrackerDaSiamRPN::Params();
+            params.model = m_modelDir +  "dasiamrpn_model.onnx";
+            params.kernel_r1 = m_modelDir + "dasiamrpn_kernel_r1.onnx";
+            params.kernel_cls1 = m_modelDir + "dasiamrpn_kernel_cls1.onnx";
+            tracker = cv::TrackerDaSiamRPN::create(params);
+            break;
+        }
+            case TrackingMethod::Nano:
+        {
+            auto params = cv::TrackerNano::Params();
+            params.backbone = m_modelDir + "nanotrack_backbone_sim.onnx";
+            params.neckhead = m_modelDir + "nanotrack_head_sim.onnx";
+            tracker = cv::TrackerNano::create(params);
+            break;
+        }
+            case TrackingMethod::Vit:
+        {
+            //なんか2つモデルがあるが、上のほうが良い？
+            //https://github.com/opencv/opencv_extra/blob/4.x/testdata/dnn/onnx/models/vitTracker.onnx
+            //https://github.com/opencv/opencv_zoo/blob/main/models/object_tracking_vittrack/object_tracking_vittrack_2023sep.onnx
+
+            auto params = cv::TrackerVit::Params();
+            params.net = m_modelDir + "vitTracker.onnx";
+            tracker = cv::TrackerVit::create(params);
+            break;
+        }
+        default:
+            // 選択されていない、または不正なインデックス
+            MessageBox(nullptr, config->translate(config, L"Please select a tracking method."), constants::WindowName, MB_OK | MB_ICONERROR);
+            return {};
+        }
+    }
+    catch (cv::Exception e)
+    {
+        MessageBoxA(NULL, e.what(), "OpenCV3 Error", MB_OK);
+        return {};
+    }
+    catch (...)
+    {
+        //nullptr
+        tracker = cv::Ptr<cv::Tracker>();
+    }
+    if (!tracker)
+    {
+        MessageBoxA(NULL, "Error when creating tracker", "OpenCV3 Error", MB_OK);
+        return {};
+    }
+    return tracker;
 }

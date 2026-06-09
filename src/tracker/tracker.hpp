@@ -27,6 +27,15 @@ struct RenderParam {
     cv::Mat* image;
 };
 
+enum class TrackingMethod {
+    MIL       = 0,
+    KCF       = 1,
+    CSRT      = 2,
+    DaSiamRPN = 3,
+    Nano      = 4,
+    Vit       = 5,
+};
+
 
 class Tracker {
 public:
@@ -34,26 +43,30 @@ public:
 
     void SetModelDir(const std::string& dir);
     void SetBox(cv::Rect2d box);
-    bool Run(EDIT_HANDLE* edit, OBJECT_LAYER_FRAME olf, int method);
+    bool Run(EDIT_HANDLE* edit, OBJECT_LAYER_FRAME olf, TrackingMethod method);
+    bool Analyze(EDIT_HANDLE* edit, TrackingMethod method);
     void Clear();
     bool SelectObject(EDIT_HANDLE* edit);
 
-    const std::vector<cv::Rect2d>& Results()   const { return m_trackResult; }
-    const std::vector<bool>&       Found()     const { return m_trackFound; }
-    bool HasResult() const { return !m_trackResult.empty(); }
+    const std::vector<cv::Rect2d>& Results()   const { return m_track_result; }
+    const std::vector<bool>&       Found()     const { return m_track_found; }
+    bool HasResult() const { return !m_track_result.empty(); }
 
 private:
     // 引数固定のため、static
     static void OnMouse(int event, int x, int y, int flags, void* userdata);
-    cv::Ptr<cv::Tracker> CreateTracker(int method);
+    RangeResult m_range;
+    // モデル選択
+    cv::Ptr<cv::Tracker> CreateTracker(TrackingMethod method);
     cv::Mat RenderFrame(EDIT_HANDLE* edit, int frame);
     // 選択範囲描画関数
     void UpdateObjectSelectionWindow(int x1, int y1, int x2, int y2);
 
     std::string             m_modelDir;
-    std::vector<cv::Rect2d> m_trackResult;
+    std::vector<cv::Rect2d> m_track_result;
 
-    std::vector<bool>       m_trackFound;
+    // 追跡結果 true or false
+    std::vector<bool>       m_track_found;
     // 状態
     int        m_hueValue  = 180;
     cv::Mat    m_image;
