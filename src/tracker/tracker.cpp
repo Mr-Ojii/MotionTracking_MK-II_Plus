@@ -162,6 +162,8 @@ bool Tracker::Analyze(EDIT_HANDLE* edit, TrackingMethod method) {
         image = m_image;
 
         for (int frame = m_range.start; frame <= m_range.end; frame++) {
+            // ログ用
+            auto t0 = cv::getTickCount();
             if (frame + 1 <= m_range.end) {
                 edit->rendering_scene_video(frame + 1, &image,
                     [](void* param, int, const void* buffer, int w, int h, int pitch) {
@@ -173,6 +175,8 @@ bool Tracker::Analyze(EDIT_HANDLE* edit, TrackingMethod method) {
             }
 
             edit->wait_rendering_task();
+            // ログ用
+            auto t1 = cv::getTickCount();
 
             if (!track_init) {
                 // 追跡対象登録
@@ -189,10 +193,17 @@ bool Tracker::Analyze(EDIT_HANDLE* edit, TrackingMethod method) {
             }
 
             m_track_result.push_back(box);
+            // ログ用
+            auto t2 = cv::getTickCount();
+
             // ログ
             int total = m_range.end - m_range.start + 1;
             int current = frame - m_range.start + 1;
             logger->info(logger, std::format(L"Analyzing: {}/{}", current, total).c_str());
+            double render_ms = (t1 - t0) / cv::getTickFrequency() * 1000.0;
+            double track_ms  = (t2 - t1) / cv::getTickFrequency() * 1000.0;
+            logger->info(logger, std::format(L"Frame {:4d} | Render {:7.2f}ms | Track {:7.2f}ms",
+                frame, render_ms, track_ms).c_str());
         }
 
     int64 end_time = cv::getTickCount();
