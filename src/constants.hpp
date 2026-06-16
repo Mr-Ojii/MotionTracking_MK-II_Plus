@@ -1,4 +1,5 @@
 #pragma once
+#include <windows.h>
 
 namespace constants {
     constexpr const wchar_t* WindowName = L"MotionTracking MK-II Plus for AviUtl2";

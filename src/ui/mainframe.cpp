@@ -273,13 +273,13 @@ LRESULT CALLBACK MainFrame::wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPA
                 default:
                     break;
             }
-            // File ボタン → ボタン直下にポップアップメニューを表示
+            // File ボタン -> ボタン直下にポップアップメニューを表示
             if (LOWORD(wparam) == (UINT)IDC_Toolbar::File) {
                 HWND hBtn = (HWND)lparam;
                 RECT rc;
                 GetWindowRect(hBtn, &rc);
                 HMENU hPopup = CreatePopupMenu();
-                AppendMenuW(hPopup, MF_STRING, (UINT_PTR)IDC_Menu::ExportCSV,    L"Export CSV...");
+                // AppendMenuW(hPopup, MF_STRING, (UINT_PTR)IDC_Menu::ExportCSV,    L"Export CSV...");
                 AppendMenuW(hPopup, MF_STRING, (UINT_PTR)IDC_Menu::ExportObject, L"Export Object File...");
                 TrackPopupMenu(hPopup, TPM_LEFTALIGN | TPM_TOPALIGN, rc.left, rc.bottom, 0, hwnd, nullptr);
                 DestroyMenu(hPopup);

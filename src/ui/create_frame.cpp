@@ -36,6 +36,7 @@ void MainFrame::CreateControls() {
     int item_height = config->get_layout_size(config, "SettingItemHeight");
     int y_pos = 10;
 
+    // メニューバーが使えなかったので、代替
     // File ボタン
     HWND button_file = CreateWindowEx(
         0, WC_BUTTON, L"File",
@@ -52,7 +53,7 @@ void MainFrame::CreateControls() {
         m_hwnd, (HMENU)IDC_Menu::OpenOptions, m_hInst, nullptr);
     SendMessage(button_options, WM_SETFONT, (WPARAM)hfont, TRUE);
 
-    y_pos += item_height + 5;
+    y_pos += item_height + 30;
 
     // Tracking Method ラベルを作成
     HWND label_track = CreateWindowEx(
