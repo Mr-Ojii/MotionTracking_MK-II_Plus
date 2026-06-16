@@ -1,5 +1,6 @@
 #include "mainframe.hpp"
 #include "ownerdraw.hpp"
+#include "constants.hpp"
 
 extern LOG_HANDLE*    logger;
 extern CONFIG_HANDLE* config;
@@ -8,6 +9,9 @@ constexpr const wchar_t* track_method[] = { L"MIL", L"KCF", L"CSRT", L"DaSiamRPN
 constexpr int METHOD_N = sizeof(track_method) / sizeof(track_method[0]);
 
 void MainFrame::CreateControls() {
+    // File ボタン（クリックでポップアップメニュー）
+    // Options ボタン（クリックで設定ウィンドウ）
+    // ボタン幅は均等に並べる（各145px）
     // 色情報の取得
     m_colors.background       = m_colors.background;
     m_colors.buttonBody       = config->get_color_code(config, "ButtonBody");
@@ -31,6 +35,24 @@ void MainFrame::CreateControls() {
 
     int item_height = config->get_layout_size(config, "SettingItemHeight");
     int y_pos = 10;
+
+    // File ボタン
+    HWND button_file = CreateWindowEx(
+        0, WC_BUTTON, L"File",
+        WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
+        10, y_pos, 145, item_height,
+        m_hwnd, (HMENU)IDC_Toolbar::File, m_hInst, nullptr);
+    SendMessage(button_file, WM_SETFONT, (WPARAM)hfont, TRUE);
+
+    // Options ボタン
+    HWND button_options = CreateWindowEx(
+        0, WC_BUTTON, L"Options",
+        WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
+        160, y_pos, 145, item_height,
+        m_hwnd, (HMENU)IDC_Menu::OpenOptions, m_hInst, nullptr);
+    SendMessage(button_options, WM_SETFONT, (WPARAM)hfont, TRUE);
+
+    y_pos += item_height + 5;
 
     // Tracking Method ラベルを作成
     HWND label_track = CreateWindowEx(

@@ -259,6 +259,34 @@ LRESULT CALLBACK MainFrame::wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPA
         case WM_DRAWITEM:
             return ownerdraw::OnDrawItem(lparam, self->m_colors);
         case WM_COMMAND:
+            // ツールバー・メニューからのコマンド
+            switch (static_cast<IDC_Menu>(LOWORD(wparam))) {
+                case IDC_Menu::OpenOptions:
+                    // TODO: OptionsWindow を開く
+                    return 0;
+                case IDC_Menu::ExportCSV:
+                    // TODO: CSV エクスポート
+                    return 0;
+                case IDC_Menu::ExportObject:
+                    // TODO: Object ファイルエクスポート
+                    return 0;
+                default:
+                    break;
+            }
+            // File ボタン → ボタン直下にポップアップメニューを表示
+            if (LOWORD(wparam) == (UINT)IDC_Toolbar::File) {
+                HWND hBtn = (HWND)lparam;
+                RECT rc;
+                GetWindowRect(hBtn, &rc);
+                HMENU hPopup = CreatePopupMenu();
+                AppendMenuW(hPopup, MF_STRING, (UINT_PTR)IDC_Menu::ExportCSV,    L"Export CSV...");
+                AppendMenuW(hPopup, MF_STRING, (UINT_PTR)IDC_Menu::ExportObject, L"Export Object File...");
+                TrackPopupMenu(hPopup, TPM_LEFTALIGN | TPM_TOPALIGN, rc.left, rc.bottom, 0, hwnd, nullptr);
+                DestroyMenu(hPopup);
+                SetFocus(nullptr);
+                return 0;
+            }
+            // ウィンドウコントロールからのコマンド
             switch (static_cast<IDC_Button>(LOWORD(wparam))) {
                 case IDC_Button::ViewResult:
                 case IDC_Button::AsSubFilter:
