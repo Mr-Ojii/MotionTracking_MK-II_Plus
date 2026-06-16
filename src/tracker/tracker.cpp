@@ -130,94 +130,124 @@ bool Tracker::SelectObject(EDIT_HANDLE* edit_handle) {
 }
 
 bool Tracker::Analyze(EDIT_HANDLE* edit, TrackingMethod method) {
-    if (!m_selectObj)
-    {
+    if (!m_selectObj) {
         MessageBoxA(NULL, "Nothing selected", "Operation Error", MB_OK);
         return false;
     }
 
     m_track_result.clear();
     m_track_found.clear();
-    //Correct for out-of-bound box
+
     if (m_boundingBox.br().x > m_image.cols)
-    {
         m_boundingBox.width = m_image.cols - m_boundingBox.x;
-    }
     if (m_boundingBox.br().y > m_image.rows)
-    {
         m_boundingBox.height = m_image.rows - m_boundingBox.y;
-    }
-    // Create Tracker
+
     cv::Ptr<cv::Tracker> tracker = CreateTracker(method);
 
-    // 応答なしバグ対応
-    // mutable で、書き換え可能に
-    std::thread([this, edit, tracker]() mutable{
-        cv::Mat image;
+    std::thread([this, edit, tracker]() mutable {
+        const int total = m_range.end - m_range.start + 1;
+
+        // 全フレーム分バッファ＋完了フラグ
+        std::vector<cv::Mat> frame_cache(total);
+        std::vector<std::atomic<bool>> ready(total);
+        for (auto& r : ready) r.store(false);
+
+        // コールバック用パラメータ（newなし、配列で管理）
+        struct RenderParam {
+            cv::Mat* img;
+            std::atomic<bool>* ready;
+        };
+        std::vector<RenderParam> params(total);
+        for (int i = 0; i < total; i++) {
+            params[i] = { &frame_cache[i], &ready[i] };
+        }
+
+        auto callback = [](void* param, int, const void* buffer,
+                           int w, int h, int pitch) {
+            auto* p = static_cast<RenderParam*>(param);
+            cv::Mat rgba(h, w, CV_8UC4,
+                         const_cast<void*>(buffer), (size_t)pitch);
+            cv::cvtColor(rgba, *p->img, cv::COLOR_RGBA2BGR);
+            p->ready->store(true, std::memory_order_release);
+        };
+
+        auto kickRender = [&](int idx) {
+            if (idx >= total) return;
+            int frame = m_range.start + idx;
+            edit->rendering_scene_video(frame, &params[idx], callback);
+        };
+
+        // 最初のフレームは SelectObject の結果をそのまま使用
+        frame_cache[0] = m_image;
+        ready[0].store(true, std::memory_order_release);
+
+        // 先行レンダリングキック（PREFETCH枚）
+        const int PREFETCH = 16;
+        int render_kicked = 1;
+        for (int i = 0; i < PREFETCH; i++) {
+            kickRender(render_kicked++);
+        }
+
         cv::Rect2i box = m_boundingBox;
         bool track_init = false;
         int64 start_time = cv::getTickCount();
+        double total_render_wait = 0.0;
+        double total_track = 0.0;
 
-        // 最初の1枚目は、SelectObject のレンダリング結果を代入
-        image = m_image;
-
-        for (int frame = m_range.start; frame <= m_range.end; frame++) {
-            // ログ用
+        for (int idx = 0; idx < total; idx++) {
+            // レンダリング完了待ち（先行済みならほぼ即抜ける）
             auto t0 = cv::getTickCount();
-            if (frame + 1 <= m_range.end) {
-                edit->rendering_scene_video(frame + 1, &image,
-                    [](void* param, int, const void* buffer, int w, int h, int pitch) {
-                        auto* img = static_cast<cv::Mat*>(param);
-                        cv::Mat rgba(h, w, CV_8UC4, const_cast<void*>(buffer), (size_t)pitch);
-                        // BGRAではトラッキングができないものがあるため、RGBに変換（CSRTなど）
-                        cv::cvtColor(rgba, *img, cv::COLOR_RGBA2BGR);
-                });
+            while (!ready[idx].load(std::memory_order_acquire)) {
+                std::this_thread::yield();
             }
-
-            edit->wait_rendering_task();
-            // ログ用
             auto t1 = cv::getTickCount();
+            total_render_wait += (t1 - t0) / cv::getTickFrequency() * 1000.0;
 
+            // トラッキング（この間に次フレームのレンダリングが並走）
             if (!track_init) {
-                // 追跡対象登録
-                tracker->init(image, box);
-                // 初回は必ず成功
+                tracker->init(frame_cache[idx], box);
                 track_init = true;
                 m_track_found.push_back(true);
             } else {
-                if (tracker->update(image, box)) {
+                if (tracker->update(frame_cache[idx], box)) {
                     m_track_found.push_back(true);
                 } else {
                     m_track_found.push_back(false);
                 }
             }
-
             m_track_result.push_back(box);
-            // ログ用
-            auto t2 = cv::getTickCount();
 
-            // ログ
-            int total = m_range.end - m_range.start + 1;
-            int current = frame - m_range.start + 1;
-            logger->info(logger, std::format(L"Analyzing: {}/{}", current, total).c_str());
-            double render_ms = (t1 - t0) / cv::getTickFrequency() * 1000.0;
-            double track_ms  = (t2 - t1) / cv::getTickFrequency() * 1000.0;
-            logger->info(logger, std::format(L"Frame {:4d} | Render {:7.2f}ms | Track {:7.2f}ms",
-                frame, render_ms, track_ms).c_str());
+            auto t2 = cv::getTickCount();
+            total_track += (t2 - t1) / cv::getTickFrequency() * 1000.0;
+
+            logger->info(logger, std::format(L"Analyzing: {}/{}",
+                idx + 1, total).c_str());
+
+            // 次フレームをキック（トラッキング中にレンダリング並走）
+            kickRender(render_kicked++);
         }
 
-    int64 end_time = cv::getTickCount();
-    double run_time = (end_time - start_time) / cv::getTickFrequency();
-    char msg[64];
-    sprintf_s(msg, "Tracking Completed!\nAverage %.2f fps",
-              (m_range.end - m_range.start) / run_time);
-    MessageBoxA(nullptr, msg, "Tracking Completed!", MB_OK);
+        int64 end_time = cv::getTickCount();
+        double run_time = (end_time - start_time) / cv::getTickFrequency();
+
+        char msg[256];
+        sprintf_s(msg,
+            "Tracking Completed!\n"
+            "Average %.2f fps\n"
+            "Render wait: %.1f ms/frame\n"
+            "Track:       %.1f ms/frame",
+            (total - 1) / run_time,
+            total_render_wait / total,
+            total_track / total);
+        MessageBoxA(nullptr, msg, "Tracking Completed!", MB_OK);
+        logger->info(logger, std::format(L"OpenCV threads: {}",
+        cv::getNumThreads()).c_str());
 
     }).detach();
 
     return true;
 }
-
 void Tracker::Clear() {
     m_track_result.clear();
     m_track_found.clear();
