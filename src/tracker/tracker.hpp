@@ -49,9 +49,10 @@ public:
     void Clear();
     bool SelectObject(EDIT_HANDLE* edit);
 
-    const std::vector<cv::Rect2d>& Results()   const { return m_track_result; }
-    const std::vector<bool>&       Found()     const { return m_track_found; }
-    bool HasResult() const { return !m_track_result.empty(); }
+    const std::vector<cv::Rect2d>& Results()    const { return m_track_result; }
+    const std::vector<bool>&       Found()      const { return m_track_found; }
+    bool HasResult()  const { return !m_track_result.empty(); }
+    int  RangeStart() const { return m_range.start; }
 
 private:
     // 引数固定のため、static

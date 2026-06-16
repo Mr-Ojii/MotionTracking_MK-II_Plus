@@ -314,17 +314,28 @@ LRESULT CALLBACK MainFrame::wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPA
                          CB_GETCURSEL, 0, 0);
                     auto method = static_cast<TrackingMethod>(sel);
                     self->m_tracker.Analyze(self->m_edit_handle, method);
+                    SetFocus(nullptr);
+                    return 0;
                 }
                 case IDC_Button::InsertObject:
+                {
+                    if (!self->m_tracker.HasResult()) {
+                        MessageBoxW(hwnd, config->translate(config, L"No track data."), constants::WindowName, MB_OK | MB_ICONWARNING);
+                        SetFocus(nullptr);
+                        return 0;
+                    }
+                    bool ok = InsertObject::Insert(
+                        self->m_tracker.Results(),
+                        self->m_tracker.Found(),
+                        self->m_tracker.RangeStart(),
+                        self->m_edit_handle
+                    );
+                    if (ok)
+                        MessageBoxW(hwnd, L"Insert completed.", constants::WindowName, MB_OK);
+                    else
+                        MessageBoxW(hwnd, L"Insert failed.", constants::WindowName, MB_OK | MB_ICONERROR);
                     SetFocus(nullptr);
-
-                    // //TODO
-                    // if (track_result.size() <= 0)
-                    // {
-                    //     MessageBox(fp->hwnd, "No track data to save!", "Operation Error", MB_OK);
-                    //     return FALSE;
-                    // }
-
+                    return 0;
                     // CHAR filename[MAX_PATH] = "D:\\tracking.exo";
 
                     // // Starts doing the real work
@@ -563,6 +574,9 @@ LRESULT CALLBACK MainFrame::wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPA
                     // }
 
                     return 0;
+                }
+                default:
+                    break;
             }
             break;
     }

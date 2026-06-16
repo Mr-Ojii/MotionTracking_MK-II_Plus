@@ -13,6 +13,7 @@
 //#include "TrackedData.hpp"
 #include "config.h"
 #include "tracker/tracker.hpp"
+#include "insert/insert_object.hpp"
 #include "ownerdraw.hpp"
 
 

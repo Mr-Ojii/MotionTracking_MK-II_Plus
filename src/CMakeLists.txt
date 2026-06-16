@@ -40,6 +40,7 @@ target_sources(
     ui/mainframe.cpp
     ui/create_frame.cpp
     ui/ownerdraw.cpp
+    insert/insert_object.cpp
     filter.cpp
     main.cpp
     utils.cpp
