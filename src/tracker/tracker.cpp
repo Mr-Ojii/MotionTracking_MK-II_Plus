@@ -130,6 +130,85 @@ bool Tracker::SelectObject(EDIT_HANDLE* edit_handle) {
 }
 
 bool Tracker::Analyze(EDIT_HANDLE* edit, TrackingMethod method) {
+    if (!m_selectObj)
+    {
+        MessageBoxA(NULL, "Nothing selected", "Operation Error", MB_OK);
+        return false;
+    }
+
+    m_track_result.clear();
+    m_track_found.clear();
+    //Correct for out-of-bound box
+    if (m_boundingBox.br().x > m_image.cols)
+    {
+        m_boundingBox.width = m_image.cols - m_boundingBox.x;
+    }
+    if (m_boundingBox.br().y > m_image.rows)
+    {
+        m_boundingBox.height = m_image.rows - m_boundingBox.y;
+    }
+    // Create Tracker
+    cv::Ptr<cv::Tracker> tracker = CreateTracker(method);
+
+    // 応答なしバグ対応
+    // mutable で、書き換え可能に
+    std::thread([this, edit, tracker]() mutable{
+        cv::Mat image;
+        cv::Rect2i box = m_boundingBox;
+        bool track_init = false;
+        int64 start_time = cv::getTickCount();
+
+        // 最初の1枚目は、SelectObject のレンダリング結果を代入
+        image = m_image;
+
+        for (int frame = m_range.start; frame <= m_range.end; frame++) {
+            if (frame + 1 <= m_range.end) {
+                edit->rendering_scene_video(frame + 1, &image,
+                    [](void* param, int, const void* buffer, int w, int h, int pitch) {
+                        auto* img = static_cast<cv::Mat*>(param);
+                        cv::Mat rgba(h, w, CV_8UC4, const_cast<void*>(buffer), (size_t)pitch);
+                        // BGRAではトラッキングができないものがあるため、RGBに変換（CSRTなど）
+                        cv::cvtColor(rgba, *img, cv::COLOR_RGBA2BGR);
+                });
+            }
+
+            edit->wait_rendering_task();
+
+            if (!track_init) {
+                // 追跡対象登録
+                tracker->init(image, box);
+                // 初回は必ず成功
+                track_init = true;
+                m_track_found.push_back(true);
+            } else {
+                if (tracker->update(image, box)) {
+                    m_track_found.push_back(true);
+                } else {
+                    m_track_found.push_back(false);
+                }
+            }
+
+            m_track_result.push_back(box);
+            // ログ
+            int total = m_range.end - m_range.start + 1;
+            int current = frame - m_range.start + 1;
+            logger->info(logger, std::format(L"Analyzing: {}/{}", current, total).c_str());
+        }
+
+    int64 end_time = cv::getTickCount();
+    double run_time = (end_time - start_time) / cv::getTickFrequency();
+    char msg[64];
+    sprintf_s(msg, "Tracking Completed!\nAverage %.2f fps",
+              (m_range.end - m_range.start) / run_time);
+    MessageBoxA(nullptr, msg, "Tracking Completed!", MB_OK);
+
+    }).detach();
+
+    return true;
+}
+
+// 処理最適化版。要検証
+bool Tracker::Analyze2(EDIT_HANDLE* edit, TrackingMethod method) {
     if (!m_selectObj) {
         MessageBoxA(NULL, "Nothing selected", "Operation Error", MB_OK);
         return false;
@@ -248,6 +327,7 @@ bool Tracker::Analyze(EDIT_HANDLE* edit, TrackingMethod method) {
 
     return true;
 }
+
 void Tracker::Clear() {
     m_track_result.clear();
     m_track_found.clear();

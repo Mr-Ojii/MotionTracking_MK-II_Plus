@@ -45,6 +45,7 @@ public:
     void SetBox(cv::Rect2d box);
     bool Run(EDIT_HANDLE* edit, OBJECT_LAYER_FRAME olf, TrackingMethod method);
     bool Analyze(EDIT_HANDLE* edit, TrackingMethod method);
+    bool Analyze2(EDIT_HANDLE* edit, TrackingMethod method);
     void Clear();
     bool SelectObject(EDIT_HANDLE* edit);
 
