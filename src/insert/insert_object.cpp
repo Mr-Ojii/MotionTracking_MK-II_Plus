@@ -3,6 +3,12 @@
 std::string InsertObject::make_alias(const std::vector<FRMFIX>& fixedFrm, int vi_start, int vi_end) {
     std::string s;
     s += "[Object]\n";
+    s += "frame=";
+    for (int i = vi_start; i <= vi_end; i++) {
+        s += std::to_string(fixedFrm[i].frame);
+        if (i < vi_end) s += ",";
+    }
+    s += "\n";
     s += "[Object.0]\n";
     s += "effect.name=図形\n";
     s += "図形の種類=四角形\n";
