@@ -307,7 +307,7 @@ LRESULT CALLBACK MainFrame::wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPA
                 case IDC_Button::SelectObject:
                 {
                     logger->info(logger, L"SelectObject: start");
-                    self->m_tracker.SelectObject(self->m_edit_handle);
+                    self->m_tracker.SelectObject(self->m_edit_handle, hueValue);
                     SetFocus(nullptr);
                     return 0;
                 }

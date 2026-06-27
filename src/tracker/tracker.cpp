@@ -21,8 +21,10 @@ cv::Mat Tracker::RenderFrame(EDIT_HANDLE* edit, int frame) {
     return cv::Mat{};
 }
 
-bool Tracker::SelectObject(EDIT_HANDLE* edit_handle) {
+bool Tracker::SelectObject(EDIT_HANDLE* edit_handle, int hueValue) {
 
+    // 色相をメンバ変数に
+    m_hueValue = hueValue;
     // 前回の状態を保存
     cv::Rect2d prevBoundingBox = m_boundingBox;
     bool prevSelectObj = m_selectObj;

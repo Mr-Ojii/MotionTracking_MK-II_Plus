@@ -47,7 +47,7 @@ public:
     bool Analyze(EDIT_HANDLE* edit, TrackingMethod method);
     bool Analyze2(EDIT_HANDLE* edit, TrackingMethod method);
     void Clear();
-    bool SelectObject(EDIT_HANDLE* edit);
+    bool SelectObject(EDIT_HANDLE* edit, int hueValue);
 
     const std::vector<cv::Rect2d>& Results()    const { return m_track_result; }
     const std::vector<bool>&       Found()      const { return m_track_found; }
