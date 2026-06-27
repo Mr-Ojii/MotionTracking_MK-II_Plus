@@ -45,14 +45,6 @@ void MainFrame::CreateControls() {
         m_hwnd, (HMENU)IDC_Toolbar::File, m_hInst, nullptr);
     SendMessage(button_file, WM_SETFONT, (WPARAM)hfont, TRUE);
 
-    // Options ボタン
-    HWND button_options = CreateWindowEx(
-        0, WC_BUTTON, L"Options",
-        WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
-        160, y_pos, 145, item_height,
-        m_hwnd, (HMENU)IDC_Menu::OpenOptions, m_hInst, nullptr);
-    SendMessage(button_options, WM_SETFONT, (WPARAM)hfont, TRUE);
-
     y_pos += item_height + 30;
 
     // Tracking Method ラベルを作成
@@ -175,21 +167,6 @@ void MainFrame::CreateControls() {
 
     y_pos += item_height + 5;
 
-    // Clear Result ボタンを作成
-    HWND button2 = CreateWindowEx(
-        0,
-        WC_BUTTON,
-        config->translate(config, L"Clear Result"),
-        WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
-        10, y_pos, 300, item_height,
-        m_hwnd,
-        (HMENU)IDC_Button::ClearResult,
-        m_hInst,
-        nullptr);
-    SendMessage(button2, WM_SETFONT, (WPARAM)hfont, TRUE);
-
-    y_pos += item_height + 5;
-
     // As Sub-filter/部分フィルター? チェックボックスを作成
     HWND check_sub_filter = CreateWindowEx(
         0,
@@ -236,31 +213,18 @@ void MainFrame::CreateControls() {
 
     y_pos += item_height + 5;
 
-    // Quick Blur チェックボックスを作成
-    HWND check_quick_blur = CreateWindowEx(
+    // Clear Result ボタンを作成
+    HWND button2 = CreateWindowEx(
         0,
         WC_BUTTON,
-        config->translate(config, L"Quick Blur"),
+        config->translate(config, L"Clear Result"),
         WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
         10, y_pos, 300, item_height,
         m_hwnd,
-        (HMENU)IDC_Button::QuickBlur,
+        (HMENU)IDC_Button::ClearResult,
         m_hInst,
         nullptr);
-    SendMessage(check_quick_blur, WM_SETFONT, (WPARAM)hfont, TRUE);
+    SendMessage(button2, WM_SETFONT, (WPARAM)hfont, TRUE);
 
     y_pos += item_height + 5;
-
-    // Easy Privacy チェックボックスを作成
-    HWND check_easy_privacy = CreateWindowEx(
-        0,
-        WC_BUTTON,
-        config->translate(config, L"Easy Privacy"),
-        WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
-        10, y_pos, 300, item_height,
-        m_hwnd,
-        (HMENU)IDC_Button::EasyPrivacy,
-        m_hInst,
-        nullptr);
-    SendMessage(check_easy_privacy, WM_SETFONT, (WPARAM)hfont, TRUE);
 }

@@ -9,7 +9,6 @@ namespace constants {
 enum class IDC_Menu : UINT {
     ExportCSV    = 3001,
     ExportObject = 3002,
-    OpenOptions  = 3003,
 };
 
 enum class IDC_Toolbar : UINT {

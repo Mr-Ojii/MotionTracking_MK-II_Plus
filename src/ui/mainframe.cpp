@@ -265,9 +265,6 @@ LRESULT CALLBACK MainFrame::wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPA
         case WM_COMMAND:
             // ツールバー・メニューからのコマンド
             switch (static_cast<IDC_Menu>(LOWORD(wparam))) {
-                case IDC_Menu::OpenOptions:
-                    // TODO: OptionsWindow を開く
-                    return 0;
                 case IDC_Menu::ExportCSV:
                     // TODO: CSV エクスポート
                     return 0;
@@ -295,9 +292,7 @@ LRESULT CALLBACK MainFrame::wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPA
                 case IDC_Button::ViewResult:
                 case IDC_Button::AsSubFilter:
                 case IDC_Button::InvertPosition:
-                case IDC_Button::IgnoreAspectRatio:
-                case IDC_Button::QuickBlur:
-                case IDC_Button::EasyPrivacy: {
+                case IDC_Button::IgnoreAspectRatio: {
                     HWND hBtn = (HWND)lparam;
                     int state = (int)GetWindowLongPtr(hBtn, GWLP_USERDATA);
                     SetWindowLongPtr(hBtn, GWLP_USERDATA, (LONG_PTR)!state);

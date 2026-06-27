@@ -29,8 +29,6 @@ enum class IDC_Button : int {
     AsSubFilter,
     InvertPosition,
     IgnoreAspectRatio,
-    QuickBlur,
-    EasyPrivacy,
 };
 
 extern HINSTANCE    hModuleDLL;
