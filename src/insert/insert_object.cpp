@@ -102,8 +102,12 @@ bool InsertObject::Insert(
         int layer = edit->info->layer;
         for (const auto& g : *p->groups) {
             std::string alias = make_alias(*p->fixedFrm, g.vi_start, g.vi_end);
-            edit->create_object_from_alias(
+            OBJECT_HANDLE handle = edit->create_object_from_alias(
                 alias.c_str(), layer, g.start, g.end - g.start + 1);
+            if (!handle) { // insert 失敗時
+                p->ok = false;
+                return;
+            }
         }
         p->ok = true;
     });

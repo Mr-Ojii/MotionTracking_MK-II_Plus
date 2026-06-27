@@ -336,10 +336,12 @@ LRESULT CALLBACK MainFrame::wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPA
                         self->m_tracker.RangeStart(),
                         self->m_edit_handle
                     );
-                    if (ok)
-                        MessageBoxW(hwnd, L"Insert completed.", constants::WindowName, MB_OK);
-                    else
-                        MessageBoxW(hwnd, L"Insert failed.", constants::WindowName, MB_OK | MB_ICONERROR);
+                    if (!ok)
+                        MessageBoxW(hwnd,
+                            L"Failed to insert object.\n"
+                            "An object may already exist on this layer.\n"
+                            "Please select a different layer and try again.",
+                            L"Insert failed", MB_OK | MB_ICONERROR);
                     SetFocus(nullptr);
                     return 0;
                 }
