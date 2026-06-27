@@ -339,6 +339,13 @@ LRESULT CALLBACK MainFrame::wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPA
                         MessageBoxW(hwnd, L"Insert failed.", constants::WindowName, MB_OK | MB_ICONERROR);
                     SetFocus(nullptr);
                     return 0;
+                }
+                case IDC_Button::ClearResult:
+                {
+                    self->m_tracker.Clear();
+                    MessageBoxW(hwnd, L"Selection states, results and image cache reseted", L"INFO", MB_OK);
+                    return 0;
+                }
                     // CHAR filename[MAX_PATH] = "D:\\tracking.exo";
 
                     // // Starts doing the real work
@@ -576,8 +583,6 @@ LRESULT CALLBACK MainFrame::wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPA
                     //     return FALSE;
                     // }
 
-                    return 0;
-                }
                 default:
                     break;
             }
