@@ -317,9 +317,10 @@ LRESULT CALLBACK MainFrame::wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPA
                     int sel = SendMessage(GetDlgItem(hwnd, (int)IDC_Button::TrackingMethodCombo),
                          CB_GETCURSEL, 0, 0);
                     auto method = static_cast<TrackingMethod>(sel);
-                    self->m_tracker.Analyze(self->m_edit_handle, method);
-                    // 解析中プログレスバー
-                    ProgressDlg::Create(hwnd, &self->m_tracker, self->m_hInst, track_method[sel]);
+                    if (self->m_tracker.Analyze(self->m_edit_handle, method)) {
+                        // 解析中プログレスバー
+                        ProgressDlg::Create(hwnd, &self->m_tracker, self->m_hInst, track_method[sel]);
+                    }
                     SetFocus(nullptr);
                     return 0;
                 }
