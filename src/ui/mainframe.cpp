@@ -183,6 +183,9 @@ MainFrame::MainFrame(HINSTANCE hInst, HOST_APP_TABLE* host, EDIT_HANDLE* edit_ha
     // メンバ変数にハンドル渡す
     m_edit_handle = edit_handle;
 
+    // AviUtl2 のテーマカラーを読み込む (InitializeConfig より後に呼ばれる保証あり)
+    m_colors.Load(config);
+
     // モデルファイルのパスを設定
     m_tracker.SetModelDir(utils::get_model_dir(m_hInst));
 
@@ -192,7 +195,7 @@ MainFrame::MainFrame(HINSTANCE hInst, HOST_APP_TABLE* host, EDIT_HANDLE* edit_ha
     wcex.lpszClassName = constants::WindowName;
     wcex.lpfnWndProc = wnd_proc;
     wcex.hInstance = m_hInst;
-    wcex.hbrBackground = CreateSolidBrush((COLORREF)m_colors.background);
+    wcex.hbrBackground = CreateSolidBrush(AviUtl2ColorToColorRef(m_colors.background));
     wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
     if (!RegisterClassEx(&wcex)) {
         return;

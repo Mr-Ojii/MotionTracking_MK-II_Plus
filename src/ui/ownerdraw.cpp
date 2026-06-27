@@ -5,9 +5,9 @@ namespace ownerdraw {
 
 LRESULT OnCtlColor(WPARAM wparam, const SystemColors& colors) {
     HDC hdc = (HDC)wparam;
-    SetTextColor(hdc, (COLORREF)colors.text);
-    SetBkColor(hdc, (COLORREF)colors.background);
-    return (LRESULT)CreateSolidBrush((COLORREF)colors.background);
+    SetTextColor(hdc, AviUtl2ColorToColorRef(colors.text));
+    SetBkColor(hdc, AviUtl2ColorToColorRef(colors.background));
+    return (LRESULT)CreateSolidBrush(AviUtl2ColorToColorRef(colors.background));
 }
 
 LRESULT OnDrawItem(LPARAM lparam, const SystemColors& colors) {
@@ -21,10 +21,10 @@ LRESULT OnDrawItem(LPARAM lparam, const SystemColors& colors) {
                            id == (int)IDC_Button::QuickBlur || id == (int)IDC_Button::EasyPrivacy);
 
         if (isCheckbox) {
-            HBRUSH hbrBackground = CreateSolidBrush((COLORREF)colors.background);
+            HBRUSH hbrBackground = CreateSolidBrush(AviUtl2ColorToColorRef(colors.background));
             FillRect(dis->hDC, &dis->rcItem, hbrBackground);
 
-            COLORREF textColor = (dis->itemState & ODS_DISABLED) ? (COLORREF)colors.textDisable : (COLORREF)colors.text;
+            COLORREF textColor = (dis->itemState & ODS_DISABLED) ? AviUtl2ColorToColorRef(colors.textDisable) : AviUtl2ColorToColorRef(colors.text);
             int state = (int)GetWindowLongPtr(dis->hwndItem, GWLP_USERDATA);
 
             RECT rcCheck = dis->rcItem;
@@ -57,14 +57,14 @@ LRESULT OnDrawItem(LPARAM lparam, const SystemColors& colors) {
             COLORREF textColor;
 
             if (dis->itemState & ODS_DISABLED) {
-                hbrBackground = CreateSolidBrush((COLORREF)colors.buttonBodyDisable);
-                textColor = (COLORREF)colors.textDisable;
+                hbrBackground = CreateSolidBrush(AviUtl2ColorToColorRef(colors.buttonBodyDisable));
+                textColor = AviUtl2ColorToColorRef(colors.textDisable);
             } else if (dis->itemState & ODS_SELECTED) {
-                hbrBackground = CreateSolidBrush((COLORREF)colors.buttonBodyPress);
-                textColor = (COLORREF)colors.text;
+                hbrBackground = CreateSolidBrush(AviUtl2ColorToColorRef(colors.buttonBodyPress));
+                textColor = AviUtl2ColorToColorRef(colors.text);
             } else {
-                hbrBackground = CreateSolidBrush((COLORREF)colors.buttonBody);
-                textColor = (COLORREF)colors.text;
+                hbrBackground = CreateSolidBrush(AviUtl2ColorToColorRef(colors.buttonBody));
+                textColor = AviUtl2ColorToColorRef(colors.text);
             }
 
             FillRect(dis->hDC, &dis->rcItem, hbrBackground);
@@ -92,13 +92,13 @@ LRESULT OnDrawItem(LPARAM lparam, const SystemColors& colors) {
     }
     else if (dis->CtlType == ODT_COMBOBOX) {
         HBRUSH hbrBackground;
-        COLORREF textColor = (COLORREF)colors.text;
-        COLORREF bgColor = (COLORREF)colors.background;
+        COLORREF textColor = AviUtl2ColorToColorRef(colors.text);
+        COLORREF bgColor = AviUtl2ColorToColorRef(colors.background);
 
         if (dis->itemState & ODS_DISABLED) {
-            textColor = (COLORREF)colors.textDisable;
+            textColor = AviUtl2ColorToColorRef(colors.textDisable);
         } else if (dis->itemState & ODS_SELECTED) {
-            bgColor = (COLORREF)colors.buttonBodyPress;
+            bgColor = AviUtl2ColorToColorRef(colors.buttonBodyPress);
         }
 
         hbrBackground = CreateSolidBrush(bgColor);
