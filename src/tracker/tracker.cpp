@@ -4,6 +4,7 @@
 #include "constants.hpp"
 #include "opencv2/highgui.hpp"
 #include "ui/mainframe.hpp"
+#include <windows.h>
 
 extern LOG_HANDLE* logger;
 extern CONFIG_HANDLE* config;
@@ -219,10 +220,11 @@ bool Tracker::Analyze(EDIT_HANDLE* edit, TrackingMethod method) {
 
     if (m_cancel) {
         m_cancel = false;
-        MessageBoxA(nullptr, "Tracking Canceled", "INFO", MB_OK);
+        // xする前に、ダイアログウィンドウをクリックしたり移動させたりすると後ろの方に行くので、MB_TOPMOSTしてます
+        MessageBoxA(nullptr, "Tracking Canceled", "INFO", MB_OK | MB_TOPMOST);
     } else {
         m_cancel = false;
-        MessageBoxA(nullptr, msg, "Tracking Completed!", MB_OK);
+        MessageBoxA(nullptr, msg, "Tracking Completed!", MB_OK | MB_TOPMOST);
     }
 
     }).detach();
