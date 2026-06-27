@@ -41,7 +41,8 @@ struct HOST_APP_TABLE;
 class MainFrame {
 public:
     MainFrame(HINSTANCE hInst, HOST_APP_TABLE* host, EDIT_HANDLE* edit_handle);
-    HWND hwnd() const { return m_hwnd; }
+    HWND      hwnd()  const { return m_hwnd; }
+    HINSTANCE hInst() const { return m_hInst; }
 
 private:
     // this を渡したらクラッシュするため

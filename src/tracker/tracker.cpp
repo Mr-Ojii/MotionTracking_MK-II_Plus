@@ -152,6 +152,10 @@ bool Tracker::Analyze(EDIT_HANDLE* edit, TrackingMethod method) {
     // Create Tracker
     cv::Ptr<cv::Tracker> tracker = CreateTracker(method);
 
+    m_progress_current = 0;
+    m_progress_total   = m_range.end - m_range.start + 1;
+    m_analyzing        = true;
+
     // 応答なしバグ対応
     // mutable で、書き換え可能に
     std::thread([this, edit, tracker]() mutable{
@@ -159,6 +163,7 @@ bool Tracker::Analyze(EDIT_HANDLE* edit, TrackingMethod method) {
         cv::Rect2i box = m_boundingBox;
         bool track_init = false;
         int64 start_time = cv::getTickCount();
+        int64 prev_stamp = start_time;
 
         // 最初の1枚目は、SelectObject のレンダリング結果を代入
         image = m_image;
@@ -191,14 +196,18 @@ bool Tracker::Analyze(EDIT_HANDLE* edit, TrackingMethod method) {
             }
 
             m_track_result.push_back(box);
-            // ログ
-            int total = m_range.end - m_range.start + 1;
-            int current = frame - m_range.start + 1;
-            logger->info(logger, std::format(L"Analyzing: {}/{}", current, total).c_str());
+            m_progress_current = frame - m_range.start + 1;
+            int64 new_stamp = cv::getTickCount();
+            if (new_stamp != prev_stamp)
+                m_progress_fps = 1.0 / ((new_stamp - prev_stamp) / cv::getTickFrequency());
+            prev_stamp = new_stamp;
+            logger->info(logger, std::format(L"Analyzing: {}/{}", m_progress_current.load(), m_progress_total.load()).c_str());
         }
 
     int64 end_time = cv::getTickCount();
     double run_time = (end_time - start_time) / cv::getTickFrequency();
+    m_analyzing = false;
+
     char msg[64];
     sprintf_s(msg, "Tracking Completed!\nAverage %.2f fps",
               (m_range.end - m_range.start) / run_time);

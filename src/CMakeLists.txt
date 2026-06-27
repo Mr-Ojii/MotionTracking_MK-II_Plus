@@ -37,6 +37,7 @@ target_sources(
     ${PROJECT_NAME}
     PRIVATE
     tracker/tracker.cpp
+    ui/progress_dlg/progress_dlg.cpp
     ui/mainframe.cpp
     ui/create_frame.cpp
     ui/ownerdraw.cpp

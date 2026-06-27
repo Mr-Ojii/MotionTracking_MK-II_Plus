@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <atomic>
 #include <windows.h>
 #include "opencv2/tracking.hpp"
 #include "opencv2/video/tracking.hpp"
@@ -53,6 +54,12 @@ public:
     const std::vector<bool>&       Found()      const { return m_track_found; }
     bool HasResult()  const { return !m_track_result.empty(); }
     int  RangeStart() const { return m_range.start; }
+
+    // 解析情報をプログレスバーに渡すため
+    std::atomic<int>    m_progress_current = 0;
+    std::atomic<int>    m_progress_total   = 0;
+    std::atomic<double> m_progress_fps     = 0.0;
+    std::atomic<bool>   m_analyzing        = false;
 
 private:
     // 引数固定のため、static

@@ -1,5 +1,6 @@
 #include "mainframe.hpp"
 #include "ownerdraw.hpp"
+#include "progress_dlg/progress_dlg.hpp"
 #include "aviutl2_sdk/plugin2.h"
 #include <windows.h>
 
@@ -317,6 +318,8 @@ LRESULT CALLBACK MainFrame::wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPA
                          CB_GETCURSEL, 0, 0);
                     auto method = static_cast<TrackingMethod>(sel);
                     self->m_tracker.Analyze(self->m_edit_handle, method);
+                    // 解析中プログレスバー
+                    ProgressDlg::Create(hwnd, &self->m_tracker, self->m_hInst, track_method[sel]);
                     SetFocus(nullptr);
                     return 0;
                 }
