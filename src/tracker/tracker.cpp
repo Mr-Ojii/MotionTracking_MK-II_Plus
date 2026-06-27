@@ -343,6 +343,8 @@ void Tracker::Clear() {
     m_track_result.clear();
     m_track_found.clear();
     m_boundingBox = {};
+    m_selectObj   = false;
+    m_image.release();
 }
 
 void Tracker::OnMouse(int event, int x, int y, int, void* userdata) {
