@@ -17,7 +17,7 @@ LRESULT CALLBACK ProgressDlg::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             reinterpret_cast<CREATESTRUCT*>(lp)->lpCreateParams);
         SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(self));
         self->m_hwnd = hwnd;
-        return TRUE;
+        return DefWindowProc(hwnd, msg, wp, lp);
 
     case WM_CREATE:
         SetTimer(hwnd, TIMER_ID, TIMER_MS, nullptr);
@@ -44,7 +44,8 @@ LRESULT CALLBACK ProgressDlg::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     }
 
     case WM_CLOSE:
-        // 解析中は × で閉じない
+        // x でキャンセルキャンセル
+        self->m_tracker->m_cancel = true;
         return 0;
 
     case WM_DESTROY:
@@ -55,6 +56,11 @@ LRESULT CALLBACK ProgressDlg::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 }
 
 ProgressDlg* ProgressDlg::Create(HWND parent, Tracker* tracker, HINSTANCE hInst, const wchar_t* methodName) {
+    INITCOMMONCONTROLSEX icc = {};
+    icc.dwSize = sizeof(icc);
+    icc.dwICC  = ICC_PROGRESS_CLASS;
+    InitCommonControlsEx(&icc);
+
     if (!s_registered) {
         WNDCLASSEXW wcex    = {};
         wcex.cbSize         = sizeof(wcex);

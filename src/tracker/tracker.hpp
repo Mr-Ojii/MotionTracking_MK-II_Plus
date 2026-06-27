@@ -37,6 +37,13 @@ enum class TrackingMethod {
     Vit       = 5,
 };
 
+// Clear Result の処理分岐用
+// デフォルトはFull設定
+enum class ClearMode {
+    Full,    // Clear Result ボタンが押されたとき、バウンディングボックス含めリセット
+    Partial, // ダイアログの x からリセットされたとき、バウンディングボックスは保持
+};
+
 
 class Tracker {
 public:
@@ -47,7 +54,7 @@ public:
     bool Run(EDIT_HANDLE* edit, OBJECT_LAYER_FRAME olf, TrackingMethod method);
     bool Analyze(EDIT_HANDLE* edit, TrackingMethod method);
     bool Analyze2(EDIT_HANDLE* edit, TrackingMethod method);
-    void Clear();
+    void Clear(ClearMode mode = ClearMode::Full);
     bool SelectObject(EDIT_HANDLE* edit, int hueValue);
 
     const std::vector<cv::Rect2d>& Results()    const { return m_track_result; }
@@ -60,7 +67,7 @@ public:
     std::atomic<int>    m_progress_total   = 0;
     std::atomic<double> m_progress_fps     = 0.0;
     std::atomic<bool>   m_analyzing        = false;
-
+    std::atomic<bool> m_cancel = false; // ダイアログをxしたらtrueにして、解析処理中止
 private:
     // 引数固定のため、static
     static void OnMouse(int event, int x, int y, int flags, void* userdata);

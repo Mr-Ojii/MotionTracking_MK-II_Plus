@@ -169,6 +169,11 @@ bool Tracker::Analyze(EDIT_HANDLE* edit, TrackingMethod method) {
         image = m_image;
 
         for (int frame = m_range.start; frame <= m_range.end; frame++) {
+            // キャンセルフラグがたったら、結果クリアしてbreak
+            if (m_cancel) {
+                Clear(ClearMode::Partial);
+                break;
+            }
             if (frame + 1 <= m_range.end) {
                 edit->rendering_scene_video(frame + 1, &image,
                     [](void* param, int, const void* buffer, int w, int h, int pitch) {
@@ -211,10 +216,16 @@ bool Tracker::Analyze(EDIT_HANDLE* edit, TrackingMethod method) {
     char msg[64];
     sprintf_s(msg, "Tracking Completed!\nAverage %.2f fps",
               (m_range.end - m_range.start) / run_time);
-    MessageBoxA(nullptr, msg, "Tracking Completed!", MB_OK);
+
+    if (m_cancel) {
+        m_cancel = false;
+        MessageBoxA(nullptr, "Tracking Canceled", "INFO", MB_OK);
+    } else {
+        m_cancel = false;
+        MessageBoxA(nullptr, msg, "Tracking Completed!", MB_OK);
+    }
 
     }).detach();
-
     return true;
 }
 
@@ -339,12 +350,14 @@ bool Tracker::Analyze2(EDIT_HANDLE* edit, TrackingMethod method) {
     return true;
 }
 
-void Tracker::Clear() {
+void Tracker::Clear(ClearMode mode) {
     m_track_result.clear();
     m_track_found.clear();
-    m_boundingBox = {};
-    m_selectObj   = false;
-    m_image.release();
+    if (mode == ClearMode::Full) { // ClearResult が押されたとき
+        m_boundingBox = {};
+        m_selectObj   = false;
+        m_image.release();
+    }
 }
 
 void Tracker::OnMouse(int event, int x, int y, int, void* userdata) {
