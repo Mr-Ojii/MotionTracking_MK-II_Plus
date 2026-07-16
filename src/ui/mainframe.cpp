@@ -1,9 +1,12 @@
 #include "mainframe.hpp"
+#include "constants.hpp"
 #include "ownerdraw.hpp"
 #include "progress_dlg/progress_dlg.hpp"
 #include "aviutl2_sdk/plugin2.h"
 #include <windows.h>
 #include <commdlg.h>
+#include <commctrl.h>
+#include <shellapi.h>
 
 extern FILTER_PLUGIN_TABLE filter;
 
@@ -237,8 +240,9 @@ static void EnableOperationButtons(HWND hwnd, BOOL enable) {
     for (auto id : targets) {
         EnableWindow(GetDlgItem(hwnd, (int)id), enable);
     }
-    // Export Object File 等のポップアップメニューを出す File ボタンも一緒に無効化
+    // Export Object File 等のポップアップメニューを出す File ボタン、Info ボタンも一緒に無効化
     EnableWindow(GetDlgItem(hwnd, (int)IDC_Toolbar::File), enable);
+    EnableWindow(GetDlgItem(hwnd, (int)IDC_Toolbar::Info), enable);
 }
 
 LRESULT CALLBACK MainFrame::wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam) {
@@ -357,6 +361,50 @@ LRESULT CALLBACK MainFrame::wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPA
                 TrackPopupMenu(hPopup, TPM_LEFTALIGN | TPM_TOPALIGN, rc.left, rc.bottom, 0, hwnd, nullptr);
                 DestroyMenu(hPopup);
                 SetFocus(nullptr);
+                return 0;
+            }
+            // Info
+            if (LOWORD(wparam) == (UINT)IDC_Toolbar::Info) {
+                if (self->m_during_operation || self->m_tracker.m_analyzing) {
+                    MessageBoxW(hwnd, config->translate(config, L"Another operation is in progress."), L"Operation Error", MB_OK | MB_ICONWARNING);
+                    SetFocus(nullptr);
+                    return 0;
+                }
+                self->m_during_operation = true;
+                EnableOperationButtons(hwnd, FALSE);
+
+                std::wstring content =
+                    std::wstring(L"Version: ") + constants::version +
+                    L"\n"
+                    L"Developer: MaverickTse, Mr-Ojii, nullru"
+                    L"\n\n"
+                    L"Source Code:"
+                    L"\n"
+                    L"<A HREF=\"https://github.com/nullruptr/MotionTracking_MK-II_Plus_for_AviUtl2\">nullruptr/MotionTracking_MK-II_Plus_for_AviUtl2</A>"
+                    L"\n\n"
+                    L"LICENSE: "
+                    L"<A HREF=\"https://github.com/nullruptr/MotionTracking_MK-II_Plus_for_AviUtl2/blob/master/LICENSE\">MIT</A>";
+
+
+                TASKDIALOGCONFIG tdc = {};
+                tdc.cbSize = sizeof(tdc);
+                tdc.hwndParent = hwnd;
+                tdc.dwFlags = TDF_ALLOW_DIALOG_CANCELLATION | TDF_ENABLE_HYPERLINKS;
+                tdc.pszWindowTitle = constants::WindowName;
+                tdc.pszMainIcon = TD_INFORMATION_ICON;
+                tdc.pszMainInstruction = constants::WindowName;
+                tdc.pszContent = content.c_str();
+                tdc.pfCallback = [](HWND hDlg, UINT msg, WPARAM wp, LPARAM lp, LONG_PTR) -> HRESULT {
+                    if (msg == TDN_HYPERLINK_CLICKED) {
+                        ShellExecuteW(hDlg, L"open", (LPCWSTR)lp, nullptr, nullptr, SW_SHOWNORMAL);
+                    }
+                    return S_OK;
+                };
+                TaskDialogIndirect(&tdc, nullptr, nullptr, nullptr);
+
+                SetFocus(nullptr);
+                self->m_during_operation = false;
+                EnableOperationButtons(hwnd, TRUE);
                 return 0;
             }
             // ウィンドウコントロールからのコマンド

@@ -45,6 +45,14 @@ void MainFrame::CreateControls() {
         m_hwnd, (HMENU)IDC_Toolbar::File, m_hInst, nullptr);
     SendMessage(button_file, WM_SETFONT, (WPARAM)hfont, TRUE);
 
+    // Info ボタン
+    HWND button_info = CreateWindowEx(
+        0, WC_BUTTON, L"Info",
+        WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
+        165, y_pos, 145, item_height,
+        m_hwnd, (HMENU)IDC_Toolbar::Info, m_hInst, nullptr);
+    SendMessage(button_info, WM_SETFONT, (WPARAM)hfont, TRUE);
+
     y_pos += item_height + 30;
 
     // Tracking Method ラベルを作成

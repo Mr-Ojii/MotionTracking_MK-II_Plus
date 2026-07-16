@@ -61,6 +61,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     ${wxWidgets_LIBRARIES}
     comctl32
     comdlg32
+    shell32
     opencv_tracking4120
     opencv_objdetect4120
     opencv_video4120

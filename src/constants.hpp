@@ -3,6 +3,7 @@
 
 namespace constants {
     constexpr const wchar_t* WindowName = L"MotionTracking MK-II Plus for AviUtl2";
+    constexpr const wchar_t* version = L"r1";
     constexpr const wchar_t* APIerr = L"AviUtl2 API Error";
 }
 
@@ -15,6 +16,7 @@ enum class IDC_Toolbar : UINT {
     Bar     = 4000,
     File    = 4001,
     Options = 4002,
+    Info    = 4003,
 };
 
 // ProgressDlg がバックグラウンド解析の完了を検知したときに、本体ウィンドウへ通知するメッセージ
