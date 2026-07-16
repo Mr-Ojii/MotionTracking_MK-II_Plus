@@ -1,3 +1,5 @@
+#include <cmath>
+#include <cstdio>
 #include "insert_object.hpp"
 
 std::string InsertObject::make_alias(const std::vector<FRMFIX>& fixedFrm, int vi_start, int vi_end, bool ignoreAspectRatio) {
@@ -80,8 +82,75 @@ std::string InsertObject::make_alias(const std::vector<FRMFIX>& fixedFrm, int vi
         }
         s += ",直線移動,0\n";
         s += "補間なし=0\n";
-        s += "ピクセル数でサイズ指定=1\n";
+        s += "ピクセル数でサイズ指定=0\n";
     }
+    return s;
+}
+
+std::string InsertObject::make_alias_as_sub(const std::vector<FRMFIX>& fixedFrm, int vi_start, int vi_end, bool ignoreAspectRatio) {
+    std::string s;
+
+    s += "[Object]\n";
+    s += "frame=";
+    for (int i = vi_start; i <= vi_end; i++) {
+        s += std::to_string(fixedFrm[i].frame);
+        if (i < vi_end) s += ",";
+    }
+    s += "\n";
+    s += "[Object.0]\n";
+    s += "effect.name=部分フィルタ\n";
+    // X=x1,x2,...
+    s += "X=";
+    for (int i = vi_start; i <= vi_end; i++) {
+        s += std::to_string(fixedFrm[i].cx);
+        if (i < vi_end) s += ",";
+    }
+    s += ",直線移動,0\n";
+
+    // Y=y1,y2,...
+    s += "Y=";
+    for (int i = vi_start; i <= vi_end; i++) {
+        s += std::to_string(fixedFrm[i].cy);
+        if (i < vi_end) s += ",";
+    }
+
+    s += ",直線移動,0\n";
+    s += "Group=1\n";
+    s += "回転=0.00\n";
+    // サイズ=s1,s2,...,直線移動,0
+    s += "サイズ=";
+    for (int i = vi_start; i <= vi_end; i++) {
+        s += std::to_string((int)fixedFrm[i].scale);
+        if (i < vi_end) s += ",";
+    }
+    s += ",直線移動,0\n";
+    s += "縦横比=";
+    for (int i = vi_start; i <= vi_end; i++) {
+        double rAsp = 0.0;
+        if (!ignoreAspectRatio) {
+            if (fixedFrm[i].width > fixedFrm[i].height) {
+                rAsp = -100.0 * (1.0 - ((double)fixedFrm[i].height / (double)fixedFrm[i].width));
+            } else if (fixedFrm[i].width < fixedFrm[i].height) {
+                rAsp = 100.0 * (1.0 - ((double)fixedFrm[i].width / (double)fixedFrm[i].height));
+            }
+        }
+        // 小数第2位までにフォーマット(四捨五入込み)
+        char buf[32];
+        snprintf(buf, sizeof(buf), "%.2f", rAsp);
+        s += buf;
+        if (i < vi_end) s += ",";
+    }
+    s += ",直線移動,0\n";
+    s += "ぼかし=0\n";
+    s += "マスクの種類=四角形\n";
+    s += "シーンの長さを合わせる=0\n";
+    s += "マスクの反転=0\n";
+    s += "[Object.1]\n";
+    s += "effect.name=単色化\n";
+    s += "強さ=100.0\n";
+    s += "色=ff0000\n";
+    s += "輝度を保持する=1\n";
+
     return s;
 }
 
@@ -91,7 +160,8 @@ bool InsertObject::Insert(
     int rangeStart,
     EDIT_HANDLE* edit,
     bool ignoreAspectRatio,
-    bool invertPosition)
+    bool invertPosition,
+    bool asSubFilter)
 {
     if (results.empty()) return false;
 
@@ -113,8 +183,9 @@ bool InsertObject::Insert(
         int  rangeStart;
         bool ignoreAspectRatio;
         bool invertPosition;
+        bool asSubFilter;
         bool ok;
-    } p { &rect_list, &err_list, &inter_list, &fixedFrm, &groups, rangeStart, ignoreAspectRatio, invertPosition, false };
+    } p { &rect_list, &err_list, &inter_list, &fixedFrm, &groups, rangeStart, ignoreAspectRatio, invertPosition, asSubFilter, false };
 
     edit->call_edit_section_param(&p, [](void* v, EDIT_SECTION* edit) {
         auto* p = static_cast<Param*>(v);
@@ -125,7 +196,9 @@ bool InsertObject::Insert(
 
         int layer = edit->info->layer;
         for (const auto& g : *p->groups) {
-            std::string alias = make_alias(*p->fixedFrm, g.vi_start, g.vi_end, p->ignoreAspectRatio);
+            std::string alias = p->asSubFilter
+                ? make_alias_as_sub(*p->fixedFrm, g.vi_start, g.vi_end, p->ignoreAspectRatio)
+                : make_alias(*p->fixedFrm, g.vi_start, g.vi_end, p->ignoreAspectRatio);
             OBJECT_HANDLE handle = edit->create_object_from_alias(
                 alias.c_str(), layer, g.start, g.end - g.start + 1);
             if (!handle) { // insert 失敗時
@@ -146,7 +219,8 @@ bool InsertObject::ExportToFile(
     EDIT_HANDLE* edit,
     const std::wstring& filepath,
     bool ignoreAspectRatio,
-    bool invertPosition)
+    bool invertPosition,
+    bool asSubFilter)
 {
     if (results.empty()) return false;
 
@@ -168,9 +242,10 @@ bool InsertObject::ExportToFile(
         int  rangeStart;
         bool ignoreAspectRatio;
         bool invertPosition;
+        bool asSubFilter;
         std::string text;
         bool ok;
-    } p { &rect_list, &err_list, &inter_list, &fixedFrm, &groups, rangeStart, ignoreAspectRatio, invertPosition, "", false };
+    } p { &rect_list, &err_list, &inter_list, &fixedFrm, &groups, rangeStart, ignoreAspectRatio, invertPosition, asSubFilter, "", false };
 
     edit->call_edit_section_param(&p, [](void* v, EDIT_SECTION* edit) {
         auto* p = static_cast<Param*>(v);
@@ -180,7 +255,9 @@ bool InsertObject::ExportToFile(
         groupObject(*p->fixedFrm, *p->groups, p->rangeStart);
 
         for (const auto& g : *p->groups) {
-            p->text += make_alias(*p->fixedFrm, g.vi_start, g.vi_end, p->ignoreAspectRatio);
+            p->text += p->asSubFilter
+                ? make_alias_as_sub(*p->fixedFrm, g.vi_start, g.vi_end, p->ignoreAspectRatio)
+                : make_alias(*p->fixedFrm, g.vi_start, g.vi_end, p->ignoreAspectRatio);
         }
         p->ok = true;
     });

@@ -25,13 +25,15 @@ struct FRMGROUP {
 class InsertObject {
 public:
     static std::string make_alias(const std::vector<FRMFIX>& fixedFrm, int vi_start, int vi_end, bool ignoreAspectRatio);
+    static std::string make_alias_as_sub(const std::vector<FRMFIX>& fixedFrm, int vi_start, int vi_end, bool ignoreAspectRatio);
     static bool Insert(
         const std::vector<cv::Rect2d>& results,
         const std::vector<bool>& found,
         int rangeStart,
         EDIT_HANDLE* edit,
         bool ignoreAspectRatio = true,
-        bool invertPosition = false
+        bool invertPosition = false,
+        bool asSubFilter = false
     );
     // タイムラインに挿入せず、生成したaliasテキストをファイルに書き出す(確認用)
     static bool ExportToFile(
@@ -41,7 +43,8 @@ public:
         EDIT_HANDLE* edit,
         const std::wstring& filepath,
         bool ignoreAspectRatio = true,
-        bool invertPosition = false
+        bool invertPosition = false,
+        bool asSubFilter = false
     );
 private:
     InsertObject() = delete;
