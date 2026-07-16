@@ -90,7 +90,8 @@ bool InsertObject::Insert(
     const std::vector<bool>& found,
     int rangeStart,
     EDIT_HANDLE* edit,
-    bool ignoreAspectRatio)
+    bool ignoreAspectRatio,
+    bool invertPosition)
 {
     if (results.empty()) return false;
 
@@ -111,14 +112,15 @@ bool InsertObject::Insert(
         std::vector<FRMGROUP>*   groups;
         int  rangeStart;
         bool ignoreAspectRatio;
+        bool invertPosition;
         bool ok;
-    } p { &rect_list, &err_list, &inter_list, &fixedFrm, &groups, rangeStart, ignoreAspectRatio, false };
+    } p { &rect_list, &err_list, &inter_list, &fixedFrm, &groups, rangeStart, ignoreAspectRatio, invertPosition, false };
 
     edit->call_edit_section_param(&p, [](void* v, EDIT_SECTION* edit) {
         auto* p = static_cast<Param*>(v);
 
         fix_frame(*p->rect_list, *p->err_list, *p->inter_list,
-                  *p->fixedFrm, edit->info->width, edit->info->height, p->rangeStart, p->ignoreAspectRatio);
+                  *p->fixedFrm, edit->info->width, edit->info->height, p->rangeStart, p->ignoreAspectRatio, p->invertPosition);
         groupObject(*p->fixedFrm, *p->groups, p->rangeStart);
 
         int layer = edit->info->layer;
@@ -143,7 +145,8 @@ bool InsertObject::ExportToFile(
     int rangeStart,
     EDIT_HANDLE* edit,
     const std::wstring& filepath,
-    bool ignoreAspectRatio)
+    bool ignoreAspectRatio,
+    bool invertPosition)
 {
     if (results.empty()) return false;
 
@@ -164,15 +167,16 @@ bool InsertObject::ExportToFile(
         std::vector<FRMGROUP>*   groups;
         int  rangeStart;
         bool ignoreAspectRatio;
+        bool invertPosition;
         std::string text;
         bool ok;
-    } p { &rect_list, &err_list, &inter_list, &fixedFrm, &groups, rangeStart, ignoreAspectRatio, "", false };
+    } p { &rect_list, &err_list, &inter_list, &fixedFrm, &groups, rangeStart, ignoreAspectRatio, invertPosition, "", false };
 
     edit->call_edit_section_param(&p, [](void* v, EDIT_SECTION* edit) {
         auto* p = static_cast<Param*>(v);
 
         fix_frame(*p->rect_list, *p->err_list, *p->inter_list,
-                  *p->fixedFrm, edit->info->width, edit->info->height, p->rangeStart, p->ignoreAspectRatio);
+                  *p->fixedFrm, edit->info->width, edit->info->height, p->rangeStart, p->ignoreAspectRatio, p->invertPosition);
         groupObject(*p->fixedFrm, *p->groups, p->rangeStart);
 
         for (const auto& g : *p->groups) {
@@ -233,7 +237,7 @@ int InsertObject::find_inter_frame(std::vector<bool> &err_list, std::vector<UINT
     return interfrm_count;
 }
 
-void InsertObject::fix_frame(std::vector<cv::Rect2d> &rect_list, std::vector<bool> &err_list, std::vector<UINT32> &inter_list, std::vector<FRMFIX> &out, int frm_w, int frm_h, int rangeStart, bool ignoreAspectRatio)
+void InsertObject::fix_frame(std::vector<cv::Rect2d> &rect_list, std::vector<bool> &err_list, std::vector<UINT32> &inter_list, std::vector<FRMFIX> &out, int frm_w, int frm_h, int rangeStart, bool ignoreAspectRatio, bool invertPosition)
 {
     //TODO
     //Interpolation phase
@@ -299,6 +303,10 @@ void InsertObject::fix_frame(std::vector<cv::Rect2d> &rect_list, std::vector<boo
         cv::Point center(getCenter(rect_list[i]));
         buf.cx = center.x + dX;
         buf.cy = center.y + dY;
+        if (invertPosition) {
+            buf.cx = -buf.cx;
+            buf.cy = -buf.cy;
+        }
         buf.width = (int)rect_list[i].width;
         buf.height = (int)rect_list[i].height;
         buf.scale = std::max(rect_list[i].width, rect_list[i].height);
