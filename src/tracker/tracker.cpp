@@ -17,11 +17,6 @@ void Tracker::SetBox(cv::Rect2d box) {
     m_boundingBox = box;
 }
 
-cv::Mat Tracker::RenderFrame(EDIT_HANDLE* edit, int frame) {
-    // TODO: rendering_scene_video + wait_rendering_task で実装
-    return cv::Mat{};
-}
-
 bool Tracker::SelectObject(EDIT_HANDLE* edit_handle, int hueValue) {
 
     // 色相をメンバ変数に

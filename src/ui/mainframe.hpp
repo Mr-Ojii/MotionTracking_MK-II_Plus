@@ -73,4 +73,6 @@ private:
     // システムカラー
     SystemColors m_colors;
 
+    // 状態管理
+    bool m_during_operation = false;
 };

@@ -16,3 +16,6 @@ enum class IDC_Toolbar : UINT {
     File    = 4001,
     Options = 4002,
 };
+
+// ProgressDlg がバックグラウンド解析の完了を検知したときに、本体ウィンドウへ通知するメッセージ
+constexpr UINT WM_APP_ANALYZE_DONE = WM_APP + 1;

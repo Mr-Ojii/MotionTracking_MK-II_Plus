@@ -1,6 +1,10 @@
 #include "progress_dlg.hpp"
+#include "constants.hpp"
+#include "aviutl2_sdk/logger2.h"
 #include <commctrl.h>
 #include <format>
+
+extern LOG_HANDLE* logger;
 
 static constexpr wchar_t CLASS_NAME[] = L"MotionTracker_ProgressDlg";
 static constexpr UINT    TIMER_ID     = 1;
@@ -38,6 +42,10 @@ LRESULT CALLBACK ProgressDlg::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 
         if (!self->m_tracker->m_analyzing.load()) {
             KillTimer(hwnd, TIMER_ID);
+            // 解析完了を本体ウィンドウへ通知(操作ボタンの再有効化用)
+            // GetParent()はWS_OVERLAPPEDウィンドウだとオーナーを返さないことがあるため、
+            // Create時に保持しておいた m_parent を使う
+            PostMessage(self->m_parent, WM_APP_ANALYZE_DONE, 0, 0);
             DestroyWindow(hwnd);
         }
         return 0;
@@ -76,6 +84,7 @@ ProgressDlg* ProgressDlg::Create(HWND parent, Tracker* tracker, HINSTANCE hInst,
     auto* dlg = new ProgressDlg();
     dlg->m_tracker    = tracker;
     dlg->m_methodName = methodName;
+    dlg->m_parent     = parent;
 
     HWND hwnd = CreateWindowExW(
         WS_EX_DLGMODALFRAME | WS_EX_APPWINDOW,

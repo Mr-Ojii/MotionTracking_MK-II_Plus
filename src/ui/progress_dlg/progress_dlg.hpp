@@ -9,6 +9,7 @@ public:
 
 private:
     HWND         m_hwnd       = nullptr;
+    HWND         m_parent     = nullptr; // 呼び出し元(本体)ウィンドウ。GetParent()に頼らずここで保持する
     HWND         m_progress   = nullptr;
     HWND         m_label      = nullptr;
     Tracker*     m_tracker    = nullptr;
