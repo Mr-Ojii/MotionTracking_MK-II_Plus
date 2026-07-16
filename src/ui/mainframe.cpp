@@ -289,12 +289,14 @@ LRESULT CALLBACK MainFrame::wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPA
                         return 0;
                     }
 
+                    bool ignoreAspectRatio = (bool)GetWindowLongPtr(GetDlgItem(hwnd, (int)IDC_Button::IgnoreAspectRatio), GWLP_USERDATA);
                     bool ok = InsertObject::ExportToFile(
                         self->m_tracker.Results(),
                         self->m_tracker.Found(),
                         self->m_tracker.RangeStart(),
                         self->m_edit_handle,
-                        filepath
+                        filepath,
+                        ignoreAspectRatio
                     );
                     if (!ok) {
                         MessageBox(hwnd, TEXT("Failed to save Alias"), TEXT("Error"), MB_OK);
@@ -356,11 +358,13 @@ LRESULT CALLBACK MainFrame::wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPA
                         SetFocus(nullptr);
                         return 0;
                     }
+                    bool ignoreAspectRatio = (bool)GetWindowLongPtr(GetDlgItem(hwnd, (int)IDC_Button::IgnoreAspectRatio), GWLP_USERDATA);
                     bool ok = InsertObject::Insert(
                         self->m_tracker.Results(),
                         self->m_tracker.Found(),
                         self->m_tracker.RangeStart(),
-                        self->m_edit_handle
+                        self->m_edit_handle,
+                        ignoreAspectRatio
                     );
                     if (!ok)
                         MessageBoxW(hwnd,

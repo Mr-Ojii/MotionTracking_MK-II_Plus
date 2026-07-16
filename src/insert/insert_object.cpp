@@ -1,6 +1,6 @@
 #include "insert_object.hpp"
 
-std::string InsertObject::make_alias(const std::vector<FRMFIX>& fixedFrm, int vi_start, int vi_end) {
+std::string InsertObject::make_alias(const std::vector<FRMFIX>& fixedFrm, int vi_start, int vi_end, bool ignoreAspectRatio) {
     std::string s;
     s += "[Object]\n";
     s += "frame=";
@@ -50,18 +50,38 @@ std::string InsertObject::make_alias(const std::vector<FRMFIX>& fixedFrm, int vi
     s += "合成モード=通常\n";
     s += "[Object.2]\n";
     s += "effect.name=リサイズ\n";
-    // 拡大率=s1,s2,...,直線移動,0
-    s += "拡大率=";
-    for (int i = vi_start; i <= vi_end; i++) {
-        s += std::to_string((int)fixedFrm[i].scale);
-        s += ".000";
-        if (i < vi_end) s += ",";
+    if (ignoreAspectRatio) {
+        // 拡大率=s1,s2,...,直線移動,0
+        s += "拡大率=";
+        for (int i = vi_start; i <= vi_end; i++) {
+            s += std::to_string((int)fixedFrm[i].scale);
+            s += ".000";
+            if (i < vi_end) s += ",";
+        }
+        s += ",直線移動,0\n";
+        s += "X=100.000\n";
+        s += "Y=100.000\n";
+        s += "補間なし=0\n";
+        s += "ピクセル数でサイズ指定=0\n";
+    } else {
+        s += "拡大率=100.000\n";
+        // X=w1,w2,...,直線移動,0 (幅をピクセル指定)
+        s += "X=";
+        for (int i = vi_start; i <= vi_end; i++) {
+            s += std::to_string(fixedFrm[i].width) + ".000";
+            if (i < vi_end) s += ",";
+        }
+        s += ",直線移動,0\n";
+        // Y=h1,h2,...,直線移動,0 (高さをピクセル指定)
+        s += "Y=";
+        for (int i = vi_start; i <= vi_end; i++) {
+            s += std::to_string(fixedFrm[i].height) + ".000";
+            if (i < vi_end) s += ",";
+        }
+        s += ",直線移動,0\n";
+        s += "補間なし=0\n";
+        s += "ピクセル数でサイズ指定=1\n";
     }
-    s += ",直線移動,0\n";
-    s += "X=100.000\n";
-    s += "Y=100.000\n";
-    s += "補間なし=0\n";
-    s += "ピクセル数でサイズ指定=0\n";
     return s;
 }
 
@@ -69,7 +89,8 @@ bool InsertObject::Insert(
     const std::vector<cv::Rect2d>& results,
     const std::vector<bool>& found,
     int rangeStart,
-    EDIT_HANDLE* edit)
+    EDIT_HANDLE* edit,
+    bool ignoreAspectRatio)
 {
     if (results.empty()) return false;
 
@@ -89,19 +110,20 @@ bool InsertObject::Insert(
         std::vector<FRMFIX>*     fixedFrm;
         std::vector<FRMGROUP>*   groups;
         int  rangeStart;
+        bool ignoreAspectRatio;
         bool ok;
-    } p { &rect_list, &err_list, &inter_list, &fixedFrm, &groups, rangeStart, false };
+    } p { &rect_list, &err_list, &inter_list, &fixedFrm, &groups, rangeStart, ignoreAspectRatio, false };
 
     edit->call_edit_section_param(&p, [](void* v, EDIT_SECTION* edit) {
         auto* p = static_cast<Param*>(v);
 
         fix_frame(*p->rect_list, *p->err_list, *p->inter_list,
-                  *p->fixedFrm, edit->info->width, edit->info->height, p->rangeStart);
+                  *p->fixedFrm, edit->info->width, edit->info->height, p->rangeStart, p->ignoreAspectRatio);
         groupObject(*p->fixedFrm, *p->groups, p->rangeStart);
 
         int layer = edit->info->layer;
         for (const auto& g : *p->groups) {
-            std::string alias = make_alias(*p->fixedFrm, g.vi_start, g.vi_end);
+            std::string alias = make_alias(*p->fixedFrm, g.vi_start, g.vi_end, p->ignoreAspectRatio);
             OBJECT_HANDLE handle = edit->create_object_from_alias(
                 alias.c_str(), layer, g.start, g.end - g.start + 1);
             if (!handle) { // insert 失敗時
@@ -120,7 +142,8 @@ bool InsertObject::ExportToFile(
     const std::vector<bool>& found,
     int rangeStart,
     EDIT_HANDLE* edit,
-    const std::wstring& filepath)
+    const std::wstring& filepath,
+    bool ignoreAspectRatio)
 {
     if (results.empty()) return false;
 
@@ -140,19 +163,20 @@ bool InsertObject::ExportToFile(
         std::vector<FRMFIX>*     fixedFrm;
         std::vector<FRMGROUP>*   groups;
         int  rangeStart;
+        bool ignoreAspectRatio;
         std::string text;
         bool ok;
-    } p { &rect_list, &err_list, &inter_list, &fixedFrm, &groups, rangeStart, "", false };
+    } p { &rect_list, &err_list, &inter_list, &fixedFrm, &groups, rangeStart, ignoreAspectRatio, "", false };
 
     edit->call_edit_section_param(&p, [](void* v, EDIT_SECTION* edit) {
         auto* p = static_cast<Param*>(v);
 
         fix_frame(*p->rect_list, *p->err_list, *p->inter_list,
-                  *p->fixedFrm, edit->info->width, edit->info->height, p->rangeStart);
+                  *p->fixedFrm, edit->info->width, edit->info->height, p->rangeStart, p->ignoreAspectRatio);
         groupObject(*p->fixedFrm, *p->groups, p->rangeStart);
 
         for (const auto& g : *p->groups) {
-            p->text += make_alias(*p->fixedFrm, g.vi_start, g.vi_end);
+            p->text += make_alias(*p->fixedFrm, g.vi_start, g.vi_end, p->ignoreAspectRatio);
         }
         p->ok = true;
     });
@@ -209,7 +233,7 @@ int InsertObject::find_inter_frame(std::vector<bool> &err_list, std::vector<UINT
     return interfrm_count;
 }
 
-void InsertObject::fix_frame(std::vector<cv::Rect2d> &rect_list, std::vector<bool> &err_list, std::vector<UINT32> &inter_list, std::vector<FRMFIX> &out, int frm_w, int frm_h, int rangeStart)
+void InsertObject::fix_frame(std::vector<cv::Rect2d> &rect_list, std::vector<bool> &err_list, std::vector<UINT32> &inter_list, std::vector<FRMFIX> &out, int frm_w, int frm_h, int rangeStart, bool ignoreAspectRatio)
 {
     //TODO
     //Interpolation phase
@@ -253,6 +277,24 @@ void InsertObject::fix_frame(std::vector<cv::Rect2d> &rect_list, std::vector<boo
     int dY = frm_h / -2;
     for (size_t i = 0; i < rect_list.size(); i++)
     {
+        // Ignore Aspect Ratio がOFFのとき、リサイズのX,Y(幅・高さ)が画面をはみ出さないようクランプ
+        if (!ignoreAspectRatio) {
+            if (rect_list[i].x < 0) {
+                rect_list[i].width += rect_list[i].x;
+                rect_list[i].x = 0;
+            }
+            if (rect_list[i].y < 0) {
+                rect_list[i].height += rect_list[i].y;
+                rect_list[i].y = 0;
+            }
+            if (rect_list[i].x + rect_list[i].width > frm_w) {
+                rect_list[i].width = frm_w - rect_list[i].x;
+            }
+            if (rect_list[i].y + rect_list[i].height > frm_h) {
+                rect_list[i].height = frm_h - rect_list[i].y;
+            }
+        }
+
         FRMFIX buf;
         cv::Point center(getCenter(rect_list[i]));
         buf.cx = center.x + dX;
