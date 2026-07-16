@@ -115,6 +115,65 @@ bool InsertObject::Insert(
     return p.ok;
 }
 
+bool InsertObject::ExportToFile(
+    const std::vector<cv::Rect2d>& results,
+    const std::vector<bool>& found,
+    int rangeStart,
+    EDIT_HANDLE* edit,
+    const std::wstring& filepath)
+{
+    if (results.empty()) return false;
+
+    auto rect_list = results;
+    auto err_list  = found;
+
+    std::vector<UINT32>   inter_list;
+    std::vector<FRMFIX>   fixedFrm;
+    std::vector<FRMGROUP> groups;
+
+    find_inter_frame(err_list, inter_list);
+
+    struct Param {
+        std::vector<cv::Rect2d>* rect_list;
+        std::vector<bool>*       err_list;
+        std::vector<UINT32>*     inter_list;
+        std::vector<FRMFIX>*     fixedFrm;
+        std::vector<FRMGROUP>*   groups;
+        int  rangeStart;
+        std::string text;
+        bool ok;
+    } p { &rect_list, &err_list, &inter_list, &fixedFrm, &groups, rangeStart, "", false };
+
+    edit->call_edit_section_param(&p, [](void* v, EDIT_SECTION* edit) {
+        auto* p = static_cast<Param*>(v);
+
+        fix_frame(*p->rect_list, *p->err_list, *p->inter_list,
+                  *p->fixedFrm, edit->info->width, edit->info->height, p->rangeStart);
+        groupObject(*p->fixedFrm, *p->groups, p->rangeStart);
+
+        for (const auto& g : *p->groups) {
+            p->text += make_alias(*p->fixedFrm, g.vi_start, g.vi_end);
+        }
+        p->ok = true;
+    });
+
+    if (!p.ok) return false;
+
+    // 既存ロジックはそのまま、書き込みだけCreateFile/WriteFileで行う
+    HANDLE hFile = CreateFileW(
+        filepath.c_str(), GENERIC_WRITE, 0, nullptr,
+        CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (hFile == INVALID_HANDLE_VALUE) {
+        return false;
+    }
+
+    DWORD written = 0;
+    BOOL wrote = WriteFile(hFile, p.text.data(), (DWORD)p.text.size(), &written, nullptr);
+    CloseHandle(hFile);
+
+    return wrote && written == p.text.size();
+}
+
 cv::Point InsertObject::getCenter(const cv::Rect2d& box) {
     return cv::Point(
         (int)((box.tl().x + box.br().x) / 2),

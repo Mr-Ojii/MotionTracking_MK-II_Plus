@@ -3,6 +3,7 @@
 #include "progress_dlg/progress_dlg.hpp"
 #include "aviutl2_sdk/plugin2.h"
 #include <windows.h>
+#include <commdlg.h>
 
 extern FILTER_PLUGIN_TABLE filter;
 
@@ -269,8 +270,37 @@ LRESULT CALLBACK MainFrame::wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPA
                     // TODO: CSV エクスポート
                     return 0;
                 case IDC_Menu::ExportObject:
-                    // TODO: Object ファイルエクスポート
+                {
+                    if (!self->m_tracker.HasResult()) {
+                        MessageBoxW(hwnd, config->translate(config, L"No track data."), constants::WindowName, MB_OK | MB_ICONWARNING);
+                        return 0;
+                    }
+
+                    wchar_t filepath[MAX_PATH] = L"";
+                    OPENFILENAMEW ofn = {};
+                    ofn.lStructSize = sizeof(ofn);
+                    ofn.hwndOwner = hwnd;
+                    ofn.lpstrFilter = L"ObjectFile (*.object)\0*.object\0All Files (*.*)\0*.*\0";
+                    ofn.lpstrFile = filepath;
+                    ofn.nMaxFile = MAX_PATH;
+                    ofn.lpstrDefExt = L"object";
+                    ofn.Flags = OFN_OVERWRITEPROMPT | OFN_PATHMUSTEXIST;
+                    if (!GetSaveFileNameW(&ofn)) {
+                        return 0;
+                    }
+
+                    bool ok = InsertObject::ExportToFile(
+                        self->m_tracker.Results(),
+                        self->m_tracker.Found(),
+                        self->m_tracker.RangeStart(),
+                        self->m_edit_handle,
+                        filepath
+                    );
+                    if (!ok) {
+                        MessageBox(hwnd, TEXT("Failed to save Alias"), TEXT("Error"), MB_OK);
+                    }
                     return 0;
+                }
                 default:
                     break;
             }

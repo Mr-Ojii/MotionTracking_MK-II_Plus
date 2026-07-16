@@ -31,6 +31,14 @@ public:
         int rangeStart,
         EDIT_HANDLE* edit
     );
+    // タイムラインに挿入せず、生成したaliasテキストをファイルに書き出す(確認用)
+    static bool ExportToFile(
+        const std::vector<cv::Rect2d>& results,
+        const std::vector<bool>& found,
+        int rangeStart,
+        EDIT_HANDLE* edit,
+        const std::wstring& filepath
+    );
 private:
     InsertObject() = delete;
     static cv::Point getCenter(const cv::Rect2d& box);
