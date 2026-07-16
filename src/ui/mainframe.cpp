@@ -325,7 +325,6 @@ LRESULT CALLBACK MainFrame::wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPA
             }
             // ウィンドウコントロールからのコマンド
             switch (static_cast<IDC_Button>(LOWORD(wparam))) {
-                case IDC_Button::ViewResult:
                 case IDC_Button::AsSubFilter:
                 case IDC_Button::InvertPosition:
                 case IDC_Button::IgnoreAspectRatio: {
@@ -333,6 +332,17 @@ LRESULT CALLBACK MainFrame::wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPA
                     int state = (int)GetWindowLongPtr(hBtn, GWLP_USERDATA);
                     SetWindowLongPtr(hBtn, GWLP_USERDATA, (LONG_PTR)!state);
                     InvalidateRect(hBtn, nullptr, TRUE);
+                    SetFocus(nullptr);
+                    return 0;
+                }
+                case IDC_Button::ViewResult:
+                {
+                    if (!self->m_tracker.HasResult()) {
+                        MessageBoxA(nullptr, "No tracking result found", "Operational Error", MB_OK);
+                        SetFocus(nullptr);
+                        return 0;
+                    }
+                    self->m_tracker.ShowResultWindow(self->m_edit_handle);
                     SetFocus(nullptr);
                     return 0;
                 }

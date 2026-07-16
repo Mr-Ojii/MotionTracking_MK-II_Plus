@@ -132,6 +132,68 @@ bool Tracker::SelectObject(EDIT_HANDLE* edit_handle, int hueValue) {
     }
 }
 
+namespace {
+    // ShowResultWindow のトラックバーコールバック用
+    struct ViewResultParam {
+        Tracker*     tracker;
+        EDIT_HANDLE* edit;
+    };
+}
+
+void Tracker::ShowResultWindow(EDIT_HANDLE* edit) {
+    if (m_track_result.empty()) {
+        MessageBoxA(nullptr, "No tracking result found", "Operational Error", MB_OK);
+        return;
+    }
+
+    cv::namedWindow("Tracking Result", cv::WINDOW_AUTOSIZE);
+
+    int pos_val = 0;
+    int max_pos = (int)m_track_result.size() - 1;
+
+    ViewResultParam param{ this, edit };
+    cv::createTrackbar("Frame", "Tracking Result", &pos_val, max_pos, OnResultTrackbarChange, &param);
+    OnResultTrackbarChange(pos_val, &param);
+
+    // × で閉じるまで待機 (SelectObjectと同じパターン)
+    while (true) {
+        cv::waitKey(10);
+        if (!static_cast<bool>(cv::getWindowProperty("Tracking Result", cv::WND_PROP_VISIBLE))) {
+            break;
+        }
+    }
+}
+
+void Tracker::OnResultTrackbarChange(int pos, void* userdata) {
+    auto* param = static_cast<ViewResultParam*>(userdata);
+    Tracker*     tracker = param->tracker;
+    EDIT_HANDLE* edit    = param->edit;
+
+    if (pos < 0 || (size_t)pos >= tracker->m_track_result.size()) return;
+
+    int frame = tracker->m_range.start + pos;
+
+    cv::Mat image;
+    edit->rendering_scene_video(frame, &image,
+        [](void* p, int, const void* buffer, int w, int h, int pitch) {
+            auto* img = static_cast<cv::Mat*>(p);
+            cv::Mat rgba(h, w, CV_8UC4, const_cast<void*>(buffer), (size_t)pitch);
+            cv::cvtColor(rgba, *img, cv::COLOR_RGBA2BGR);
+        });
+    edit->wait_rendering_task();
+
+    if (image.empty()) return;
+
+    if (tracker->m_track_found[pos]) {
+        cv::rectangle(image, tracker->m_track_result[pos], utils::hue_to_scalar(tracker->m_hueValue), 2, 1);
+        cv::putText(image, "OK", cv::Point(0, 50), cv::FONT_HERSHEY_PLAIN, 2.0, cv::Scalar(0, 255, 0), 2);
+    } else {
+        cv::putText(image, "ERROR", cv::Point(0, 50), cv::FONT_HERSHEY_PLAIN, 2.0, cv::Scalar(0, 0, 255), 2);
+    }
+
+    cv::imshow("Tracking Result", image);
+}
+
 bool Tracker::Analyze(EDIT_HANDLE* edit, TrackingMethod method) {
     if (!m_selectObj)
     {

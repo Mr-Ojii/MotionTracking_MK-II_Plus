@@ -56,6 +56,8 @@ public:
     bool Analyze2(EDIT_HANDLE* edit, TrackingMethod method);
     void Clear(ClearMode mode = ClearMode::Full);
     bool SelectObject(EDIT_HANDLE* edit, int hueValue);
+    // トラッキング結果をトラックバー付きウィンドウでプレビュー表示
+    void ShowResultWindow(EDIT_HANDLE* edit);
 
     const std::vector<cv::Rect2d>& Results()    const { return m_track_result; }
     const std::vector<bool>&       Found()      const { return m_track_found; }
@@ -71,6 +73,8 @@ public:
 private:
     // 引数固定のため、static
     static void OnMouse(int event, int x, int y, int flags, void* userdata);
+    // ShowResultWindow のトラックバーコールバック (引数固定のため、static)
+    static void OnResultTrackbarChange(int pos, void* userdata);
     RangeResult m_range;
     // モデル選択
     cv::Ptr<cv::Tracker> CreateTracker(TrackingMethod method);

@@ -152,18 +152,33 @@ void MainFrame::CreateControls() {
 
     y_pos += item_height + 5;
 
-    // Save EXO ボタンを作成
-    HWND button_save = CreateWindowEx(
+    // View Result ボタンを作成
+    HWND button_view_result = CreateWindowEx(
         0,
         WC_BUTTON,
-        config->translate(config, L"Insert Object"),
+        config->translate(config, L"View Result"),
         WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
         10, y_pos, 300, item_height,
         m_hwnd,
-        (HMENU)IDC_Button::InsertObject,
+        (HMENU)IDC_Button::ViewResult,
         m_hInst,
         nullptr);
-    SendMessage(button_save, WM_SETFONT, (WPARAM)hfont, TRUE);
+    SendMessage(button_view_result, WM_SETFONT, (WPARAM)hfont, TRUE);
+
+    y_pos += item_height + 5;
+
+    // Clear Result ボタンを作成
+    HWND button2 = CreateWindowEx(
+        0,
+        WC_BUTTON,
+        config->translate(config, L"Clear Result"),
+        WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
+        10, y_pos, 300, item_height,
+        m_hwnd,
+        (HMENU)IDC_Button::ClearResult,
+        m_hInst,
+        nullptr);
+    SendMessage(button2, WM_SETFONT, (WPARAM)hfont, TRUE);
 
     y_pos += item_height + 5;
 
@@ -213,18 +228,18 @@ void MainFrame::CreateControls() {
 
     y_pos += item_height + 5;
 
-    // Clear Result ボタンを作成
-    HWND button2 = CreateWindowEx(
+    // Insert Object ボタンを作成
+    HWND button_save = CreateWindowEx(
         0,
         WC_BUTTON,
-        config->translate(config, L"Clear Result"),
+        config->translate(config, L"Insert Object"),
         WS_VISIBLE | WS_CHILD | BS_OWNERDRAW,
         10, y_pos, 300, item_height,
         m_hwnd,
-        (HMENU)IDC_Button::ClearResult,
+        (HMENU)IDC_Button::InsertObject,
         m_hInst,
         nullptr);
-    SendMessage(button2, WM_SETFONT, (WPARAM)hfont, TRUE);
+    SendMessage(button_save, WM_SETFONT, (WPARAM)hfont, TRUE);
 
     y_pos += item_height + 5;
 }

@@ -16,7 +16,7 @@ LRESULT OnDrawItem(LPARAM lparam, const SystemColors& colors) {
 
     if (dis->CtlType == ODT_BUTTON) {
         int id = dis->CtlID;
-        bool isCheckbox = (id == (int)IDC_Button::ViewResult || id == (int)IDC_Button::AsSubFilter ||
+        bool isCheckbox = (id == (int)IDC_Button::AsSubFilter ||
                            id == (int)IDC_Button::InvertPosition || id == (int)IDC_Button::IgnoreAspectRatio);
 
         if (isCheckbox) {
