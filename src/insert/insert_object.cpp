@@ -18,8 +18,38 @@ std::string InsertObject::make_alias(const std::vector<FRMFIX>& fixedFrm, int vi
     s += "色=00ff00\n";
     s += "角を丸くする=0\n";
     s += "[Object.1]\n";
-    s += "effect.name=リサイズ\n";
+    s += "effect.name=標準描画\n";
+    // X=x1,x2,...
+    s += "X=";
+    for (int i = vi_start; i <= vi_end; i++) {
+        s += std::to_string(fixedFrm[i].cx) + ".00";
+        if (i < vi_end) s += ",";
+    }
+    s += ",直線移動,0\n";
 
+    // Y=y1,y2,...
+    s += "Y=";
+    for (int i = vi_start; i <= vi_end; i++) {
+        s += std::to_string(fixedFrm[i].cy) + ".00";
+        if (i < vi_end) s += ",";
+    }
+
+    s += ",直線移動,0\n";
+    s += "Z=0.00\n";
+    s += "Group=1\n";
+    s += "中心X=0.00\n";
+    s += "中心Y=0.00\n";
+    s += "中心Z=0.00\n";
+    s += "X軸回転=0.00\n";
+    s += "Y軸回転=0.00\n";
+    s += "Z軸回転=0.00\n";
+    s += "Group2=1\n";
+    s += "拡大率=100.000\n";
+    s += "縦横比=0.000\n";
+    s += "透明度=0.00\n";
+    s += "合成モード=通常\n";
+    s += "[Object.2]\n";
+    s += "effect.name=リサイズ\n";
     // 拡大率=s1,s2,...,直線移動,0
     s += "拡大率=";
     for (int i = vi_start; i <= vi_end; i++) {
@@ -28,36 +58,6 @@ std::string InsertObject::make_alias(const std::vector<FRMFIX>& fixedFrm, int vi
         if (i < vi_end) s += ",";
     }
     s += ",直線移動,0\n";
-
-    s += "X=100.000\nY=100.000\n補間なし=0\nピクセル数でサイズ指定=0\n";
-    s += "[Object.2]\n";
-    s += "effect.name=標準描画\n";
-
-    // X=x1,x2,...,直線移動,0
-    s += "X=";
-    for (int i = vi_start; i <= vi_end; i++) {
-        s += std::to_string(fixedFrm[i].cx) + ".00";
-        if (i < vi_end) s += ",";
-    }
-    s += ",直線移動,0\n";
-
-    // Y=y1,y2,...,直線移動,0
-    s += "Y=";
-    for (int i = vi_start; i <= vi_end; i++) {
-        s += std::to_string(fixedFrm[i].cy) + ".00";
-        if (i < vi_end) s += ",";
-    }
-    s += ",直線移動,0\n";
-
-    s += "Z=0.00\n";
-    s += "拡大率=100.00\n";
-    s += "縦横比=0.000\n";
-    s += "透明度=0.00\n";
-    s += "合成モード=通常\n";
-
-    s += "[Object.2]\n";
-    s += "effect.name=リサイズ\n";
-    s += "拡大率=100.000\n"; // 仮
     s += "X=100.000\n";
     s += "Y=100.000\n";
     s += "補間なし=0\n";
