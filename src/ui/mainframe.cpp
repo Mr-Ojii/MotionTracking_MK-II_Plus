@@ -373,7 +373,7 @@ LRESULT CALLBACK MainFrame::wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPA
                 EnableOperationButtons(hwnd, FALSE);
 
                 std::wstring content =
-                    std::wstring(L"Version: ") + L"r" + constants::version +
+                    std::wstring(L"Version: ") + constants::version +
                     L"\n"
                     L"Developer: MaverickTse, Mr-Ojii, nullru"
                     L"\n\n"
@@ -389,7 +389,7 @@ LRESULT CALLBACK MainFrame::wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPA
                 tdc.cbSize = sizeof(tdc);
                 tdc.hwndParent = hwnd;
                 tdc.dwFlags = TDF_ALLOW_DIALOG_CANCELLATION | TDF_ENABLE_HYPERLINKS;
-                tdc.pszWindowTitle = constants::WindowName;
+                tdc.pszWindowTitle = L"Info";
                 tdc.pszMainIcon = TD_INFORMATION_ICON;
                 tdc.pszMainInstruction = constants::WindowName;
                 tdc.pszContent = content.c_str();
