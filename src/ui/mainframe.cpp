@@ -303,13 +303,16 @@ LRESULT CALLBACK MainFrame::wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPA
                     return 0;
                 case IDC_Menu::ExportObject:
                 {
-                    if (self->m_during_operation) {
+                    if (self->m_during_operation || self->m_tracker.m_analyzing) {
                         MessageBoxW(hwnd, config->translate(config, L"Another operation is in progress."), L"Operation Error", MB_OK | MB_ICONWARNING);
+                        return 0;
                     }
                     self->m_during_operation = true;
+                    EnableOperationButtons(hwnd, FALSE);
                     if (!self->m_tracker.HasResult()) {
                         MessageBoxW(hwnd, config->translate(config, L"No track data to save!"), L"Operation Error", MB_OK | MB_ICONWARNING);
                         self->m_during_operation = false;
+                        EnableOperationButtons(hwnd, TRUE);
                         return 0;
                     }
 
@@ -324,6 +327,7 @@ LRESULT CALLBACK MainFrame::wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPA
                     ofn.Flags = OFN_OVERWRITEPROMPT | OFN_PATHMUSTEXIST;
                     if (!GetSaveFileNameW(&ofn)) {
                         self->m_during_operation = false;
+                        EnableOperationButtons(hwnd, TRUE);
                         return 0;
                     }
 
@@ -344,6 +348,7 @@ LRESULT CALLBACK MainFrame::wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPA
                         MessageBox(hwnd, TEXT("Failed to save Alias"), TEXT("Error"), MB_OK);
                     }
                     self->m_during_operation = false;
+                    EnableOperationButtons(hwnd, TRUE);
                     return 0;
                 }
                 default:
