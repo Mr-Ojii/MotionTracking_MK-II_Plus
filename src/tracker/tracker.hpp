@@ -82,6 +82,11 @@ private:
     // 選択範囲描画関数
     void UpdateObjectSelectionWindow(int x1, int y1, int x2, int y2);
 
+    // モデルディレクトリ有無判定。
+    // OpenCV Error が出てクラッシュするので、未然に防止
+    // https://e-penguiner.com/cpp-function-check-file-exist/
+    bool IsFileExist(const std::string& path);
+
     std::string             m_modelDir;
     std::vector<cv::Rect2d> m_track_result;
 

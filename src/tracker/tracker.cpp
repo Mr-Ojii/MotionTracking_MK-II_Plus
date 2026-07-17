@@ -3,8 +3,9 @@
 #include "aviutl2_sdk/plugin2.h"
 #include "constants.hpp"
 #include "opencv2/highgui.hpp"
-#include "ui/mainframe.hpp"
+#include <string>
 #include <windows.h>
+#include <filesystem>
 
 extern LOG_HANDLE* logger;
 extern CONFIG_HANDLE* config;
@@ -209,6 +210,9 @@ bool Tracker::Analyze(EDIT_HANDLE* edit, TrackingMethod method) {
     }
     // Create Tracker
     cv::Ptr<cv::Tracker> tracker = CreateTracker(method);
+    if (!tracker) {
+        return false;
+    }
 
     m_progress_current = 0;
     m_progress_total   = m_range.end - m_range.start + 1;
@@ -502,6 +506,9 @@ cv::Ptr<cv::Tracker> Tracker::CreateTracker(TrackingMethod method) {
             params.model = m_modelDir +  "dasiamrpn_model.onnx";
             params.kernel_r1 = m_modelDir + "dasiamrpn_kernel_r1.onnx";
             params.kernel_cls1 = m_modelDir + "dasiamrpn_kernel_cls1.onnx";
+            if(!IsFileExist(params.model)) {break;}
+            if(!IsFileExist(params.kernel_r1)) {break;}
+            if(!IsFileExist(params.kernel_cls1)) {break;}
             tracker = cv::TrackerDaSiamRPN::create(params);
             break;
         }
@@ -510,6 +517,8 @@ cv::Ptr<cv::Tracker> Tracker::CreateTracker(TrackingMethod method) {
             auto params = cv::TrackerNano::Params();
             params.backbone = m_modelDir + "nanotrack_backbone_sim.onnx";
             params.neckhead = m_modelDir + "nanotrack_head_sim.onnx";
+            if(!IsFileExist(params.backbone)) {break;}
+            if(!IsFileExist(params.neckhead)) {break;}
             tracker = cv::TrackerNano::create(params);
             break;
         }
@@ -521,6 +530,7 @@ cv::Ptr<cv::Tracker> Tracker::CreateTracker(TrackingMethod method) {
 
             auto params = cv::TrackerVit::Params();
             params.net = m_modelDir + "vitTracker.onnx";
+            if(!IsFileExist(params.net)) {break;}
             tracker = cv::TrackerVit::create(params);
             break;
         }
@@ -546,4 +556,17 @@ cv::Ptr<cv::Tracker> Tracker::CreateTracker(TrackingMethod method) {
         return {};
     }
     return tracker;
+}
+
+bool Tracker::IsFileExist(const std::string& path) {
+    if(!std::filesystem::is_regular_file(path)) {
+        int wlen = MultiByteToWideChar(CP_UTF8, 0, path.c_str(), -1, nullptr, 0);
+        std::wstring wpath(wlen, L'\0');
+        MultiByteToWideChar(CP_UTF8, 0, path.c_str(), -1, wpath.data(), wlen);
+
+        std::wstring msg = TEXT("Model Not Found (´•̥ ω •̥` )\n\nExpected Model Path:\n") + wpath;
+        MessageBox(NULL, msg.c_str(), TEXT("Error"), MB_OK | MB_ICONERROR);
+        return false;
+    }
+    return true;
 }
