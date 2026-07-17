@@ -1,75 +1,146 @@
 name: Build
 
 on:
-  push:
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: windows-latest
-    strategy:
-      matrix:
-        arch: [AVX, SSE2]
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-
-    - name: Build OpenCV
-      run: |
-        git clone https://github.com/opencv/opencv.git -b 4.12.0 --depth 1
-        git clone https://github.com/opencv/opencv_contrib.git -b 4.12.0 --depth 1
-        cmake -S opencv -B opencv/build -D CMAKE_GENERATOR_PLATFORM=x64 -D CMAKE_BUILD_TYPE=Release -D OPENCV_EXTRA_MODULES_PATH=./opencv_contrib/modules -D BUILD_SHARED_LIBS=OFF -D BUILD_PERF_TESTS=OFF -D BUILD_TESTS=OFF -D WITH_ADE=OFF -D WITH_OPENJPEG=OFF -D WITH_WEBP=OFF -D WITH_TIFF=OFF -D WITH_QUIRC=OFF -D WITH_OPENEXR=OFF -D WITH_JPEG=OFF -D WITH_LAPACK=OFF -D WITH_JASPER=OFF -D WITH_PNG=OFF -D WITH_GSTREAMER=OFF -D WITH_FFMPEG=OFF -D WITH_EIGEN=OFF -D WITH_DSHOW=OFF -D WITH_DIRECTX=OFF -D WITH_ARITH_DEC=OFF -D WITH_ARITH_ENC=OFF -D WITH_1394=OFF -D WITH_IMGCODEC_HDR=OFF -D WITH_IMGCODEC_PFM=OFF -D WITH_IMGCODEC_PXM=OFF -D WITH_IMGCODEC_SUNRASTER=OFF -D BUILD_OPENJPEG=OFF -D BUILD_JASPER=OFF -D BUILD_JAVA=OFF -D BUILD_JPEG=OFF -D BUILD_OPENEXR=OFF -D BUILD_PNG=OFF -D BUILD_TBB=OFF -D BUILD_opencv_python3=OFF
-        cmake --build opencv/build --config Release
-        cmake --install opencv/build
-
-    - name: Build MotionTracking_MK-II_Plus
-      run: |
-        cmake -S src -B src/build -D CMAKE_GENERATOR_PLATFORM=x64 -D OPENCV_INCLUDE_DIR=opencv/build/install/include -D OPENCV_LIBRARY_DIR=opencv/build/install/staticlib -D MSVC_ARCH=${{ matrix.arch }}
-        cmake --build src/build --config Release
-
-    - name: Create Archive
-      run: |
-        cd ${{ github.workspace }}
-        move LICENSE Licenses/MotionTrackingMKII.txt
-        move opencv/LICENSE Licenses/opencv.txt
-        move opencv_contrib/LICENSE Licenses/opencv_contrib.txt
-        move src/build/Release/MotionTrackingMKIIPlus.auf MotionTrackingMKIIPlus.auf
-        mkdir MotionTracking_model
-        move opencv/data/haarcascades/haarcascade_frontalface_default.xml MotionTracking_model/haarcascade_frontalface_default.xml
-        move opencv/data/haarcascades/haarcascade_profileface.xml MotionTracking_model/haarcascade_profileface.xml
-        7z a MotionTrackingMKIIPlus-${{ matrix.arch }}.zip MotionTrackingMKIIPlus.auf README.md README.ja.md Licenses MotionTracking_model
-
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: MotionTrackingMKIIPlus-${{ matrix.arch }}
-        path: ${{ github.workspace }}/MotionTrackingMKIIPlus-${{ matrix.arch }}.zip
-
-  create_release:
-    name: Create release
-    needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - uses: actions/download-artifact@v4
-      with:
-        path: artifacts
+      # "locales のインストールと日本語ロケール生成"
+      - name: Setting TZ and Japanese Locale
+        run: |
+          sudo apt update && \
+          sudo apt-get upgrade -y && \
+          sudo apt install -y locales && \
+          sudo locale-gen ja_JP.UTF-8 && \
+          sudo update-locale LANG=ja_JP.UTF-8
 
-    - name: Create a Release
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        cd ${{ github.workspace }}/artifacts
-        mv ./*/*.zip ./
-        REVCOUNT=`git rev-list --count HEAD`
-        RELEASE_NAME=r${REVCOUNT}
-        TAG_NAME=r${REVCOUNT}
-        echo "通常はAVX版を使用することをお勧めします。AVX版が動作しない場合のみSSE2版をお使いください。" >> ReleaseNotes.txt
-        gh release create "${TAG_NAME}" ${{ github.workspace }}/artifacts/*.zip -t "${RELEASE_NAME}" -F ReleaseNotes.txt
+      # install
+      - name: install
+        run: |
+          sudo apt update &&\
+          sudo apt-get upgrade -y &&\
+          sudo apt install -y \
+          make \
+          cmake \
+          gcc \
+          g++ \
+          gcc-mingw-w64 \
+          g++-mingw-w64
+
+      - name: Prepare /opt
+        run: |
+          sudo mkdir -p /opt && \
+          sudo chown "$(id -u):$(id -g)" /opt
+
+      # OpenCV は /usr/x86_64-w64-mingw32 配下に make install されるのでキャッシュする。
+      # バージョンを上げた場合は key の -v1 部分を変更してキャッシュを無効化すること。
+      - name: Cache MinGW-built dependencies (OpenCV)
+        id: cache-deps
+        uses: actions/cache@v4
+        with:
+          path: /usr/x86_64-w64-mingw32
+          key: mingw-deps-opencv4.12.0-v1
+
+      # Setup OpenCV
+      - name: Setup OpenCV
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        working-directory: /opt
+        run: |
+          git clone https://github.com/opencv/opencv.git -b 4.12.0 --depth 1
+
+      - name: Setup OpenCV (contrib)
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        working-directory: /opt
+        run: |
+          git clone https://github.com/opencv/opencv_contrib.git -b 4.12.0 --depth 1
+
+      # Build
+      - name: Build OpenCV
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p /opt/opencv/build-mingw
+
+      - name: Build OpenCV (cmake)
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        working-directory: /opt/opencv/build-mingw
+        run: |
+          cmake .. \
+          -DCMAKE_SYSTEM_NAME=Windows \
+          -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
+          -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ \
+          -DCMAKE_INSTALL_PREFIX=/usr/x86_64-w64-mingw32 \
+          -DCMAKE_FIND_ROOT_PATH=/usr/x86_64-w64-mingw32 \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER \
+          -DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=ONLY \
+          -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY \
+          -DBUILD_SHARED_LIBS=OFF \
+          -DBUILD_PERF_TESTS=OFF  \
+          -DBUILD_TESTS=OFF \
+          -DWITH_ADE=OFF \
+          -DWITH_OPENJPEG=OFF \
+          -DWITH_WEBP=OFF \
+          -DWITH_TIFF=OFF \
+          -DWITH_QUIRC=OFF \
+          -DWITH_OPENEXR=OFF \
+          -DWITH_JPEG=OFF \
+          -DWITH_LAPACK=OFF \
+          -DWITH_JASPER=OFF \
+          -DWITH_PNG=OFF \
+          -DWITH_GSTREAMER=OFF \
+          -DWITH_FFMPEG=OFF \
+          -DWITH_EIGEN=OFF \
+          -DWITH_DSHOW=OFF \
+          -DWITH_DIRECTX=OFF \
+          -DWITH_ARITH_DEC=OFF \
+          -DWITH_ARITH_ENC=OFF \
+          -DWITH_1394=OFF \
+          -DWITH_IMGCODEC_HDR=OFF \
+          -DWITH_IMGCODEC_PFM=OFF \
+          -DWITH_IMGCODEC_PXM=OFF \
+          -DWITH_IMGCODEC_SUNRASTER=OFF \
+          -DBUILD_OPENJPEG=OFF \
+          -DBUILD_JASPER=OFF \
+          -DBUILD_JAVA=OFF \
+          -DBUILD_JPEG=OFF \
+          -DBUILD_OPENEXR=OFF \
+          -DBUILD_PNG=OFF \
+          -DBUILD_TBB=OFF \
+          -DBUILD_opencv_python3=OFF \
+          -DOPENCV_EXTRA_MODULES_PATH=/opt/opencv_contrib/modules \
+          && make -j$(nproc) \
+          && sudo make install
+
+      # ビルド
+      - name: Build plugin
+        run: |
+          cd src
+          make compile
+
+      - name: Determine version
+        id: version
+        run: |
+          REVCOUNT=$(git rev-list --count HEAD)
+          VERSION="v${REVCOUNT}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Package artifact
+        run: |
+          mkdir -p dist
+          cp src/build/MotionTrackingMKIIPlusforAviUtl2.aux2 dist/
+          cp README.md README.ja.md LICENSE dist/
+          cp -r Licenses dist/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MotionTrackingMKIIPlusforAviUtl2-${{ steps.version.outputs.version }}
+          path: dist/

@@ -13,22 +13,15 @@ project(MotionTrackingMKIIPlusforAviUtl2 CXX)
 add_library(${PROJECT_NAME} SHARED)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(WX_ROOT_PATH "/usr/x86_64-w64-mingw32/debug")
     add_definitions(-D_DEBUG)
-else()
-    set(WX_ROOT_PATH "/usr/x86_64-w64-mingw32/release")
 endif()
 
-set(CMAKE_FIND_ROOT_PATH ${WX_ROOT_PATH} /usr/x86_64-w64-mingw32)
+set(CMAKE_FIND_ROOT_PATH /usr/x86_64-w64-mingw32)
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 set(CMAKE_CXX_USE_RESPONSE_FILE_FOR_INCLUDES OFF)
 set(CMAKE_C_USE_RESPONSE_FILE_FOR_INCLUDES OFF)
-set(wxWidgets_ROOT_DIR ${WX_ROOT_PATH})
-
-find_package(wxWidgets COMPONENTS core base propgrid aui REQUIRED)
-include(${wxWidgets_USE_FILE})
 
 set(OPENCV_INCLUDE_DIR "/usr/x86_64-w64-mingw32/include/opencv4")
 set(OPENCV_LIBRARY_DIR "/usr/x86_64-w64-mingw32/lib")
@@ -58,7 +51,6 @@ target_link_directories(${PROJECT_NAME} PRIVATE
     ${OPENCV_LIBRARY_DIR}/opencv4/3rdparty
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE
-    ${wxWidgets_LIBRARIES}
     comctl32
     comdlg32
     shell32
