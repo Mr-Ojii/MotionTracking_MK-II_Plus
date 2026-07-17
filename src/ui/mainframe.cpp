@@ -37,9 +37,7 @@ constexpr const wchar_t* track_method[] = { L"MIL", L"KCF", L"CSRT", L"DaSiamRPN
 constexpr int METHOD_N = sizeof(track_method) / sizeof(track_method[0]);
 
 
-EXTERN_C __declspec(dllexport) DWORD RequiredVersion() {
-    return 2003300;
-}
+// RequiredVersion / InitializePlugin は main.cpp に移設 (バージョン判定を実装)
 
 EXTERN_C __declspec(dllexport) void InitializeLogger(LOG_HANDLE* handle) {
     logger = handle;
@@ -47,10 +45,6 @@ EXTERN_C __declspec(dllexport) void InitializeLogger(LOG_HANDLE* handle) {
 
 EXTERN_C __declspec(dllexport) void InitializeConfig(CONFIG_HANDLE* handle) {
     config = handle;
-}
-
-EXTERN_C __declspec(dllexport) bool InitializePlugin(DWORD version) {
-    return true;
 }
 
 /*
@@ -379,7 +373,7 @@ LRESULT CALLBACK MainFrame::wnd_proc(HWND hwnd, UINT message, WPARAM wparam, LPA
                 EnableOperationButtons(hwnd, FALSE);
 
                 std::wstring content =
-                    std::wstring(L"Version: ") + constants::version +
+                    std::wstring(L"Version: ") + L"r" + constants::version +
                     L"\n"
                     L"Developer: MaverickTse, Mr-Ojii, nullru"
                     L"\n\n"

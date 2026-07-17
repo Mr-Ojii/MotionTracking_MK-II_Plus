@@ -564,7 +564,7 @@ bool Tracker::IsFileExist(const std::string& path) {
         std::wstring wpath(wlen, L'\0');
         MultiByteToWideChar(CP_UTF8, 0, path.c_str(), -1, wpath.data(), wlen);
 
-        std::wstring msg = TEXT("Model Not Found (´•̥ ω •̥` )\n\nExpected Model Path:\n") + wpath;
+        std::wstring msg = TEXT("Model Not Found\n\nExpected Model Path:\n") + wpath;
         MessageBox(NULL, msg.c_str(), TEXT("Error"), MB_OK | MB_ICONERROR);
         return false;
     }
