@@ -12,7 +12,7 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         fetch-depth: 0
 
@@ -26,7 +26,7 @@ jobs:
 
     - name: Build MotionTracking_MK-II_Plus
       run: |
-        cmake -S src -B src/build -D CMAKE_GENERATOR_PLATFORM=Win32 -D OPENCV_INCLUDE_DIR=opencv/build/install/include -D OPENCV_LIBRARY_DIR=opencv/build/install/x86/vc17/staticlib -D MSVC_ARCH=${{ matrix.arch }}
+        cmake -S src -B src/build -D CMAKE_GENERATOR_PLATFORM=Win32 -D OPENCV_INCLUDE_DIR=opencv/build/install/include -D OPENCV_LIBRARY_DIR=opencv/build/install/staticlib -D MSVC_ARCH=${{ matrix.arch }}
         cmake --build src/build --config Release
 
     - name: Create Archive
@@ -42,7 +42,7 @@ jobs:
         7z a MotionTrackingMKIIPlus-${{ matrix.arch }}.zip MotionTrackingMKIIPlus.auf README.md README.ja.md Licenses MotionTracking_model
 
     - name: Upload artifact
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: MotionTrackingMKIIPlus-${{ matrix.arch }}
         path: ${{ github.workspace }}/MotionTrackingMKIIPlus-${{ matrix.arch }}.zip
@@ -54,11 +54,11 @@ jobs:
     if: github.ref == 'refs/heads/master'
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         fetch-depth: 0
 
-    - uses: actions/download-artifact@v7
+    - uses: actions/download-artifact@v8
       with:
         path: artifacts
 
