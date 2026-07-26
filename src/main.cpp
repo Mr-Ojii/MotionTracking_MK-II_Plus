@@ -8,7 +8,7 @@
 #include "opencv2/core/utility.hpp"
 #include "opencv2/highgui.hpp"
 #include "opencv2/tracking.hpp"
-#include "opencv2/objdetect.hpp"
+#include "opencv2/xobjdetect.hpp"
 #include "opencv2/video.hpp"
 #include "opencv2/video/tracking.hpp"
 #include "resource.h"
