@@ -18,14 +18,19 @@
 
 HINSTANCE hModuleDLL = nullptr;
 
+enum class OutputType {
+    FIGURE = 1,
+    SUBFILTER = 2,
+    FILTEROBJ = 3,
+};
 
 constexpr TCHAR* track_method[] = { "MIL", "KCF", "CSRT", "DaSiamRPN", "Nano", "Vit"};
 constexpr int METHOD_N = sizeof(track_method) / sizeof(TCHAR*);
 
-constexpr TCHAR* track_name[] = { "Method", "Rect Hue" };   // トラックバーの名前
-constexpr int    track_default[] = { 3, 120 };       // トラックバーの初期値
-constexpr int    track_s[] = { 1, 0 };             // トラックバーの下限値
-constexpr int    track_e[] = { METHOD_N, 359 };      // トラックバーの上限値
+constexpr TCHAR* track_name[] = { "Method", "Rect Hue", "Exo Type" };   // トラックバーの名前
+constexpr int    track_default[] = { 3, 120, 1 };       // トラックバーの初期値
+constexpr int    track_s[] = { 1, 0, 1 };             // トラックバーの下限値
+constexpr int    track_e[] = { METHOD_N, 359, 3 };      // トラックバーの上限値
 constexpr int    TRACK_N = sizeof(track_name) / sizeof(TCHAR*);
 
 static_assert(TRACK_N == sizeof(track_default) / sizeof(int), "size of track_default mismatch with TRACK_N");
@@ -33,8 +38,8 @@ static_assert(TRACK_N == sizeof(track_s) / sizeof(int), "size of track_s mismatc
 static_assert(TRACK_N == sizeof(track_e) / sizeof(int), "size of track_e mismatch with TRACK_N");
 
 
-constexpr TCHAR *check_name[] = { "Select Object", "Analyze", "View Result", "Clear Result", "As Sub-filter/部分フィルター?", "Invert Position", "Ignore Aspect Ratio", "Save EXO", "Quick Blur", "Easy Privacy"}; // チェックボックスの名前
-constexpr int   check_default[] = { -1, -1, 0, -1, 0, 0, 1, -1, 0, 0 }; // チェックボックスの初期値 (値は0か1)
+constexpr TCHAR *check_name[] = { "Select Object", "Analyze", "View Result", "Clear Result", "Invert Position", "Ignore Aspect Ratio", "Save EXO", "Quick Blur", "Easy Privacy"}; // チェックボックスの名前
+constexpr int   check_default[] = { -1, -1, 0, -1, 0, 1, -1, 0, 0 }; // チェックボックスの初期値 (値は0か1)
 constexpr int   CHECK_N = sizeof(check_name) / sizeof(TCHAR*);
 
 static_assert(CHECK_N == sizeof(check_default) / sizeof(int), "size of check_default mismatch with CHECK_N");
@@ -653,7 +658,7 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
             return TRUE;
             break;
         }
-        case MID_FILTER_BUTTON + 7: //Save EXO
+        case MID_FILTER_BUTTON + 6: //Save EXO
         {
             //TODO
             if (track_result.size() <= 0)
@@ -713,9 +718,15 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
                     SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
                     SecureZeroMemory(fmtstr, sizeof(TCHAR[2048]));
                     //2 more param for Figure obj
-                    if (!fp->check[4])
+                    if (fp->track[2] == (int)OutputType::FIGURE)
                     {
                         LoadString(fp->dll_hinst, IDS_FIGUREPARAMA, boilerplate, 2048);
+                        strbuf << boilerplate; //verbatim copy
+                        SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
+                    }
+                    if (fp->track[2] == (int)OutputType::FILTEROBJ)
+                    {
+                        LoadString(fp->dll_hinst, IDS_FILTERPARAM, boilerplate, 2048);
                         strbuf << boilerplate; //verbatim copy
                         SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
                     }
@@ -725,11 +736,11 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
                         strbuf << boilerplate; //verbatim copy
                         SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
                     }
-                    //Section [*.0] Graphics/Sub-filter
+                    //Section [*.0] Graphics/Sub-filter/Filter effect
                     sprintf_s(head_num, sizeof(char[32]), "[%d.0]\n\0", object_id);
                     strbuf << head_num;
                     //
-                    if (fp->check[4]) //Sub-filter
+                    if (fp->track[2] == (int)OutputType::SUBFILTER) //Sub-filter
                     {
                         LoadString(fp->dll_hinst, IDS_SFPARAM_JP, boilerplate, 2048);//TODO: Set JP text
                         int Xi, Xf, Yi, Yf, size_st, size_ed;
@@ -778,13 +789,13 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
                                 rAsp_ed = 0.0;
                             }
                         }
-                        if (fp->check[6]) // Ignore Aspect Ratio
+                        if (fp->check[5]) // Ignore Aspect Ratio
                         {
                             rAsp_st = 0.0;
                             rAsp_ed = 0.0;
                         }
 
-                        if (fp->check[5]) //Invert Position
+                        if (fp->check[4]) //Invert Position
                         {
                             Xi = -Xi;
                             Xf = -Xf;
@@ -797,17 +808,46 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
                         SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
                         SecureZeroMemory(fmtstr, sizeof(TCHAR[2048]));
                     }
-                    else //Graphics
+                    else if (fp->track[2] == (int)OutputType::FIGURE) //Graphics
                     {
                         LoadString(fp->dll_hinst, IDS_FIGUREPARAMB_JP, boilerplate, 2048);//TODO: Set JP text
                         strbuf << boilerplate;
                         SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
                     }
+                    else if (fp->track[2] == (int)OutputType::FILTEROBJ) //Filter effect
+                    {
+
+                        int Xi, Xf, Yi, Yf;
+                        Xi = fixedFrm[f].cx;
+                        Yi = fixedFrm[f].cy;
+                        if ((size_t)f >= (fixedFrm.size() - 1))//last frame
+                        {
+                            Xf = Xi;
+                            Yf = Yi;
+                        }
+                        else //Normal
+                        {
+                            Xf = fixedFrm[f + 1].cx;
+                            Yf = fixedFrm[f + 1].cy;
+                        }
+                        LoadString(fp->dll_hinst, IDS_COORD_JP, boilerplate, 2048);//TODO: Set JP text
+                        if (fp->check[4]) // invert position
+                        {
+                            Xi = -Xi;
+                            Xf = -Xf;
+                            Yi = -Yi;
+                            Yf = -Yf;
+                        }
+                        sprintf_s(fmtstr, sizeof(TCHAR[2048]), boilerplate, (double)Xi, (double)Xf, (double)Yi, (double)Yf);
+                        strbuf << fmtstr;
+                        SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
+                        SecureZeroMemory(fmtstr, sizeof(TCHAR[2048]));
+                    }
                     //Section [*.1] Resize FX or Mono FX
                     sprintf_s(head_num, sizeof(char[32]), "[%d.1]\n\0", object_id);
                     strbuf << head_num;
                     //
-                    if (fp->check[4])// Mono FX for Sub-filter
+                    if (fp->track[2] == (int)OutputType::SUBFILTER)// Mono FX for Sub-filter
                     {
                         LoadString(fp->dll_hinst, IDS_FXMONO_JP, boilerplate, 2048);//TODO: Set JP text
                         strbuf << boilerplate;
@@ -836,13 +876,13 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
                         }
 
                         LoadString(fp->dll_hinst, IDS_FXRESIZE_JP, boilerplate, 2048);//TODO: Set JP text
-                        if (fp->check[6]) // Ignore Aspect Ratio
+                        if (fp->check[5]) // Ignore Aspect Ratio
                         {
-                            sprintf_s(fmtstr, sizeof(TCHAR[2048]), boilerplate, (double)Si, Sf, 100.0, 100.0, 100.0, 100.0, !fp->check[6]);
+                            sprintf_s(fmtstr, sizeof(TCHAR[2048]), boilerplate, (double)Si, Sf, 100.0, 100.0, 100.0, 100.0, !fp->check[5]);
                         }
                         else
                         {
-                            sprintf_s(fmtstr, sizeof(TCHAR[2048]), boilerplate, 100.0, 100.0, (double)Wi, (double)Wf, (double)Hi, (double)Hf, !fp->check[6]);
+                            sprintf_s(fmtstr, sizeof(TCHAR[2048]), boilerplate, 100.0, 100.0, (double)Wi, (double)Wf, (double)Hi, (double)Hf, !fp->check[5]);
                         }
                         strbuf << fmtstr;
                         SecureZeroMemory(boilerplate, sizeof(TCHAR[2048]));
@@ -850,7 +890,7 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
                     }
                     //Section [*.2] Std Drawing for Graphics
                     //Coordinate animation part for Graphics
-                    if (!fp->check[4]) //only for graphics
+                    if (fp->track[2] == (int)OutputType::FIGURE) //only for graphics
                     {
                         sprintf_s(head_num, sizeof(char[32]), "[%d.2]\n\0", object_id);
                         strbuf << head_num;
@@ -869,7 +909,7 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
                             Yf = fixedFrm[f + 1].cy;
                         }
                         LoadString(fp->dll_hinst, IDS_STDDRAW_JP, boilerplate, 2048);//TODO: Set JP text
-                        if (fp->check[5]) // invert position
+                        if (fp->check[4]) // invert position
                         {
                             Xi = -Xi;
                             Xf = -Xf;
@@ -973,7 +1013,7 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
         fpip->ycp_edit = ycswap;
     }
 
-    if (isFilterActive && isEditing && fp->check[8] && hasResult && isFrameInRng)
+    if (isFilterActive && isEditing && fp->check[7] && hasResult && isFrameInRng)
     {
         if (track_found[fpip->frame - selA])
         {
@@ -1018,7 +1058,7 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
             redraw = true;
         }
     }
-    if (fp->check[9] && isFilterActive && isEditing)
+    if (fp->check[8] && isFilterActive && isEditing)
     {
         //AviUtl -> OCV
         size_t frmsize = fpip->w* fpip->h;

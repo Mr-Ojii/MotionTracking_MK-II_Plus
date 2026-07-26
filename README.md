@@ -74,7 +74,10 @@ Specifies the algorithm to be used in the analysis.
 ##### Rect Hue
 Specifies the hue of the rectangle displayed in Object Selection and View Result.
 ##### Save EXO Options
-- As Sub-filter/部分フィルター？ : Output as a sub filter.
+- Exo Type：Exo Output type
+    1. Graphic
+    2. Sub-Filter
+    3. Filter effect
 - Invert Position : Reverse the position of the tracking result.
 - Ignore Aspect Ratio : Ignore the aspect ratio and output in scale.
 ###### Note
