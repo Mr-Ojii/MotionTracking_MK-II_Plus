@@ -22,8 +22,8 @@ set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ".auf")
 target_include_directories(${PROJECT_NAME} PRIVATE ${OPENCV_INCLUDE_DIR})
 target_link_directories(${PROJECT_NAME} PRIVATE ${OPENCV_LIBRARY_DIR})
 target_link_libraries(${PROJECT_NAME} PRIVATE comctl32 ippicvmt
-                        debug     ippiwd debug     ipphald debug     ittnotifyd debug     opencv_core500d debug     opencv_highgui500d debug     opencv_imgcodecs500d debug     opencv_imgproc500d debug     opencv_xobjdetect500d debug     opencv_tracking500d debug     opencv_video500d debug     opencv_calib500d debug     opencv_flann500d debug     opencv_features500d debug     opencv_dnn500d debug     opencv_geometry500d debug     zlibd debug     libprotobufd
-                        optimized ippiw  optimized ipphal  optimized ittnotify  optimized opencv_core500  optimized opencv_highgui500  optimized opencv_imgcodecs500  optimized opencv_imgproc500  optimized opencv_xobjdetect500  optimized opencv_tracking500  optimized opencv_video500  optimized opencv_calib500  optimized opencv_flann500  optimized opencv_features500  optimized opencv_dnn500  optimized opencv_geometry500  optimized zlib  optimized libprotobuf
+                        debug     ippiwd debug     ipphald debug     ittnotifyd debug     opencv_core4140d debug     opencv_highgui4140d debug     opencv_imgcodecs4140d debug     opencv_imgproc4140d debug     opencv_objdetect4140d debug     opencv_tracking4140d debug     opencv_video4140d debug     opencv_calib3d4140d debug     opencv_flann4140d debug     opencv_features2d4140d debug     opencv_dnn4140d debug     zlibd debug     libprotobufd
+                        optimized ippiw  optimized ipphal  optimized ittnotify  optimized opencv_core4140  optimized opencv_highgui4140  optimized opencv_imgcodecs4140  optimized opencv_imgproc4140  optimized opencv_objdetect4140  optimized opencv_tracking4140  optimized opencv_video4140  optimized opencv_calib3d4140  optimized opencv_flann4140  optimized opencv_features2d4140  optimized opencv_dnn4140  optimized zlib  optimized libprotobuf
                         )
 
 execute_process(COMMAND git rev-list --count HEAD
